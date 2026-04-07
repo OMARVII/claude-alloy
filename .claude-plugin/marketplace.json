@@ -1,0 +1,17 @@
+{
+  "name": "claude-alloy",
+  "owner": {
+    "name": "Omar Khaled",
+    "url": "https://omar-khaled.com",
+    "github": "https://github.com/OMARVII"
+  },
+  "plugins": [
+    {
+      "name": "claude-alloy",
+      "source": "./",
+      "version": "1.0.0",
+      "description": "A mixture stronger than its parts. 11 agents, 8 skills, 10 commands, 11 hooks. Multi-agent orchestration for Claude Code.",
+      "keywords": ["agents", "orchestration", "multi-agent", "harness", "alloy"]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+name: Feature Request
+description: Suggest a new agent, skill, hook, or improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the pain point or gap.
+      placeholder: "I often need to... but currently..."
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How should it work?
+      placeholder: "A new agent/skill/hook that..."
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: What type of addition?
+      options:
+        - New agent
+        - New skill
+        - New hook
+        - New command
+        - Enhancement to existing component
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What workarounds have you tried?
+      placeholder: "I tried using gauge for this, but..."

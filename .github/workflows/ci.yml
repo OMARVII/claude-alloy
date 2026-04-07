@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y shellcheck jq
+
+      - name: Run shellcheck on all shell scripts
+        run: |
+          shellcheck \
+            activate.sh \
+            deactivate.sh \
+            install.sh \
+            setup-global.sh \
+            setup-aliases.sh \
+            hooks/*.sh
+
+      - name: Smoke test — project install
+        run: |
+          bash install.sh --project /tmp/test-project
+
+          echo "Verifying installed structure..."
+          test -d /tmp/test-project/.claude/agents
+          test -d /tmp/test-project/.claude/skills
+          test -d /tmp/test-project/.claude/commands
+          test -d /tmp/test-project/.claude/alloy-hooks
+          test -f /tmp/test-project/.claude/settings.json
+          test -f /tmp/test-project/CLAUDE.md
+
+          echo "All smoke tests passed."
