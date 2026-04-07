@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y shellcheck jq
+
+      - name: Run shellcheck on all shell scripts
+        run: |
+          shellcheck \
+            activate.sh \
+            deactivate.sh \
+            install.sh \
+            setup-global.sh \
+            setup-aliases.sh \
+            hooks/*.sh
+
+      - name: Smoke test — project install
+        run: |
+          bash install.sh --project /tmp/test-project
+
+          echo "Verifying installed structure..."
+          test -d /tmp/test-project/.claude/agents
+          test -d /tmp/test-project/.claude/skills
+          test -d /tmp/test-project/.claude/commands
+          test -d /tmp/test-project/.claude/alloy-hooks
+          test -f /tmp/test-project/.claude/settings.json
+          test -f /tmp/test-project/CLAUDE.md
+
+          echo "Verifying file counts..."
+          AGENT_COUNT=$(ls /tmp/test-project/.claude/agents/*.md 2>/dev/null | wc -l)
+          SKILL_COUNT=$(find /tmp/test-project/.claude/skills -name "SKILL.md" 2>/dev/null | wc -l)
+          COMMAND_COUNT=$(ls /tmp/test-project/.claude/commands/*.md 2>/dev/null | wc -l)
+          HOOK_COUNT=$(ls /tmp/test-project/.claude/alloy-hooks/*.sh 2>/dev/null | wc -l)
+
+          [ "$AGENT_COUNT" -eq 11 ] || { echo "Expected 11 agents, got $AGENT_COUNT"; exit 1; }
+          [ "$SKILL_COUNT" -eq 8 ] || { echo "Expected 8 skills, got $SKILL_COUNT"; exit 1; }
+          [ "$COMMAND_COUNT" -eq 10 ] || { echo "Expected 10 commands, got $COMMAND_COUNT"; exit 1; }
+          [ "$HOOK_COUNT" -eq 11 ] || { echo "Expected 11 hooks, got $HOOK_COUNT"; exit 1; }
+
+          echo "Verifying settings.json is valid JSON..."
+          jq . /tmp/test-project/.claude/settings.json > /dev/null
+
+          echo "Verifying manifest was created..."
+          test -f /tmp/test-project/.claude/.alloy-manifest
+
+          echo "All smoke tests passed."
+
+      - name: Smoke test — project cleanup
+        run: |
+          echo "Verifying project can be cleaned up..."
+          rm -rf /tmp/test-project/.claude /tmp/test-project/CLAUDE.md
+
+          test ! -d /tmp/test-project/.claude/agents
+          test ! -f /tmp/test-project/CLAUDE.md
+
+          echo "Project cleanup test passed."
+
+      - name: Smoke test — global install and uninstall
+        run: |
+          echo "Testing global install..."
+          bash install.sh
+          test -d ~/.claude/agents
+          test -d ~/.claude/alloy-hooks
+          test -f ~/.claude/settings.json
+
+          echo "Testing global --uninstall..."
+          bash install.sh --uninstall
+          test ! -f ~/.claude/agents/steel.md
+          test ! -d ~/.claude/alloy-hooks
+          test ! -d ~/.claude/agent-memory
+
+          echo "Global install/uninstall test passed."
+
+      - name: Smoke test — global activate/deactivate roundtrip
+        run: |
+          mkdir -p ~/.claude
+
+          echo "Testing activate..."
+          bash activate.sh
+
+          test -f ~/.claude/settings.json
+          test -d ~/.claude/agents
+          test -d ~/.claude/alloy-hooks
+          test -f ~/.claude/.alloy-manifest
+          jq . ~/.claude/settings.json > /dev/null
+
+          echo "Testing deactivate..."
+          bash deactivate.sh
+
+          test ! -d ~/.claude/agents || [ -z "$(ls -A ~/.claude/agents 2>/dev/null)" ]
+
+          echo "Roundtrip test passed."

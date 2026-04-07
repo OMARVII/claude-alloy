@@ -1,0 +1,107 @@
+{
+  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, typecheck, lint, auto-install, agent-reminder, skill-reminder, todo-enforcer, loop-stop, session-notify",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/write-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking file safety..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/branch-guard.sh",
+            "timeout": 5,
+            "statusMessage": "Checking branch protection..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/comment-checker.sh",
+            "timeout": 10,
+            "statusMessage": "Checking code quality..."
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/typecheck.sh",
+            "timeout": 60,
+            "statusMessage": "Running type check..."
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/lint.sh",
+            "timeout": 30,
+            "statusMessage": "Running linter..."
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/auto-install.sh",
+            "timeout": 60,
+            "statusMessage": "Checking dependencies..."
+          }
+        ]
+      },
+      {
+        "matcher": "Grep|Glob|WebFetch|WebSearch|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-reminder.sh",
+            "timeout": 5,
+            "statusMessage": "Checking delegation patterns..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|Bash|Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/skill-reminder.sh",
+            "timeout": 5,
+            "statusMessage": "Checking skill usage..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/todo-enforcer.sh",
+            "timeout": 5,
+            "statusMessage": "Checking todos..."
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/loop-stop.sh",
+            "timeout": 5,
+            "statusMessage": "Checking loop status..."
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-notify.sh",
+            "timeout": 5,
+            "async": true,
+            "statusMessage": "Session complete!"
+          }
+        ]
+      }
+    ]
+  }
+}
