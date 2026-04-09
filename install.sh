@@ -91,20 +91,16 @@ if [ "${1:-}" = "--project" ]; then
     if cp "${SCRIPT_DIR}/CLAUDE.md" "$dest" 2>/dev/null; then
         echo "$dest" >> "$MANIFEST_FILE"
     fi
-    if [ -d "${SCRIPT_DIR}/agent-memory" ]; then
-        for mem_dir in "${SCRIPT_DIR}"/agent-memory/*/; do
-            mem_name=$(basename "$mem_dir")
-            mkdir -p "${CLAUDE_DIR}/agent-memory/${mem_name}"
-            for f in "${mem_dir}"*; do
-                [ -f "$f" ] || continue
-                dest="${CLAUDE_DIR}/agent-memory/${mem_name}/$(basename "$f")"
-                if cp "$f" "$dest" 2>/dev/null; then
-                    echo "$dest" >> "$MANIFEST_FILE"
-                fi
-            done
-        done
-        success "  agent-memory: copied"
-    fi
+    for agent in $AGENTS; do
+        mem_dir="${CLAUDE_DIR}/agent-memory/${agent}"
+        mkdir -p "$mem_dir"
+        dest="${mem_dir}/MEMORY.md"
+        if [ ! -f "$dest" ]; then
+            echo "# ${agent} Memory" > "$dest"
+        fi
+        echo "$dest" >> "$MANIFEST_FILE"
+    done
+    success "  agent-memory: generated"
     echo "$MANIFEST_FILE" >> "$MANIFEST_FILE"
     info "Wrote manifest ($(wc -l < "$MANIFEST_FILE" | tr -d ' ') files tracked)"
     cat > "${CLAUDE_DIR}/settings.json" << PROJ_EOF
@@ -211,18 +207,15 @@ for hook in $HOOKS; do
     fi
 done
 
-if [ -d "${SCRIPT_DIR}/agent-memory" ]; then
-    info "Installing 11 agent memory files..."
-    for mem_dir in "${SCRIPT_DIR}"/agent-memory/*/; do
-        mem_name=$(basename "$mem_dir")
-        mkdir -p "${CLAUDE_DIR}/agent-memory/${mem_name}"
-        for f in "${mem_dir}"*; do
-            [ -f "$f" ] || continue
-            cp "$f" "${CLAUDE_DIR}/agent-memory/${mem_name}/$(basename "$f")"
-        done
-        success "  ✓ ${mem_name}"
-    done
-fi
+info "Generating agent memory files..."
+for agent in $AGENTS; do
+    mem_dir="${CLAUDE_DIR}/agent-memory/${agent}"
+    mkdir -p "$mem_dir"
+    if [ ! -f "$mem_dir/MEMORY.md" ]; then
+        echo "# ${agent} Memory" > "$mem_dir/MEMORY.md"
+    fi
+    success "  ✓ ${agent}"
+done
 
 info "Configuring hooks in settings.json..."
 SETTINGS_FILE="${CLAUDE_DIR}/settings.json"
@@ -286,7 +279,7 @@ echo "  11 agents — steel, tungsten, quartz, mercury, graphene, carbon, prism,
 echo "  8 skills  — git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop"
 echo "  10 commands — ignite, loop, init-deep, refactor, start-work, handoff, halt, alloy, unalloy, status"
 echo "  11 hooks  — comment-checker, agent-reminder, skill-reminder, todo-enforcer, loop-stop, write-guard, session-notify, branch-guard, auto-install, typecheck, lint"
-echo "  11 memory — persistent agent memory files (one per agent)"
+echo "  11 memory — persistent agent memory files (generated per agent)"
 echo "  2 MCPs    — context7, grep_app (+ websearch if EXA_API_KEY is set)"
 echo ""
 info "Usage modes:"

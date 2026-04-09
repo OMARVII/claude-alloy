@@ -77,17 +77,17 @@ for f in "${SCRIPT_DIR}"/hooks/*.sh; do
 done
 info "Installed 11 hooks"
 
-for mem_dir in "${SCRIPT_DIR}"/agent-memory/*/; do
-    mem_name=$(basename "$mem_dir")
-    mkdir -p "${CLAUDE_DIR}/agent-memory/${mem_name}"
-    for f in "${mem_dir}"*; do
-        [ -f "$f" ] || continue
-        dest="${CLAUDE_DIR}/agent-memory/${mem_name}/$(basename "$f")"
-        cp "$f" "$dest"
-        echo "$dest" >> "$MANIFEST_FILE"
-    done
+for f in "${SCRIPT_DIR}"/agents/*.md; do
+    agent_name=$(basename "$f" .md)
+    mem_dir="${CLAUDE_DIR}/agent-memory/${agent_name}"
+    mkdir -p "$mem_dir"
+    dest="${mem_dir}/MEMORY.md"
+    if [ ! -f "$dest" ]; then
+        echo "# ${agent_name} Memory" > "$dest"
+    fi
+    echo "$dest" >> "$MANIFEST_FILE"
 done
-info "Installed 11 agent memory files"
+info "Generated 11 agent memory files"
 
 dest="${CLAUDE_DIR}/CLAUDE.md"
 cp "${SCRIPT_DIR}/CLAUDE.md" "$dest"

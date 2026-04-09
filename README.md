@@ -127,7 +127,7 @@ bash setup-global.sh
 ├── skills/               8 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop)
 ├── commands/             10 commands (/ignite, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status)
 ├── alloy-hooks/          11 hooks (all automatic, listed below)
-├── agent-memory/         11 persistent memory files — agents learn across sessions
+├── agent-memory/         11 memory files (generated at install — agents learn across sessions)
 ├── settings.json         hook config + env vars
 └── CLAUDE.md             injected context for all agents
 ```
