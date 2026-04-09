@@ -36,3 +36,4 @@ venv/
 
 # Backups created by install
 *.bak
+.claude/
