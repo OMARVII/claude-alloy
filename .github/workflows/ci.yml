@@ -26,6 +26,7 @@ jobs:
 
       - name: Smoke test — project install
         run: |
+          mkdir -p /tmp/test-project
           bash install.sh --project /tmp/test-project
 
           echo "Verifying installed structure..."

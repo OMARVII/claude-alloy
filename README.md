@@ -16,7 +16,8 @@
   <a href="#quick-start">Quick Start</a> &bull;
   <a href="#the-agents">Agents</a> &bull;
   <a href="#install-modes">Install</a> &bull;
-  <a href="#development-guide">Dev Guide</a>
+  <a href="#development-guide">Dev Guide</a> &bull;
+  <a href="#contributing">Contributing</a>
 </p>
 
 ---
@@ -32,6 +33,8 @@ alloy
 ```
 
 That's it. 11 agents, 11 hooks, 8 skills, 10 commands. Globally active. Open Claude in any directory and go.
+
+<!-- TODO: Add terminal demo GIF here before launch (e.g. asciinema or vhs recording of `alloy` → `ig implement auth` → agents firing) -->
 
 ```bash
 unalloy
@@ -137,7 +140,7 @@ bash setup-global.sh
 | **branch-guard** | Before Write/Edit | Blocks edits on main/master branches |
 | **comment-checker** | After Write/Edit | Warns about AI slop comments |
 | **typecheck** | After .ts/.tsx edits | Runs `tsc --noEmit`, reports errors |
-| **auto-install** | After package.json/requirements.txt | Installs dependencies (lifecycle scripts disabled for safety) |
+| **auto-install** | After package.json/requirements.txt/pyproject.toml | Installs dependencies (lifecycle scripts disabled for safety) |
 | **agent-reminder** | After 2 direct searches | Nudges toward mercury/graphene agents |
 | **lint** | After Write/Edit | Runs ESLint/Biome/Prettier, reports errors |
 | **skill-reminder** | After 8 direct tool calls | Nudges toward delegation |
@@ -189,11 +192,21 @@ Type **`ig`** (or `/ignite`) for maximum effort: 4+ agents fired in parallel, to
 | Method | Command | Who it's for |
 |---|---|---|
 | **Global toggle** | `alloy` / `unalloy` | Most users — instant, reversible |
-| **Plugin** | `/plugin install claude-alloy` | Marketplace users (pending approval) |
+| **Plugin** | `claude plugin add claude-alloy` | Marketplace users (coming soon) |
 | **Per-project** | `bash install.sh --project .` | Teams — committed to version control |
 | **Global command** | `bash setup-global.sh` then `/alloy-init` | One command per project |
 
 `alloy` merges with your existing Claude settings. Your custom permissions, model preferences, and plugins are preserved. `unalloy` restores them exactly.
+
+### Uninstall
+
+| What to remove | Command |
+|---|---|
+| Deactivate (keep files) | `unalloy` |
+| Remove aliases | `bash setup-aliases.sh --uninstall` |
+| Remove global command | `bash setup-global.sh --uninstall` |
+| Remove per-project install | `bash install.sh --uninstall` |
+| Remove everything | All of the above |
 
 ---
 
@@ -312,6 +325,26 @@ sudo dnf install jq    # Fedora
 
 ---
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add agents, skills, hooks, and submit PRs.
+
+Agents follow the material/metal naming convention — the name should reflect the agent's core property.
+
+---
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for the security policy, known considerations, and how to report vulnerabilities.
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.0.0**.
+
+---
+
 ## Inspiration
 
 Built on Claude Code. Inspired by the agent orchestration patterns pioneered by [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent).
@@ -322,4 +355,4 @@ The alloy concept: individual agents are metals — each with specific propertie
 
 ## License
 
-MIT
+[MIT](LICENSE)
