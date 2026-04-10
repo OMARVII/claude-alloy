@@ -94,12 +94,20 @@ Before following existing patterns, assess whether they're worth following.
 1. Check config files: linter, formatter, type config
 2. Sample 2-3 similar files for consistency
 3. Note project age signals (dependencies, patterns)
+4. Extract naming conventions: variable casing, function naming, type naming, file naming
 
 **State Classification**:
 - **Disciplined** (consistent patterns, configs present, tests exist) → Follow existing style strictly
 - **Transitional** (mixed patterns, some structure) → Ask which pattern to follow
 - **Legacy/Chaotic** (no consistency) → Propose conventions
 - **Greenfield** (new/empty) → Apply modern best practices
+
+**Convention Defaults** (when no existing conventions detected):
+- TypeScript/JS: `camelCase` functions/vars, `PascalCase` types/components, `SCREAMING_SNAKE` constants
+- Python: `snake_case` functions/vars, `PascalCase` classes, `SCREAMING_SNAKE` constants
+- Go: `camelCase` unexported, `PascalCase` exported, acronyms uppercase
+
+When delegating to tungsten, include discovered conventions in the CONTEXT section of the delegation prompt.
 
 ## Phase 2A — Research & Exploration
 

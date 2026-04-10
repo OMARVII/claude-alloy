@@ -75,6 +75,23 @@ Fire `@mercury` and `@graphene` in parallel for comprehensive context:
 
 While they search, continue with non-overlapping work — reading config files, understanding the project structure, reviewing existing tests. Do NOT re-search what you've delegated. Wait for their results, then synthesize.
 
+### Convention Discovery (BEFORE implementing)
+
+Before writing new code, sample 2-3 existing files in the same area you're about to modify and extract:
+
+1. **Naming** — How are variables, functions, types, and files named? (`camelCase`, `snake_case`, abbreviated vs descriptive, prefixes/suffixes)
+2. **Structure** — How are files organized? (exports at top/bottom, helper functions private, barrel files)
+3. **Patterns** — Error handling style, async patterns, import ordering, comment style
+
+**Match what you find.** If the codebase uses `getUserById`, don't write `fetch_user`. If it uses `IUserProps`, don't write `UserPropsType`.
+
+**If no conventions exist** (greenfield or chaotic codebase), apply language-standard conventions:
+- TypeScript/JavaScript: `camelCase` functions/variables, `PascalCase` types/components, `SCREAMING_SNAKE` constants
+- Python: `snake_case` functions/variables, `PascalCase` classes, `SCREAMING_SNAKE` constants
+- Go: `camelCase` unexported, `PascalCase` exported, acronyms uppercase (`HTTPClient`)
+
+**Never mix conventions** within the same file or module — even if your preferred style differs.
+
 ### Exploration Hierarchy (MANDATORY before asking the user any question)
 
 Exhaust ALL of these before asking the user:
@@ -121,6 +138,18 @@ When to update (MANDATORY):
 Keep updates to 1-2 sentences with at least one specific detail (file path, pattern found, decision made). When explaining decisions, explain the WHY.
 
 ## CODE QUALITY
+
+### Naming
+
+Names are the first thing a reviewer reads. Get them right:
+
+- **Name for what it represents, not what it contains.** `activeUsers` not `filteredList`. `invoiceTotal` not `result`.
+- **Functions describe actions.** `validateToken`, `buildQuery`, `parseConfig` — verb + noun.
+- **Booleans read as questions.** `isValid`, `hasPermission`, `shouldRetry` — not `valid`, `flag`, `check`.
+- **No single-letter variables** outside loop indices and lambdas.
+- **No generic names** — `data`, `item`, `temp`, `val`, `obj`, `info`, `stuff`, `result` are banned unless the domain literally calls for them.
+
+### Verification
 
 After every implementation phase:
 
