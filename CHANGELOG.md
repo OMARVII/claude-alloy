@@ -10,14 +10,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 - **3 new agents**: iridium (performance reviewer), cobalt (dependency expert), flint (test engineer)
-- **3 new hooks**: pre-compact (PreCompact), subagent-start (SubagentStart), subagent-stop (SubagentStop)
+- **6 new hooks**: pre-compact (PreCompact), subagent-start (SubagentStart), subagent-stop (SubagentStop), rate-limit-resume (StopFailure), session-start (SessionStart), session-end (SessionEnd)
+- **2 new skills**: wiki (project knowledge base), learn (pattern extraction)
+- **3 new commands**: /wiki-update, /notify-setup, /learn
+- **Wiki system**: auto-maintained project knowledge base (architecture, conventions, decisions)
+- **Rate limit auto-resume**: auto-resumes up to 3 times on rate limit, then stops
+- **Notification system**: desktop, Slack, and Discord webhook support via /notify-setup
+- **Learn/skillify**: extract reusable patterns from sessions into skill files
 - **API contract review** section added to gauge agent
-- Hook coverage expanded from 3 to 6 event types
+- Hook coverage expanded from 3 to 9 event types (added StopFailure, SessionStart, SessionEnd)
 
 ### Changed
 - Agent count: 11 → 14
-- Hook count: 11 → 14
+- Hook count: 11 → 17
+- Skill count: 8 → 10
+- Command count: 10 → 13
 - Memory files: 11 → 14
+- session-notify.sh now supports Slack and Discord webhooks
 
 ---
 

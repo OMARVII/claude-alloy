@@ -17,9 +17,9 @@ warn() { echo -e "${YELLOW}[ALLOY]${NC} $1"; }
 error() { echo -e "${RED}[ALLOY]${NC} $1"; }
 
 AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium iridium cobalt flint"
-SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop"
-COMMANDS="ignite loop init-deep refactor start-work handoff halt alloy unalloy status"
-HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh"
+SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop wiki learn"
+COMMANDS="ignite loop init-deep refactor start-work handoff halt alloy unalloy status wiki-update notify-setup learn"
+HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh"
 
 if [ "${1:-}" = "--uninstall" ]; then
     info "Uninstalling claude-alloy..."
@@ -101,6 +101,18 @@ if [ "${1:-}" = "--project" ]; then
         echo "$dest" >> "$MANIFEST_FILE"
     done
     success "  agent-memory: generated"
+    # Copy wiki templates (only if not already present)
+    WIKI_DIR="${CLAUDE_DIR}/wiki"
+    mkdir -p "$WIKI_DIR"
+    for wiki_file in "${SCRIPT_DIR}"/wiki/*.md; do
+        [ -f "$wiki_file" ] || continue
+        dest="${WIKI_DIR}/$(basename "$wiki_file")"
+        if [ ! -f "$dest" ]; then
+            cp "$wiki_file" "$dest"
+            echo "$dest" >> "$MANIFEST_FILE"
+            success "  wiki: $(basename "$wiki_file")"
+        fi
+    done
     echo "$MANIFEST_FILE" >> "$MANIFEST_FILE"
     info "Wrote manifest ($(wc -l < "$MANIFEST_FILE" | tr -d ' ') files tracked)"
     cat > "${CLAUDE_DIR}/settings.json" << PROJ_EOF
@@ -123,7 +135,10 @@ if [ "${1:-}" = "--project" ]; then
     ]}],
     "PreCompact": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/pre-compact.sh", "timeout": 10}]}],
     "SubagentStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-start.sh", "timeout": 5}]}],
-    "SubagentStop": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-stop.sh", "timeout": 5}]}]
+    "SubagentStop": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-stop.sh", "timeout": 5}]}],
+    "StopFailure": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/rate-limit-resume.sh", "timeout": 5}]}],
+    "SessionStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-start.sh", "timeout": 5}]}],
+    "SessionEnd": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-end.sh", "timeout": 5, "async": true}]}]
   }
 }
 PROJ_EOF
@@ -178,7 +193,7 @@ for agent in $AGENTS; do
     fi
 done
 
-info "Installing 8 skills..."
+info "Installing 10 skills..."
 for skill in $SKILLS; do
     if [ -f "${SCRIPT_DIR}/skills/${skill}/SKILL.md" ]; then
         mkdir -p "${CLAUDE_DIR}/skills/${skill}"
@@ -189,7 +204,7 @@ for skill in $SKILLS; do
     fi
 done
 
-info "Installing 10 commands..."
+info "Installing 13 commands..."
 for cmd in $COMMANDS; do
     if [ -f "${SCRIPT_DIR}/commands/${cmd}.md" ]; then
         cp "${SCRIPT_DIR}/commands/${cmd}.md" "${CLAUDE_DIR}/commands/${cmd}.md"
@@ -199,7 +214,7 @@ for cmd in $COMMANDS; do
     fi
 done
 
-info "Installing 14 hook scripts..."
+info "Installing 17 hook scripts..."
 for hook in $HOOKS; do
     if [ -f "${SCRIPT_DIR}/hooks/${hook}" ]; then
         cp "${SCRIPT_DIR}/hooks/${hook}" "${CLAUDE_DIR}/alloy-hooks/${hook}"
@@ -218,6 +233,20 @@ for agent in $AGENTS; do
         echo "# ${agent} Memory" > "$mem_dir/MEMORY.md"
     fi
     success "  ✓ ${agent}"
+done
+
+info "Copying wiki templates..."
+WIKI_DIR="${CLAUDE_DIR}/wiki"
+mkdir -p "$WIKI_DIR"
+for wiki_file in "${SCRIPT_DIR}"/wiki/*.md; do
+    [ -f "$wiki_file" ] || continue
+    dest="${WIKI_DIR}/$(basename "$wiki_file")"
+    if [ ! -f "$dest" ]; then
+        cp "$wiki_file" "$dest"
+        success "  ✓ $(basename "$wiki_file")"
+    else
+        warn "  ✓ $(basename "$wiki_file") (already exists, skipped)"
+    fi
 done
 
 info "Configuring hooks in settings.json..."
@@ -249,7 +278,10 @@ cat > "$SETTINGS_FILE" << SETTINGS_EOF
     ]}],
     "PreCompact": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/pre-compact.sh", "timeout": 10}]}],
     "SubagentStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-start.sh", "timeout": 5}]}],
-    "SubagentStop": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-stop.sh", "timeout": 5}]}]
+    "SubagentStop": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-stop.sh", "timeout": 5}]}],
+    "StopFailure": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/rate-limit-resume.sh", "timeout": 5}]}],
+    "SessionStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-start.sh", "timeout": 5}]}],
+    "SessionEnd": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-end.sh", "timeout": 5, "async": true}]}]
   }
 }
 SETTINGS_EOF
@@ -282,9 +314,9 @@ echo -e "${GREEN}╚════════════════════
 echo ""
 success "Installed:"
 echo "  14 agents — steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint"
-echo "  8 skills  — git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop"
-echo "  10 commands — ignite, loop, init-deep, refactor, start-work, handoff, halt, alloy, unalloy, status"
-echo "  14 hooks  — comment-checker, agent-reminder, skill-reminder, todo-enforcer, loop-stop, write-guard, session-notify, branch-guard, auto-install, typecheck, lint, pre-compact, subagent-start, subagent-stop"
+echo "  10 skills — git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, wiki, learn"
+echo "  13 commands — ignite, loop, init-deep, refactor, start-work, handoff, halt, alloy, unalloy, status, wiki-update, notify-setup, learn"
+echo "  17 hooks  — comment-checker, agent-reminder, skill-reminder, todo-enforcer, loop-stop, write-guard, session-notify, branch-guard, auto-install, typecheck, lint, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end"
 echo "  14 memory — persistent agent memory files (generated per agent)"
 echo "  2 MCPs    — context7, grep_app (+ websearch if EXA_API_KEY is set)"
 echo ""
@@ -296,6 +328,6 @@ echo ""
 info "Quick Start:"
 echo "  1. Start Claude Code: claude"
 echo "  2. Type: /ignite"
-echo "  3. All 14 agents + 14 hooks active."
+echo "  3. All 14 agents + 17 hooks active."
 echo ""
 warn "To uninstall: bash ${SCRIPT_DIR}/install.sh --uninstall"
