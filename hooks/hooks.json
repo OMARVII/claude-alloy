@@ -1,5 +1,5 @@
 {
-  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, typecheck, lint, auto-install, agent-reminder, skill-reminder, todo-enforcer, loop-stop, session-notify, pre-compact, subagent-start, subagent-stop",
+  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, typecheck, lint, auto-install, agent-reminder, skill-reminder, todo-enforcer, loop-stop, session-notify, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end",
   "hooks": {
     "PreToolUse": [
       {
@@ -135,6 +135,43 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/subagent-stop.sh",
             "timeout": 5,
             "statusMessage": "Verifying agent deliverables..."
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/rate-limit-resume.sh",
+            "timeout": 5,
+            "statusMessage": "Checking rate limit status..."
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
+            "timeout": 5,
+            "statusMessage": "Loading project wiki..."
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-end.sh",
+            "timeout": 5,
+            "async": true,
+            "statusMessage": "Checking session productivity..."
           }
         ]
       }

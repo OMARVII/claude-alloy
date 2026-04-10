@@ -32,7 +32,7 @@ This is what [Claude Code](https://docs.anthropic.com/en/docs/claude-code) looks
 alloy
 ```
 
-That's it. 14 agents, 14 hooks, 8 skills, 10 commands. Globally active. Open Claude in any directory and go.
+That's it. 14 agents, 17 hooks, 10 skills, 13 commands. Globally active. Open Claude in any directory and go.
 
 <!-- TODO: Add terminal demo GIF here before launch (e.g. asciinema or vhs recording of `alloy` → `ig implement auth` → agents firing) -->
 
@@ -127,9 +127,10 @@ bash setup-global.sh
 ```
 .claude/
 ├── agents/               14 agents (steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint)
-├── skills/               8 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop)
-├── commands/             10 commands (/ignite, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status)
-├── alloy-hooks/          14 hooks (all automatic, listed below)
+├── skills/               10 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, wiki, learn)
+├── commands/             13 commands (/ignite, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status, /wiki-update, /notify-setup, /learn)
+├── alloy-hooks/          17 hooks (all automatic, listed below)
+├── wiki/                 project wiki (architecture, conventions, decisions)
 ├── agent-memory/         14 memory files (generated at install — agents learn across sessions)
 ├── settings.json         hook config + env vars
 └── CLAUDE.md             injected context for all agents
@@ -153,6 +154,9 @@ bash setup-global.sh
 | **pre-compact** | Before compaction | Saves critical context before memory compaction |
 | **subagent-start** | On subagent start | Tracks agent activity and delegation |
 | **subagent-stop** | On subagent stop | Verifies agent deliverables and results |
+| **rate-limit-resume** | On stop failure | Auto-resumes on rate limit (up to 3x) |
+| **session-start** | On session start | Injects wiki context into session |
+| **session-end** | On session end | Nudges wiki update if session was productive |
 
 ### Commands
 
@@ -168,6 +172,9 @@ bash setup-global.sh
 | `/init-deep` | Generate hierarchical CLAUDE.md files |
 | `/start-work` | Execute a plan from carbon |
 | `/status` | Show loop state, pending todos, branch, recent activity |
+| `/wiki-update` | Update project wiki with session learnings |
+| `/notify-setup` | Configure desktop, Slack, and Discord notifications |
+| `/learn` | Extract reusable patterns from the current session into skills |
 
 ---
 
@@ -292,6 +299,9 @@ exit 0
 | `PreCompact` | Before memory compaction | No |
 | `SubagentStart` | When a subagent is spawned | No |
 | `SubagentStop` | When a subagent completes | No |
+| `StopFailure` | When session stops due to error | No |
+| `SessionStart` | When a session starts/resumes | No |
+| `SessionEnd` | When a session ends | No |
 
 ---
 

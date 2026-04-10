@@ -60,14 +60,14 @@ for skill_dir in "${SCRIPT_DIR}"/skills/*/; do
         echo "$dest" >> "$MANIFEST_FILE"
     done
 done
-info "Installed 8 skills"
+info "Installed 10 skills"
 
 for f in "${SCRIPT_DIR}"/commands/*.md; do
     dest="${CLAUDE_DIR}/commands/$(basename "$f")"
     cp "$f" "$dest"
     echo "$dest" >> "$MANIFEST_FILE"
 done
-info "Installed 10 commands"
+info "Installed 13 commands"
 
 for f in "${SCRIPT_DIR}"/hooks/*.sh; do
     dest="${CLAUDE_DIR}/alloy-hooks/$(basename "$f")"
@@ -75,7 +75,7 @@ for f in "${SCRIPT_DIR}"/hooks/*.sh; do
     chmod +x "$dest"
     echo "$dest" >> "$MANIFEST_FILE"
 done
-info "Installed 14 hooks"
+info "Installed 17 hooks"
 
 for f in "${SCRIPT_DIR}"/agents/*.md; do
     agent_name=$(basename "$f" .md)
@@ -150,6 +150,15 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
     ],
     "SubagentStop": [
       {"hooks": [{"type":"command","command":($hd + "/subagent-stop.sh"),"timeout":5,"statusMessage":"Verifying agent deliverables..."}]}
+    ],
+    "StopFailure": [
+      {"hooks": [{"type":"command","command":($hd + "/rate-limit-resume.sh"),"timeout":5,"statusMessage":"Checking rate limit status..."}]}
+    ],
+    "SessionStart": [
+      {"hooks": [{"type":"command","command":($hd + "/session-start.sh"),"timeout":5,"statusMessage":"Loading project wiki..."}]}
+    ],
+    "SessionEnd": [
+      {"hooks": [{"type":"command","command":($hd + "/session-end.sh"),"timeout":5,"async":true,"statusMessage":"Checking session productivity..."}]}
     ]
   }
 }')
@@ -164,7 +173,10 @@ if [ -f "$BACKUP_FILE" ]; then
       .hooks.Stop = [{"hooks": (($alloy.hooks.Stop[0].hooks) + ([($orig.hooks.Stop // [{}])[0].hooks // []] | flatten | map(select(.command // "" | test("alloy-hooks") | not))))}] |
       .hooks.PreCompact = $alloy.hooks.PreCompact |
       .hooks.SubagentStart = $alloy.hooks.SubagentStart |
-      .hooks.SubagentStop = $alloy.hooks.SubagentStop
+      .hooks.SubagentStop = $alloy.hooks.SubagentStop |
+      .hooks.StopFailure = $alloy.hooks.StopFailure |
+      .hooks.SessionStart = $alloy.hooks.SessionStart |
+      .hooks.SessionEnd = $alloy.hooks.SessionEnd
     ' "$BACKUP_FILE" <(echo "$ALLOY_SETTINGS") > "$SETTINGS_FILE"
     info "Merged settings with existing configuration"
 else

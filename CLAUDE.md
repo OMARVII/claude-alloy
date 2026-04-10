@@ -61,6 +61,8 @@ Fire mercury and graphene agents in parallel for any non-trivial research. They 
 | `/ai-slop-remover` | Remove AI code smells (obvious comments, over-defensive code, spaghetti nesting) |
 | `/tdd-workflow` | Test-driven development: red-green-refactor cycle enforcement |
 | `/verification-loop` | Full verify cycle: build → typecheck → lint → test → E2E |
+| `/wiki` | Update project wiki with architecture, conventions, decisions |
+| `/learn` | Extract reusable patterns from session into skill files |
 
 ## Commands Available
 
@@ -76,6 +78,9 @@ Fire mercury and graphene agents in parallel for any non-trivial research. They 
 | `/alloy` | Show all agents, skills, commands, hooks with examples |
 | `/unalloy` | Remove claude-alloy harness from current project |
 | `/status` | Show loop state, pending todos, branch, recent activity |
+| `/wiki-update` | Update project wiki with session learnings |
+| `/notify-setup` | Configure desktop, Slack, and Discord notifications |
+| `/learn` | Extract reusable patterns from session into skills |
 
 ## Keyword Triggers
 

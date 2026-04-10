@@ -31,7 +31,7 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 - Invoke **sentinel** after any code that touches auth, crypto, or user input
 - Invoke **titanium** at session start when continuing interrupted work
 
-## Skills (8)
+## Skills (10)
 
 | Skill | Invoke | Use For |
 |---|---|---|
@@ -43,8 +43,10 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | **ai-slop-remover** | `/ai-slop-remover` | Remove AI-generated code smells (comments, nesting, naming) |
 | **tdd-workflow** | `/tdd-workflow` | Test-driven development: red-green-refactor cycle enforcement |
 | **verification-loop** | `/verification-loop` | Full verify cycle: build → typecheck → lint → test → E2E |
+| **wiki** | `/wiki` | Update project wiki (architecture, conventions, decisions) |
+| **learn** | `/learn` | Extract reusable patterns from session into skill files |
 
-## Commands (10)
+## Commands (13)
 
 | Command | Invoke | What It Does |
 |---|---|---|
@@ -58,8 +60,11 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | **status** | `/status` | Show loop state, pending todos, branch, recent activity |
 | **alloy** | `/alloy` | This guide |
 | **unalloy** | `/unalloy` | Remove claude-alloy harness from current project |
+| **wiki-update** | `/wiki-update` | Update project wiki with session learnings |
+| **notify-setup** | `/notify-setup` | Configure desktop, Slack, and Discord notifications |
+| **learn** | `/learn` | Extract reusable patterns from session into skills |
 
-## Hooks (14, automatic)
+## Hooks (17, automatic)
 
 | Hook | When | What |
 |---|---|---|
@@ -77,6 +82,9 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | **pre-compact** | Before compaction | Saves critical context before memory compaction |
 | **subagent-start** | On subagent start | Tracks agent activity and delegation |
 | **subagent-stop** | On subagent stop | Verifies agent deliverables and results |
+| **rate-limit-resume** | On stop failure | Auto-resumes on rate limit (up to 3x) |
+| **session-start** | On session start | Injects wiki context into session |
+| **session-end** | On session end | Nudges wiki update if session was productive |
 
 ## Quick Examples
 
