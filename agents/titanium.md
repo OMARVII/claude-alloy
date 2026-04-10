@@ -47,7 +47,7 @@ Someone (usually steel) invokes you when:
 # Read all agent memory files for recent entries
 ls .claude/agent-memory/*/MEMORY.md
 ```
-- Read ALL 11 memory files
+- Read ALL 14 memory files
 - Look for entries from the last 24-48 hours
 - Extract: what was learned, what patterns were found, what the user prefers
 

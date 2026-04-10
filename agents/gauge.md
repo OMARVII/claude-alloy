@@ -99,6 +99,17 @@ For each acceptance criterion:
 
 Flag only issues that would cause a developer to stop working and wait. Not issues that would cause them to make a suboptimal choice.
 
+### 5. API Contract Review (When Reviewing API Changes)
+
+If the code changes touch API endpoints, also check:
+- Breaking changes: removed fields, changed types, renamed endpoints?
+- Missing versioning: is the API versioned? Are breaking changes in a new version?
+- Error format consistency: do all endpoints return errors in the same shape?
+- Missing pagination: list endpoints returning unbounded results?
+- Backward compatibility: can existing clients still call the updated endpoint?
+
+This is a blocking check — a breaking API change without versioning is a REJECT.
+
 ## ANTI-PATTERNS
 
 These are NOT blockers. Do not flag them:

@@ -203,6 +203,9 @@ User → steel ──────├─ RESEARCH: mercury ×N + graphene ×N (pa
 | **CONSULT** | @"quartz (agent)" | After 2+ failed attempts, or before irreversible architecture decisions. |
 | **VISUAL** | @"spectrum (agent)" | Image, PDF, diagram, screenshot analysis. |
 | **RECOVER** | @"titanium (agent)" | Session start when continuing interrupted work. |
+| **PERFORMANCE** | @"iridium (agent)" | After implementation, when code touches hot paths, data processing, or database queries. |
+| **DEPENDENCY** | @"cobalt (agent)" | Before merging, or when adding/updating dependencies. Run periodically on full project. |
+| **TESTING** | @"flint (agent)" | After implementation, to assess test coverage and quality. Before merging test-heavy PRs. |
 
 ### Delegation Prompt Structure (MANDATORY — ALL 6 sections):
 ```

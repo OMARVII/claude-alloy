@@ -16,7 +16,7 @@ success() { echo -e "${GREEN}[ALLOY]${NC} $1"; }
 warn() { echo -e "${YELLOW}[ALLOY]${NC} $1"; }
 error() { echo -e "${RED}[ALLOY]${NC} $1"; }
 
-AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium"
+AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium iridium cobalt flint"
 SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop"
 COMMANDS="ignite loop init-deep refactor start-work handoff halt alloy unalloy status"
 HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh"
