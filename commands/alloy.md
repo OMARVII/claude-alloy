@@ -4,7 +4,7 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 
 # claude-alloy — Usage Guide
 
-## Agents (11)
+## Agents (14)
 
 | Agent | Model | Invoke | Use For |
 |---|---|---|---|
@@ -19,6 +19,9 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | **spectrum** | sonnet | @"spectrum (agent)" | Analyzes images, PDFs, diagrams, screenshots. |
 | **sentinel** | opus | @"sentinel (agent)" | Security review. CWE Top 25, secrets, injection, auth. Read-only. |
 | **titanium** | sonnet | @"titanium (agent)" | Context recovery. Rebuilds state from previous sessions. |
+| **iridium** | sonnet | @"iridium (agent)" | Performance review. Finds O(n²), memory leaks, N+1 queries. |
+| **cobalt** | sonnet | @"cobalt (agent)" | Dependency expert. CVEs, outdated packages, supply chain risks. |
+| **flint** | sonnet | @"flint (agent)" | Test engineer. Coverage gaps, flaky tests, missing edge cases. |
 
 ### Agent Tips
 - Fire **mercury** + **graphene** in parallel for research (they're cheap)
@@ -56,7 +59,7 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | **alloy** | `/alloy` | This guide |
 | **unalloy** | `/unalloy` | Remove claude-alloy harness from current project |
 
-## Hooks (11, automatic)
+## Hooks (14, automatic)
 
 | Hook | When | What |
 |---|---|---|
@@ -71,6 +74,9 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | **todo-enforcer** | Before stopping | Blocks exit if todos are incomplete |
 | **loop** | Before stopping | Keeps you working if loop is active |
 | **session-notify** | On stop | macOS/Linux desktop notification when session ends |
+| **pre-compact** | Before compaction | Saves critical context before memory compaction |
+| **subagent-start** | On subagent start | Tracks agent activity and delegation |
+| **subagent-stop** | On subagent stop | Verifies agent deliverables and results |
 
 ## Quick Examples
 
@@ -134,7 +140,7 @@ unalloy     # Back to vanilla Claude
 | Tier | Model | Cost | Used By |
 |---|---|---|---|
 | High | opus | $$$ | steel, tungsten, quartz, sentinel |
-| Medium | sonnet | $$ | carbon, gauge, graphene, prism, spectrum, titanium |
+| Medium | sonnet | $$ | carbon, gauge, graphene, prism, spectrum, titanium, iridium, cobalt, flint |
 | Low | haiku | $ | mercury |
 
 **Tip:** mercury (haiku) is nearly free. Fire 3-5 in parallel without worry.

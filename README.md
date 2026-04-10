@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.0.0"><img src="https://img.shields.io/badge/version-1.0.0-green.svg" alt="Version 1.0.0"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.1.0"><img src="https://img.shields.io/badge/version-1.1.0-green.svg" alt="Version 1.1.0"></a>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 
 ---
 
-Eleven agents. Named after what they're made of.
+Fourteen agents. Named after what they're made of.
 
 Steel holds the structure. Tungsten doesn't melt under pressure. Mercury moves fast. Graphene conducts everything.
 
@@ -32,7 +32,7 @@ This is what [Claude Code](https://docs.anthropic.com/en/docs/claude-code) looks
 alloy
 ```
 
-That's it. 11 agents, 11 hooks, 8 skills, 10 commands. Globally active. Open Claude in any directory and go.
+That's it. 14 agents, 14 hooks, 8 skills, 10 commands. Globally active. Open Claude in any directory and go.
 
 <!-- TODO: Add terminal demo GIF here before launch (e.g. asciinema or vhs recording of `alloy` → `ig implement auth` → agents firing) -->
 
@@ -59,6 +59,9 @@ Back to vanilla Claude. Your original settings restored exactly.
 | **mercury** | haiku | Fast codebase search. Cheap to fire. | Quicksilver — everywhere at once. |
 | **sentinel** | opus | Security reviewer. CWE Top 25, secrets, injection. Read-only. | The watchman. Never sleeps. |
 | **titanium** | sonnet | Context recovery. Rebuilds state from previous sessions. | Highest strength-to-weight ratio. Lightweight but recovers everything. |
+| **iridium** | sonnet | Performance reviewer. Finds O(n²), memory leaks, N+1 queries. | Densest natural element. Catches the heaviest problems. |
+| **cobalt** | sonnet | Dependency expert. CVEs, outdated packages, supply chain risks. | Essential trace element. Small but critical to the whole. |
+| **flint** | sonnet | Test engineer. Coverage gaps, flaky tests, missing edge cases. | Strikes sparks. Finds what breaks. |
 
 **Model tiering is intentional.** Opus handles orchestration and judgment. Sonnet handles research and analysis. Haiku handles grep. You pay for thinking, not searching.
 
@@ -90,7 +93,7 @@ source ~/.zshrc  # or ~/.bashrc
 Then, anywhere:
 
 ```bash
-alloy     # 11 agents active globally
+alloy     # 14 agents active globally
 unalloy      # back to vanilla Claude
 ```
 
@@ -123,11 +126,11 @@ bash setup-global.sh
 
 ```
 .claude/
-├── agents/               11 agents (steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium)
+├── agents/               14 agents (steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint)
 ├── skills/               8 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop)
 ├── commands/             10 commands (/ignite, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status)
-├── alloy-hooks/          11 hooks (all automatic, listed below)
-├── agent-memory/         11 memory files (generated at install — agents learn across sessions)
+├── alloy-hooks/          14 hooks (all automatic, listed below)
+├── agent-memory/         14 memory files (generated at install — agents learn across sessions)
 ├── settings.json         hook config + env vars
 └── CLAUDE.md             injected context for all agents
 ```
@@ -147,6 +150,9 @@ bash setup-global.sh
 | **todo-enforcer** | Before stopping | Reminds about incomplete todos (blocks once, then allows) |
 | **loop-stop** | Before stopping | Keeps working if `/loop` is active |
 | **session-notify** | On stop | Desktop notification when session ends |
+| **pre-compact** | Before compaction | Saves critical context before memory compaction |
+| **subagent-start** | On subagent start | Tracks agent activity and delegation |
+| **subagent-stop** | On subagent stop | Verifies agent deliverables and results |
 
 ### Commands
 
@@ -283,6 +289,9 @@ exit 0
 | `PreToolUse` | Before tool execution | Yes |
 | `PostToolUse` | After tool execution | No |
 | `Stop` | Before session stops | Yes |
+| `PreCompact` | Before memory compaction | No |
+| `SubagentStart` | When a subagent is spawned | No |
+| `SubagentStop` | When a subagent completes | No |
 
 ---
 
@@ -319,7 +328,7 @@ sudo dnf install jq    # Fedora
 | Claude-only models | Opus/Sonnet/Haiku tiering. One provider, no API key juggling. |
 | Per-project install | Each project opts in. Nothing polluted globally (unless you want it with `alloy`). |
 | Shell hooks | Claude Code hooks are external processes. Shell is universal, zero dependencies except jq. |
-| 11 agents, not 30+ | Curated over comprehensive. Every agent earns its slot. No bloat. |
+| 14 agents, not 30+ | Curated over comprehensive. Every agent earns its slot. No bloat. |
 | Block-once todo enforcer | Reminds the agent once, then lets you stop. Smart, not annoying. |
 | Agent memory files | Agents learn across sessions. Preferences, patterns, edge cases persist. |
 
@@ -341,7 +350,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.0.0**.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.1.0**.
 
 ---
 

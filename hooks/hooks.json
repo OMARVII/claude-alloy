@@ -1,5 +1,5 @@
 {
-  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, typecheck, lint, auto-install, agent-reminder, skill-reminder, todo-enforcer, loop-stop, session-notify",
+  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, typecheck, lint, auto-install, agent-reminder, skill-reminder, todo-enforcer, loop-stop, session-notify, pre-compact, subagent-start, subagent-stop",
   "hooks": {
     "PreToolUse": [
       {
@@ -99,6 +99,42 @@
             "timeout": 5,
             "async": true,
             "statusMessage": "Session complete!"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-compact.sh",
+            "timeout": 10,
+            "statusMessage": "Saving context before compaction..."
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/subagent-start.sh",
+            "timeout": 5,
+            "statusMessage": "Tracking agent activity..."
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/subagent-stop.sh",
+            "timeout": 5,
+            "statusMessage": "Verifying agent deliverables..."
           }
         ]
       }

@@ -43,10 +43,10 @@ jobs:
           COMMAND_COUNT=$(ls /tmp/test-project/.claude/commands/*.md 2>/dev/null | wc -l)
           HOOK_COUNT=$(ls /tmp/test-project/.claude/alloy-hooks/*.sh 2>/dev/null | wc -l)
 
-          [ "$AGENT_COUNT" -eq 11 ] || { echo "Expected 11 agents, got $AGENT_COUNT"; exit 1; }
+          [ "$AGENT_COUNT" -eq 14 ] || { echo "Expected 14 agents, got $AGENT_COUNT"; exit 1; }
           [ "$SKILL_COUNT" -eq 8 ] || { echo "Expected 8 skills, got $SKILL_COUNT"; exit 1; }
           [ "$COMMAND_COUNT" -eq 10 ] || { echo "Expected 10 commands, got $COMMAND_COUNT"; exit 1; }
-          [ "$HOOK_COUNT" -eq 11 ] || { echo "Expected 11 hooks, got $HOOK_COUNT"; exit 1; }
+          [ "$HOOK_COUNT" -eq 14 ] || { echo "Expected 14 hooks, got $HOOK_COUNT"; exit 1; }
 
           echo "Verifying settings.json is valid JSON..."
           jq . /tmp/test-project/.claude/settings.json > /dev/null

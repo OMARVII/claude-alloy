@@ -16,10 +16,10 @@ success() { echo -e "${GREEN}[ALLOY]${NC} $1"; }
 warn() { echo -e "${YELLOW}[ALLOY]${NC} $1"; }
 error() { echo -e "${RED}[ALLOY]${NC} $1"; }
 
-AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium"
+AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium iridium cobalt flint"
 SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop"
 COMMANDS="ignite loop init-deep refactor start-work handoff halt alloy unalloy status"
-HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh"
+HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh"
 
 if [ "${1:-}" = "--uninstall" ]; then
     info "Uninstalling claude-alloy..."
@@ -120,7 +120,10 @@ if [ "${1:-}" = "--project" ]; then
       {"type": "command", "command": "${HOOK_PREFIX}/todo-enforcer.sh", "timeout": 5},
       {"type": "command", "command": "${HOOK_PREFIX}/loop-stop.sh", "timeout": 5},
       {"type": "command", "command": "${HOOK_PREFIX}/session-notify.sh", "timeout": 5, "async": true}
-    ]}]
+    ]}],
+    "PreCompact": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/pre-compact.sh", "timeout": 10}]}],
+    "SubagentStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-start.sh", "timeout": 5}]}],
+    "SubagentStop": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-stop.sh", "timeout": 5}]}]
   }
 }
 PROJ_EOF
@@ -165,7 +168,7 @@ if [ "$NEEDS_BACKUP" = true ]; then
     cp -r "${CLAUDE_DIR}/commands/" "${BACKUP_DIR}/commands/" 2>/dev/null || true
 fi
 
-info "Installing 11 agents..."
+info "Installing 14 agents..."
 for agent in $AGENTS; do
     if [ -f "${SCRIPT_DIR}/agents/${agent}.md" ]; then
         cp "${SCRIPT_DIR}/agents/${agent}.md" "${CLAUDE_DIR}/agents/${agent}.md"
@@ -196,7 +199,7 @@ for cmd in $COMMANDS; do
     fi
 done
 
-info "Installing 11 hook scripts..."
+info "Installing 14 hook scripts..."
 for hook in $HOOKS; do
     if [ -f "${SCRIPT_DIR}/hooks/${hook}" ]; then
         cp "${SCRIPT_DIR}/hooks/${hook}" "${CLAUDE_DIR}/alloy-hooks/${hook}"
@@ -243,7 +246,10 @@ cat > "$SETTINGS_FILE" << SETTINGS_EOF
       {"type": "command", "command": "${HOOK_PREFIX}/todo-enforcer.sh", "timeout": 5},
       {"type": "command", "command": "${HOOK_PREFIX}/loop-stop.sh", "timeout": 5},
       {"type": "command", "command": "${HOOK_PREFIX}/session-notify.sh", "timeout": 5, "async": true}
-    ]}]
+    ]}],
+    "PreCompact": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/pre-compact.sh", "timeout": 10}]}],
+    "SubagentStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-start.sh", "timeout": 5}]}],
+    "SubagentStop": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-stop.sh", "timeout": 5}]}]
   }
 }
 SETTINGS_EOF
@@ -275,11 +281,11 @@ echo -e "${GREEN}║       Installation Complete!               ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════╝${NC}"
 echo ""
 success "Installed:"
-echo "  11 agents — steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium"
+echo "  14 agents — steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint"
 echo "  8 skills  — git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop"
 echo "  10 commands — ignite, loop, init-deep, refactor, start-work, handoff, halt, alloy, unalloy, status"
-echo "  11 hooks  — comment-checker, agent-reminder, skill-reminder, todo-enforcer, loop-stop, write-guard, session-notify, branch-guard, auto-install, typecheck, lint"
-echo "  11 memory — persistent agent memory files (generated per agent)"
+echo "  14 hooks  — comment-checker, agent-reminder, skill-reminder, todo-enforcer, loop-stop, write-guard, session-notify, branch-guard, auto-install, typecheck, lint, pre-compact, subagent-start, subagent-stop"
+echo "  14 memory — persistent agent memory files (generated per agent)"
 echo "  2 MCPs    — context7, grep_app (+ websearch if EXA_API_KEY is set)"
 echo ""
 info "Usage modes:"
@@ -290,6 +296,6 @@ echo ""
 info "Quick Start:"
 echo "  1. Start Claude Code: claude"
 echo "  2. Type: /ignite"
-echo "  3. All 11 agents + 11 hooks active."
+echo "  3. All 14 agents + 14 hooks active."
 echo ""
 warn "To uninstall: bash ${SCRIPT_DIR}/install.sh --uninstall"
