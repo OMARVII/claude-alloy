@@ -49,7 +49,7 @@ for f in "${SCRIPT_DIR}"/agents/*.md; do
     cp "$f" "$dest"
     echo "$dest" >> "$MANIFEST_FILE"
 done
-info "Installed 11 agents"
+info "Installed 14 agents"
 
 for skill_dir in "${SCRIPT_DIR}"/skills/*/; do
     skill_name=$(basename "$skill_dir")
@@ -75,7 +75,7 @@ for f in "${SCRIPT_DIR}"/hooks/*.sh; do
     chmod +x "$dest"
     echo "$dest" >> "$MANIFEST_FILE"
 done
-info "Installed 11 hooks"
+info "Installed 14 hooks"
 
 for f in "${SCRIPT_DIR}"/agents/*.md; do
     agent_name=$(basename "$f" .md)
@@ -87,7 +87,7 @@ for f in "${SCRIPT_DIR}"/agents/*.md; do
     fi
     echo "$dest" >> "$MANIFEST_FILE"
 done
-info "Generated 11 agent memory files"
+info "Generated 14 agent memory files"
 
 dest="${CLAUDE_DIR}/CLAUDE.md"
 cp "${SCRIPT_DIR}/CLAUDE.md" "$dest"
@@ -141,6 +141,15 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
           {"type":"command","command":($hd + "/session-notify.sh"),"timeout":5,"async":true,"statusMessage":"Session complete!"}
         ]
       }
+    ],
+    "PreCompact": [
+      {"hooks": [{"type":"command","command":($hd + "/pre-compact.sh"),"timeout":10,"statusMessage":"Saving context before compaction..."}]}
+    ],
+    "SubagentStart": [
+      {"hooks": [{"type":"command","command":($hd + "/subagent-start.sh"),"timeout":5,"statusMessage":"Tracking agent activity..."}]}
+    ],
+    "SubagentStop": [
+      {"hooks": [{"type":"command","command":($hd + "/subagent-stop.sh"),"timeout":5,"statusMessage":"Verifying agent deliverables..."}]}
     ]
   }
 }')
@@ -152,7 +161,10 @@ if [ -f "$BACKUP_FILE" ]; then
       .env = (($orig.env // {}) * $alloy.env) |
       .hooks.PreToolUse = ($alloy.hooks.PreToolUse) + ([($orig.hooks.PreToolUse // [])[]] | map(select((.hooks // [{}])[0].command // "" | test("alloy-hooks") | not))) |
       .hooks.PostToolUse = ($alloy.hooks.PostToolUse) + ([($orig.hooks.PostToolUse // [])[]] | map(select((.hooks // [{}])[0].command // "" | test("alloy-hooks") | not))) |
-      .hooks.Stop = [{"hooks": (($alloy.hooks.Stop[0].hooks) + ([($orig.hooks.Stop // [{}])[0].hooks // []] | flatten | map(select(.command // "" | test("alloy-hooks") | not))))}]
+      .hooks.Stop = [{"hooks": (($alloy.hooks.Stop[0].hooks) + ([($orig.hooks.Stop // [{}])[0].hooks // []] | flatten | map(select(.command // "" | test("alloy-hooks") | not))))}] |
+      .hooks.PreCompact = $alloy.hooks.PreCompact |
+      .hooks.SubagentStart = $alloy.hooks.SubagentStart |
+      .hooks.SubagentStop = $alloy.hooks.SubagentStop
     ' "$BACKUP_FILE" <(echo "$ALLOY_SETTINGS") > "$SETTINGS_FILE"
     info "Merged settings with existing configuration"
 else
