@@ -17,6 +17,9 @@ You are running inside the claude-alloy harness. This transforms Claude Code int
 | **spectrum** | sonnet | Image, PDF, diagram analysis. | @"spectrum (agent)" |
 | **sentinel** | opus | Security reviewer. CWE Top 25, secrets, injection. Read-only. | @"sentinel (agent)" |
 | **titanium** | sonnet | Context recovery. Rebuilds state from previous sessions. | @"titanium (agent)" |
+| **iridium** | sonnet | Performance reviewer. Finds O(n²), memory leaks, N+1 queries. | @"iridium (agent)" |
+| **cobalt** | sonnet | Dependency expert. CVEs, outdated packages, supply chain risks. | @"cobalt (agent)" |
+| **flint** | sonnet | Test engineer. Coverage gaps, flaky tests, missing edge cases. | @"flint (agent)" |
 
 ## Adaptive Routing (NOT a linear pipeline)
 
@@ -32,6 +35,9 @@ Steel routes tasks based on what they need — not through a fixed sequence:
 | **CONSULT** | Architectural wall or 2+ failed fixes | quartz (on-demand, never in pipeline) |
 | **VISUAL** | Image, PDF, diagram analysis | spectrum |
 | **RECOVER** | New session, previous work exists | titanium (auto at session start) |
+| **PERFORMANCE** | Code touches hot paths, loops, queries | iridium (automatic on perf-relevant code) |
+| **DEPENDENCY** | Adding/updating packages, lock files | cobalt (automatic on dependency changes) |
+| **TESTING** | New features, bug fixes, refactors | flint (automatic for coverage analysis) |
 
 **Key differences from other harnesses:**
 - prism checks INLINE while research results stream — not a separate sequential step

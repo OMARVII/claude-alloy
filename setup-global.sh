@@ -35,7 +35,7 @@ info "Copied installer to ${CLAUDE_DIR}/alloy-install.sh"
 
 cat > "${CLAUDE_DIR}/commands/alloy-init.md" << INITMAX_EOF
 ---
-description: "Install claude-alloy harness into the current project. Adds 11 agents, 8 skills, 10 commands, 11 hooks, and agent memory."
+description: "Install claude-alloy harness into the current project. Adds 14 agents, 8 skills, 10 commands, 14 hooks, and agent memory."
 ---
 
 # /alloy-init — Install claude-alloy Into This Project
@@ -47,11 +47,11 @@ bash ${CLAUDE_DIR}/alloy-install.sh --project .
 \`\`\`
 
 After installation, you'll have:
-- **11 agents** — steel (opus), tungsten (opus), quartz (opus), mercury (haiku), graphene (sonnet), carbon (sonnet), prism (sonnet), gauge (sonnet), spectrum (sonnet), sentinel (opus), titanium (sonnet)
+- **14 agents** — steel (opus), tungsten (opus), quartz (opus), mercury (haiku), graphene (sonnet), carbon (sonnet), prism (sonnet), gauge (sonnet), spectrum (sonnet), sentinel (opus), titanium (sonnet), iridium (sonnet), cobalt (sonnet), flint (sonnet)
 - **8 skills** — git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop
 - **10 commands** — /ignite, /loop, /init-deep, /refactor, /start-work, /handoff, /halt, /alloy, /unalloy, /status
-- **11 hooks** — intent detection, branch protection, write guard, comment checker, typecheck, auto-install, agent & skill reminders, todo enforcer, loop, session notify
-- **11 agent memory files** — persistent cross-session learning per agent
+- **14 hooks** — intent detection, branch protection, write guard, comment checker, typecheck, auto-install, agent & skill reminders, todo enforcer, loop, session notify, pre-compact, subagent-start, subagent-stop
+- **14 agent memory files** — persistent cross-session learning per agent
 - **Environment tuning** — 7min bash timeout
 
 **After install, type \`/ignite\` to activate maximum effort mode.**
@@ -70,7 +70,7 @@ echo "  2. Start Claude Code:  claude"
 echo "  3. Type:  /alloy-init"
 echo "  4. Claude runs the installer for that project"
 echo "  5. Type:  /ignite"
-echo "  6. All 11 agents + 11 hooks active"
+echo "  6. All 14 agents + 14 hooks active"
 echo ""
 info "Installer copy: ${CLAUDE_DIR}/alloy-install.sh"
 info "Global command: ${CLAUDE_DIR}/commands/alloy-init.md"

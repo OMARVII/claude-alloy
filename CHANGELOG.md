@@ -6,6 +6,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.1.0] — 2026-04-10
+
+### Added
+- **3 new agents**: iridium (performance reviewer), cobalt (dependency expert), flint (test engineer)
+- **3 new hooks**: pre-compact (PreCompact), subagent-start (SubagentStart), subagent-stop (SubagentStop)
+- **API contract review** section added to gauge agent
+- Hook coverage expanded from 3 to 6 event types
+
+### Changed
+- Agent count: 11 → 14
+- Hook count: 11 → 14
+- Memory files: 11 → 14
+
+---
+
 ## [1.0.0] — 2026-04-04
 
 ### Initial Release
