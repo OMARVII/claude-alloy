@@ -67,7 +67,7 @@ for f in "${SCRIPT_DIR}"/commands/*.md; do
     cp "$f" "$dest"
     echo "$dest" >> "$MANIFEST_FILE"
 done
-info "Installed 13 commands"
+info "Installed 14 commands"
 
 for f in "${SCRIPT_DIR}"/hooks/*.sh; do
     dest="${CLAUDE_DIR}/alloy-hooks/$(basename "$f")"

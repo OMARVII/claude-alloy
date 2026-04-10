@@ -18,7 +18,7 @@ error() { echo -e "${RED}[ALLOY]${NC} $1"; }
 
 AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium iridium cobalt flint"
 SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop wiki learn"
-COMMANDS="ignite loop init-deep refactor start-work handoff halt alloy unalloy status wiki-update notify-setup learn"
+COMMANDS="ignite ig loop init-deep refactor start-work handoff halt alloy unalloy status wiki-update notify-setup learn"
 HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh"
 
 if [ "${1:-}" = "--uninstall" ]; then
@@ -204,7 +204,7 @@ for skill in $SKILLS; do
     fi
 done
 
-info "Installing 13 commands..."
+info "Installing 14 commands..."
 for cmd in $COMMANDS; do
     if [ -f "${SCRIPT_DIR}/commands/${cmd}.md" ]; then
         cp "${SCRIPT_DIR}/commands/${cmd}.md" "${CLAUDE_DIR}/commands/${cmd}.md"
@@ -315,7 +315,7 @@ echo ""
 success "Installed:"
 echo "  14 agents — steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint"
 echo "  10 skills — git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, wiki, learn"
-echo "  13 commands — ignite, loop, init-deep, refactor, start-work, handoff, halt, alloy, unalloy, status, wiki-update, notify-setup, learn"
+echo "  14 commands — ignite, ig, loop, init-deep, refactor, start-work, handoff, halt, alloy, unalloy, status, wiki-update, notify-setup, learn"
 echo "  17 hooks  — comment-checker, agent-reminder, skill-reminder, todo-enforcer, loop-stop, write-guard, session-notify, branch-guard, auto-install, typecheck, lint, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end"
 echo "  14 memory — persistent agent memory files (generated per agent)"
 echo "  2 MCPs    — context7, grep_app (+ websearch if EXA_API_KEY is set)"

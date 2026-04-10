@@ -46,11 +46,11 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | **wiki** | `/wiki` | Update project wiki (architecture, conventions, decisions) |
 | **learn** | `/learn` | Extract reusable patterns from session into skill files |
 
-## Commands (13)
+## Commands (14)
 
 | Command | Invoke | What It Does |
 |---|---|---|
-| **ignite** | `/ignite` | Max-effort mode. All agents engaged. No stopping. |
+| **ignite** | `/ignite` or `/ig` | Max-effort mode. All agents engaged. No stopping. |
 | **loop** | `/loop <task>` | Autonomous loop until task is 100% done |
 | **init-deep** | `/init-deep` | Generate CLAUDE.md files throughout project |
 | **refactor** | `/refactor <target>` | Safe refactoring with diagnostics verification |

@@ -10,7 +10,7 @@
       "name": "claude-alloy",
       "source": "./",
       "version": "1.1.0",
-      "description": "A mixture stronger than its parts. 14 agents, 10 skills, 13 commands, 17 hooks. Multi-agent orchestration for Claude Code.",
+      "description": "A mixture stronger than its parts. 14 agents, 10 skills, 14 commands, 17 hooks. Multi-agent orchestration for Claude Code.",
       "keywords": ["agents", "orchestration", "multi-agent", "harness", "alloy"]
     }
   ]

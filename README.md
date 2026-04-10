@@ -32,7 +32,7 @@ This is what [Claude Code](https://docs.anthropic.com/en/docs/claude-code) looks
 alloy
 ```
 
-That's it. 14 agents, 17 hooks, 10 skills, 13 commands. Globally active. Open Claude in any directory and go.
+That's it. 14 agents, 17 hooks, 10 skills, 14 commands. Globally active. Open Claude in any directory and go.
 
 <!-- TODO: Add terminal demo GIF here before launch (e.g. asciinema or vhs recording of `alloy` → `ig implement auth` → agents firing) -->
 
@@ -128,7 +128,7 @@ bash setup-global.sh
 .claude/
 ├── agents/               14 agents (steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint)
 ├── skills/               10 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, wiki, learn)
-├── commands/             13 commands (/ignite, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status, /wiki-update, /notify-setup, /learn)
+├── commands/             14 commands (/ignite, /ig, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status, /wiki-update, /notify-setup, /learn)
 ├── alloy-hooks/          17 hooks (all automatic, listed below)
 ├── wiki/                 project wiki (architecture, conventions, decisions)
 ├── agent-memory/         14 memory files (generated at install — agents learn across sessions)

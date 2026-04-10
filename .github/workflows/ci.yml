@@ -45,7 +45,7 @@ jobs:
 
           [ "$AGENT_COUNT" -eq 14 ] || { echo "Expected 14 agents, got $AGENT_COUNT"; exit 1; }
           [ "$SKILL_COUNT" -eq 10 ] || { echo "Expected 10 skills, got $SKILL_COUNT"; exit 1; }
-          [ "$COMMAND_COUNT" -eq 13 ] || { echo "Expected 13 commands, got $COMMAND_COUNT"; exit 1; }
+          [ "$COMMAND_COUNT" -eq 14 ] || { echo "Expected 14 commands, got $COMMAND_COUNT"; exit 1; }
           [ "$HOOK_COUNT" -eq 17 ] || { echo "Expected 17 hooks, got $HOOK_COUNT"; exit 1; }
 
           echo "Verifying settings.json is valid JSON..."
