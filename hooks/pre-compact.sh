@@ -19,7 +19,7 @@ if command -v jq &>/dev/null; then
     SOURCE=$(echo "$INPUT" | jq -r '.compaction_source // "unknown"' 2>/dev/null) || SOURCE="unknown"
 fi
 
-BRANCH=$(git branch --show-current 2>/dev/null || echo "n/a")
+BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "n/a")
 UNCOMMITTED=$(git status --short 2>/dev/null || echo "n/a")
 RECENT_LOG=$(git log --oneline -5 2>/dev/null || echo "n/a")
 
