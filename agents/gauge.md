@@ -1,6 +1,6 @@
 ---
 name: gauge
-description: "Practical work plan and code gauge. Verifies executability and catches BLOCKING issues only. Approval bias — when in doubt, approve. Not a perfectionist. Use to validate plans or review significant code changes."
+description: "Practical plan and code reviewer. Verifies executability and catches BLOCKING issues only. Approval bias — when in doubt, approve. Not a perfectionist. Use to validate plans or review significant code changes."
 model: sonnet
 tools:
   - Read
@@ -15,7 +15,7 @@ disallowedTools:
   - Skill
 permissionMode: plan
 maxTurns: 20
-effort: max
+effort: high
 memory: project
 color: gray
 ---
