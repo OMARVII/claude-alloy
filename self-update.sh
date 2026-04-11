@@ -4,7 +4,6 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="${HOME}/.claude"
-VERSION_FILE="${CLAUDE_DIR}/.alloy-version"
 NO_UPDATE_FILE="${CLAUDE_DIR}/.alloy-no-update"
 EXPECTED_REMOTE="github.com/OMARVII/claude-alloy"
 
