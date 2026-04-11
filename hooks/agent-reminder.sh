@@ -25,7 +25,7 @@ STATE_FILE="${STATE_DIR}/agent-reminder-${SESSION_ID}"
 TOOL_LOWER=$(echo "$TOOL_NAME" | tr '[:upper:]' '[:lower:]')
 
 AGENT_TOOLS="agent task"
-SEARCH_TOOLS="grep glob webfetch websearch mcp_websearch mcp_context7 mcp_grep_app"
+SEARCH_TOOLS="grep glob webfetch websearch mcp__context7 mcp__grep_app"
 
 for at in $AGENT_TOOLS; do
     if [ "$TOOL_LOWER" = "$at" ] || echo "$TOOL_LOWER" | grep -qi "^agent"; then

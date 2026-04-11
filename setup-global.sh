@@ -12,10 +12,13 @@ warn() { echo -e "${YELLOW}[ALLOY]${NC} $1"; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="${HOME}/.claude"
+DIST_DIR="${CLAUDE_DIR}/alloy-dist"
 
 if [ "${1:-}" = "--uninstall" ]; then
     info "Removing /alloy-init global command..."
-    rm -f "${CLAUDE_DIR}/commands/alloy-init.md"
+    rm -f "${CLAUDE_DIR:?}/commands/alloy-init.md"
+    rm -f "${CLAUDE_DIR:?}/alloy-install.sh"
+    rm -rf "${DIST_DIR:?}"
     success "Done. /alloy-init removed."
     exit 0
 fi
@@ -28,10 +31,18 @@ echo ""
 
 mkdir -p "${CLAUDE_DIR}/commands"
 
-# Copy install.sh to ~/.claude/ so /alloy-init survives if the user moves the cloned repo
-cp "${SCRIPT_DIR}/install.sh" "${CLAUDE_DIR}/alloy-install.sh"
-chmod +x "${CLAUDE_DIR}/alloy-install.sh"
-info "Copied installer to ${CLAUDE_DIR}/alloy-install.sh"
+# Copy the full install payload so /alloy-init survives if the user moves the cloned repo.
+rm -rf "${DIST_DIR:?}"
+mkdir -p "$DIST_DIR"
+cp "${SCRIPT_DIR}/install.sh" "$DIST_DIR/install.sh"
+cp "${SCRIPT_DIR}/CLAUDE.md" "$DIST_DIR/CLAUDE.md"
+cp -R "${SCRIPT_DIR}/agents" "$DIST_DIR/agents"
+cp -R "${SCRIPT_DIR}/skills" "$DIST_DIR/skills"
+cp -R "${SCRIPT_DIR}/commands" "$DIST_DIR/commands"
+cp -R "${SCRIPT_DIR}/hooks" "$DIST_DIR/hooks"
+cp -R "${SCRIPT_DIR}/wiki" "$DIST_DIR/wiki"
+chmod +x "$DIST_DIR/install.sh"
+info "Copied installer payload to ${DIST_DIR}"
 
 cat > "${CLAUDE_DIR}/commands/alloy-init.md" << INITMAX_EOF
 ---
@@ -43,7 +54,7 @@ description: "Install claude-alloy harness into the current project. Adds 14 age
 Run the claude-alloy installer for the current working directory.
 
 \`\`\`bash
-bash ${CLAUDE_DIR}/alloy-install.sh --project .
+bash ${DIST_DIR}/install.sh --project .
 \`\`\`
 
 After installation, you'll have:
@@ -72,7 +83,7 @@ echo "  4. Claude runs the installer for that project"
 echo "  5. Type:  /ignite"
 echo "  6. All 14 agents + 17 hooks active"
 echo ""
-info "Installer copy: ${CLAUDE_DIR}/alloy-install.sh"
+info "Installer payload: ${DIST_DIR}"
 info "Global command: ${CLAUDE_DIR}/commands/alloy-init.md"
 echo ""
 warn "To remove: bash ${SCRIPT_DIR}/setup-global.sh --uninstall"

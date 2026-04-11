@@ -117,6 +117,7 @@ if [ "${1:-}" = "--project" ]; then
     info "Wrote manifest ($(wc -l < "$MANIFEST_FILE" | tr -d ' ') files tracked)"
     cat > "${CLAUDE_DIR}/settings.json" << PROJ_EOF
 {
+  "agent": "steel",
   "env": {"BASH_DEFAULT_TIMEOUT_MS": "420000", "BASH_MAX_TIMEOUT_MS": "420000"},
   "hooks": {
     "PreToolUse": [
