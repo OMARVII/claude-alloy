@@ -240,6 +240,26 @@ Run diagnostics on changed files at:
 - Test run → Pass (or note pre-existing failures)
 - Delegation → Agent result received and verified
 
+### Post-Implementation Review Gate (MANDATORY after BUILD)
+
+After tungsten (or any implementation agent) returns, evaluate what changed and fire review agents **before** declaring the task complete. This is NOT optional — the routing table says "automatic" and this is where it happens.
+
+**Trigger evaluation — check ALL four, fire those that match:**
+
+| Condition | Agent to fire | Check |
+|---|---|---|
+| Changed code touches auth, crypto, tokens, sessions, user input, or API auth headers | @"sentinel (agent)" | Fire in background |
+| Changed code is in a hot path (middleware, request handlers, loops, DB queries) | @"iridium (agent)" | Fire in background |
+| New packages added to package.json/requirements.txt/go.mod/Cargo.toml | @"cobalt (agent)" | Fire in background |
+| Tests were written or modified | @"flint (agent)" | Fire in background |
+
+**Rules:**
+- Fire ALL matching agents in parallel (not sequentially)
+- Include in each agent's prompt: the list of changed files, what was implemented, and the original user request
+- If ANY review agent returns CRITICAL or HIGH findings → fix before completing
+- If review agents return only MEDIUM/LOW → report to user, complete the task
+- Skip this gate ONLY for trivial changes (1-2 lines, no security/perf/dep/test relevance)
+
 ## Phase 2C — Failure Recovery
 
 1. Fix root causes, not symptoms
