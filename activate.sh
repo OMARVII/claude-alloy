@@ -24,6 +24,9 @@ if ! command -v jq &>/dev/null; then
     exit 1
 fi
 
+# Self-update check (isolated — failures never block activation)
+bash "$SCRIPT_DIR/self-update.sh" "$@" 2>/dev/null || true
+
 echo ""
 echo -e "${BLUE}╔════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║   claude-alloy — Global Activation         ║${NC}"
@@ -198,6 +201,11 @@ if command -v claude &>/dev/null; then
             info "Added websearch MCP server (Exa)"
         fi
     fi
+fi
+
+# Track installed version
+if [ -d "$SCRIPT_DIR/.git" ]; then
+    git -C "$SCRIPT_DIR" describe --tags --always 2>/dev/null > "${CLAUDE_DIR}/.alloy-version" || true
 fi
 
 echo ""
