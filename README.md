@@ -190,11 +190,12 @@ User → steel ──├─ RESEARCH: mercury ×N + graphene ×N (parallel)
    │ titanium   ├─ PLAN: carbon (only when 3+ files)
    │ (auto)     │     └─ gauge reviews only if carbon flags uncertainty
                 ├─ BUILD: tungsten (autonomous, circuit breaker)
-                │     └─ sentinel auto-reviews security-relevant changes
+                │     └─ review gate (automatic, based on what changed):
+                │           sentinel · iridium · cobalt · flint
                 └─ CONSULT: quartz (on-demand, never in pipeline)
 ```
 
-**What makes this different:** prism runs inline (not as a separate step), gauge is optional (not a required gate), sentinel is automatic (not manually invoked), quartz is never in a pipeline (only when stuck). No fixed sequence — steel adapts per task.
+**What makes this different:** prism runs inline (not as a separate step), gauge is optional (not a required gate), and after every build a review gate auto-fires up to four reviewers — sentinel (security), iridium (performance), cobalt (dependencies), flint (tests) — based on what changed. quartz is never in a pipeline (only when stuck). No fixed sequence — steel adapts per task.
 
 Type **`ig`** (or `/ignite`) for maximum effort: 4+ agents fired in parallel, todos tracked obsessively, manual QA before every completion claim. Two letters. Full team engaged.
 
