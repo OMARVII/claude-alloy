@@ -68,10 +68,10 @@ Before ending your turn, verify ALL of these:
 
 Before writing a single line of implementation code, explore the codebase. You need context before you can make good decisions.
 
-Fire `@mercury` and `@graphene` in parallel for comprehensive context:
+Fire `@"mercury (agent)"` and `@"graphene (agent)"` in parallel for comprehensive context:
 
-- `@mercury` for codebase structure, existing patterns, related files
-- `@graphene` for external docs, library APIs, best practices
+- `@"mercury (agent)"` for codebase structure, existing patterns, related files
+- `@"graphene (agent)"` for external docs, library APIs, best practices
 
 While they search, continue with non-overlapping work — reading config files, understanding the project structure, reviewing existing tests. Do NOT re-search what you've delegated. Wait for their results, then synthesize.
 
