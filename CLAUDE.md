@@ -42,7 +42,7 @@ Steel routes tasks based on what they need — not through a fixed sequence:
 **Key differences from other harnesses:**
 - prism checks INLINE while research results stream — not a separate sequential step
 - gauge is OPTIONAL — only when carbon requests review, not always
-- sentinel is AUTOMATIC on security-relevant code, not manually invoked
+- sentinel/iridium/cobalt/flint fire AUTOMATICALLY after implementation via steel's Post-Implementation Review Gate — steel evaluates what changed and fires matching review agents in parallel before declaring done
 - No fixed pipeline — steel adapts per task
 
 ## Background Agents
