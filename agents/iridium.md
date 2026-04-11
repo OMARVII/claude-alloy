@@ -13,10 +13,11 @@ disallowedTools:
   - Write
   - Edit
   - Agent
+  - Skill
 permissionMode: plan
 maxTurns: 20
 effort: high
-color: red
+color: amber
 memory: project
 ---
 

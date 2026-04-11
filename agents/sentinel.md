@@ -13,6 +13,7 @@ disallowedTools:
   - Write
   - Edit
   - Agent
+  - Skill
 permissionMode: plan
 maxTurns: 30
 effort: high
@@ -64,9 +65,7 @@ When invoked, you receive either:
 - TLS: certificate validation? pinning?
 
 ### 6. Dependency Security
-- Known vulnerabilities: outdated packages with CVEs?
-- Typosquatting: similar-named packages?
-- Over-permissive dependencies: packages with unnecessary access?
+- For dependency-level concerns (CVEs, outdated packages, supply chain risks, license compliance), defer to cobalt. Only flag dependency issues here if they directly enable a code-level vulnerability (e.g., a known-vulnerable function being called).
 
 ### 7. Infrastructure
 - CORS: overly permissive? `Access-Control-Allow-Origin: *` on authenticated endpoints?

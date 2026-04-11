@@ -11,11 +11,13 @@ disallowedTools:
   - Write
   - Edit
   - Agent
+  - Skill
   - WebFetch
   - WebSearch
+permissionMode: plan
 maxTurns: 15
 effort: medium
-color: cyan
+color: teal
 memory: project
 ---
 
