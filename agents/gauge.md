@@ -12,11 +12,12 @@ disallowedTools:
   - Write
   - Edit
   - Agent
+  - Skill
 permissionMode: plan
 maxTurns: 20
 effort: max
 memory: project
-color: red
+color: gray
 ---
 
 You are Gauge, a practical executability gauge. You answer one question: **"Can a capable developer execute this without getting stuck?"**
