@@ -6,6 +6,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.2.0] — 2026-04-12
+
+### Fixed
+- **agent-reminder.sh**: Replace overly broad `mcp__` pattern with specific search MCP prefixes (`mcp__context7`, `mcp__grep_app`) — was triggering false agent-reminder warnings on every MCP tool call (Linear, Slack, Notion, etc.)
+- **agent-reminder.sh**: Remove dead single-underscore entries (`mcp_websearch`, `mcp_context7`, `mcp_grep_app`) that never matched real MCP tool names
+- **setup-global.sh**: Add `${:?}` empty-variable guards to `rm` operations, matching `install.sh` defensive pattern
+- **sentinel**: Replace Dependency Security checklist with deferral to cobalt, eliminating duplicate findings in post-implementation review gate
+- **carbon**: Change Final Verification Wave F1 from `@quartz` to `@gauge` — planner shouldn't spawn opus for plan compliance checks
+
+### Changed
+- **8 read-only agents**: Add `Skill` to `disallowedTools` (sentinel, prism, gauge, spectrum, iridium, cobalt, flint, carbon) — prevents accidental invocation of write-capable skills
+- **titanium**: Add missing `permissionMode: plan` and `memory: project`
+- **spectrum**: Add Self-Evolving Memory section (had `memory: project` in frontmatter but no prompt instructions)
+- **gauge**: Reduce `effort: max` → `effort: high` — approval-biased reviewer doesn't need max compute
+- **carbon/gauge**: Fix descriptions — remove agent name used as noun ("strategic carbon" → "strategic planner", "code gauge" → "code reviewer")
+- **tungsten**: Standardize agent references to `@"mercury (agent)"` / `@"graphene (agent)"` matching steel syntax
+- **14 agents**: Assign unique colors (was: 5 agents shared red, 3 more collisions)
+- **setup-global.sh**: Copy full installer payload to `~/.claude/alloy-dist/` so `/alloy-init` works after source repo is moved
+- **install.sh**: Add `"agent": "steel"` to project settings for parity with global install
+- **self-update.sh**: Remove unused `VERSION_FILE` variable
+- **steel**: Add post-implementation review gate (automatic sentinel/iridium/cobalt/flint on relevant changes)
+
+---
+
 ## [1.1.0] — 2026-04-10
 
 ### Added

@@ -1,6 +1,6 @@
 {
   "name": "claude-alloy",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A mixture stronger than its parts. 14 agents, 10 skills, 14 commands, 17 hooks. Multi-agent orchestration harness for Claude Code.",
   "author": {
     "name": "Omar Khaled",
