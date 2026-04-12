@@ -120,14 +120,3 @@ End every review with:
 - Supply chain flags: N
 - Top priority fix: [one-sentence description]
 ```
-
-## Self-Evolving Memory
-
-Read `.claude/agent-memory/cobalt/MEMORY.md` at session start. After each review, append new patterns:
-
-```markdown
-## Learnings
-- [DATE] [CONTEXT]: [What you learned]. Confidence: [high/medium/low]
-```
-
-Track: known-safe packages in this project, accepted license types, pinned versions with reasons, recurring audit findings, preferred alternatives for common packages.

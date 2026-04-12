@@ -63,7 +63,9 @@ for skill_dir in "${SCRIPT_DIR}"/skills/*/; do
         echo "$dest" >> "$MANIFEST_FILE"
     done
 done
-info "Installed 10 skills"
+info "Installed 8 skills"
+# Clean up skills removed in previous versions (e.g. wiki, learn removed in v1.3.0)
+for stale_skill in wiki learn; do rm -rf "${CLAUDE_DIR}/skills/${stale_skill}" 2>/dev/null; done
 
 for f in "${SCRIPT_DIR}"/commands/*.md; do
     dest="${CLAUDE_DIR}/commands/$(basename "$f")"
@@ -180,7 +182,13 @@ if [ -f "$BACKUP_FILE" ]; then
       .hooks.StopFailure = $alloy.hooks.StopFailure |
       .hooks.SessionStart = $alloy.hooks.SessionStart |
       .hooks.SessionEnd = $alloy.hooks.SessionEnd
-    ' "$BACKUP_FILE" <(echo "$ALLOY_SETTINGS") > "$SETTINGS_FILE"
+    ' "$BACKUP_FILE" <(echo "$ALLOY_SETTINGS") > "${SETTINGS_FILE}.tmp" || {
+        error "Settings merge failed. Restoring backup."
+        rm -f "${SETTINGS_FILE}.tmp"
+        cp "$BACKUP_FILE" "$SETTINGS_FILE"
+        exit 1
+    }
+    mv "${SETTINGS_FILE}.tmp" "$SETTINGS_FILE"
     info "Merged settings with existing configuration"
 else
     echo "$ALLOY_SETTINGS" > "$SETTINGS_FILE"

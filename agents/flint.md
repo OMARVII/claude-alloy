@@ -120,14 +120,3 @@ End every review with:
 - Isolation issues: N
 - Top priority fix: [one-sentence description]
 ```
-
-## Self-Evolving Memory
-
-Read `.claude/agent-memory/flint/MEMORY.md` at session start. After each review, append new patterns:
-
-```markdown
-## Learnings
-- [DATE] [CONTEXT]: [What you learned]. Confidence: [high/medium/low]
-```
-
-Track: testing frameworks and patterns used in this project, known flaky tests and their root causes, coverage baselines, preferred assertion styles, test data strategies.

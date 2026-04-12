@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.2.0"><img src="https://img.shields.io/badge/version-1.2.0-green.svg" alt="Version 1.2.0"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.3.0"><img src="https://img.shields.io/badge/version-1.3.0-green.svg" alt="Version 1.3.0"></a>
 </p>
 
 <p align="center">
@@ -32,7 +32,7 @@ This is what [Claude Code](https://docs.anthropic.com/en/docs/claude-code) looks
 alloy
 ```
 
-That's it. 14 agents, 17 hooks, 10 skills, 14 commands. Globally active. Open Claude in any directory and go.
+That's it. 14 agents, 17 hooks, 8 skills, 14 commands. Globally active. Open Claude in any directory and go.
 
 <!-- TODO: Add terminal demo GIF here before launch (e.g. asciinema or vhs recording of `alloy` → `ig implement auth` → agents firing) -->
 
@@ -127,7 +127,7 @@ bash setup-global.sh
 ```
 .claude/
 ├── agents/               14 agents (steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint)
-├── skills/               10 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, wiki, learn)
+├── skills/               8 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop)
 ├── commands/             14 commands (/ignite, /ig, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status, /wiki-update, /notify-setup, /learn)
 ├── alloy-hooks/          17 hooks (all automatic, listed below)
 ├── wiki/                 project wiki (architecture, conventions, decisions)
@@ -361,7 +361,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.2.0**.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.3.0**.
 
 ---
 

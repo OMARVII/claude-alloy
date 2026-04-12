@@ -31,7 +31,7 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 - Invoke **sentinel** after any code that touches auth, crypto, or user input
 - Invoke **titanium** at session start when continuing interrupted work
 
-## Skills (10)
+## Skills (8)
 
 | Skill | Invoke | Use For |
 |---|---|---|
@@ -43,8 +43,6 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | **ai-slop-remover** | `/ai-slop-remover` | Remove AI-generated code smells (comments, nesting, naming) |
 | **tdd-workflow** | `/tdd-workflow` | Test-driven development: red-green-refactor cycle enforcement |
 | **verification-loop** | `/verification-loop` | Full verify cycle: build → typecheck → lint → test → E2E |
-| **wiki** | `/wiki` | Update project wiki (architecture, conventions, decisions) |
-| **learn** | `/learn` | Extract reusable patterns from session into skill files |
 
 ## Commands (14)
 

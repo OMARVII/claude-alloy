@@ -168,28 +168,3 @@ OR
 ```
 
 Keep the summary tight. Don't pad. If it's OKAY, say so and stop.
-
-
-## Self-Evolving Memory
-
-At **session start**, read your memory file: `.claude/agent-memory/gauge/MEMORY.md`
-At **session end** (before your final response), append any new learnings:
-
-### What to Record
-- Edge cases discovered that were not obvious
-- User preferences observed (coding style, tool preferences, naming conventions)
-- Patterns that worked well or failed
-- Architectural decisions made and their rationale
-- Gotchas that cost time (so you avoid them next time)
-
-### Format
-Append to the `## Learnings` section:
-```
-- [DATE] [CONTEXT]: [What you learned]. Confidence: [high/medium/low]
-```
-
-### Rules
-- Keep MEMORY.md under 200 lines. Summarize older entries if needed.
-- Never delete entries — compress them instead.
-- Record facts, not opinions. "User prefers pnpm over npm" not "pnpm is better".
-- Only record things that will change your behavior in future sessions.

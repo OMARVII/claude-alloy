@@ -17,7 +17,7 @@ warn() { echo -e "${YELLOW}[ALLOY]${NC} $1"; }
 error() { echo -e "${RED}[ALLOY]${NC} $1"; }
 
 AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium iridium cobalt flint"
-SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop wiki learn"
+SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop"
 COMMANDS="ignite ig loop init-deep refactor start-work handoff halt alloy unalloy status wiki-update notify-setup learn"
 HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh"
 
@@ -25,6 +25,8 @@ if [ "${1:-}" = "--uninstall" ]; then
     info "Uninstalling claude-alloy..."
     for agent in $AGENTS; do rm -f "${CLAUDE_DIR:?}/agents/${agent}.md"; done
     for skill in $SKILLS; do rm -rf "${CLAUDE_DIR:?}/skills/${skill}"; done
+    # Clean up skills removed in previous versions (e.g. wiki, learn removed in v1.3.0)
+    for stale_skill in wiki learn; do rm -rf "${CLAUDE_DIR:?}/skills/${stale_skill}"; done
     for cmd in $COMMANDS; do rm -f "${CLAUDE_DIR:?}/commands/${cmd}.md"; done
     rm -rf "${CLAUDE_DIR:?}/alloy-hooks"
     rm -rf "${CLAUDE_DIR:?}/agent-memory"
@@ -32,8 +34,18 @@ if [ "${1:-}" = "--uninstall" ]; then
     rm -f "${CLAUDE_DIR:?}/alloy-loop-active"
     rm -f "${CLAUDE_DIR:?}/.alloy-manifest"
     rm -rf "${CLAUDE_DIR:?}/.alloy-state"
+    # Restore original settings.json from backup (matches deactivate.sh behavior)
+    BACKUP_FILE="${CLAUDE_DIR}/settings.json.alloy-backup"
+    SETTINGS_FILE="${CLAUDE_DIR}/settings.json"
+    if [ -f "$BACKUP_FILE" ]; then
+        mv "$BACKUP_FILE" "$SETTINGS_FILE"
+        info "Restored original settings.json from backup."
+    elif [ -f "$SETTINGS_FILE" ]; then
+        rm -f "$SETTINGS_FILE"
+        info "Removed Alloy settings.json (no original to restore)."
+    fi
+    rm -f "${CLAUDE_DIR:?}/.alloy-version"
     success "claude-alloy uninstalled."
-    warn "Note: settings.json hooks were NOT removed. Edit ~/.claude/settings.json manually if needed."
     exit 0
 fi
 
@@ -69,6 +81,8 @@ if [ "${1:-}" = "--project" ]; then
             error "  missing: ${skill}"
         fi
     done
+    # Clean up skills removed in previous versions (e.g. wiki, learn removed in v1.3.0)
+    for stale_skill in wiki learn; do rm -rf "${CLAUDE_DIR}/skills/${stale_skill}" 2>/dev/null; done
     for cmd in $COMMANDS; do
         dest="${CLAUDE_DIR}/commands/${cmd}.md"
         if cp "${SCRIPT_DIR}/commands/${cmd}.md" "$dest" 2>/dev/null; then
@@ -115,7 +129,15 @@ if [ "${1:-}" = "--project" ]; then
     done
     echo "$MANIFEST_FILE" >> "$MANIFEST_FILE"
     info "Wrote manifest ($(wc -l < "$MANIFEST_FILE" | tr -d ' ') files tracked)"
-    cat > "${CLAUDE_DIR}/settings.json" << PROJ_EOF
+    SETTINGS_FILE="${CLAUDE_DIR}/settings.json"
+    BACKUP_FILE="${CLAUDE_DIR}/settings.json.alloy-backup"
+    # Back up existing settings on first install (preserve original)
+    if [ -f "$SETTINGS_FILE" ] && [ ! -f "$BACKUP_FILE" ]; then
+        cp "$SETTINGS_FILE" "$BACKUP_FILE"
+        info "Backed up existing project settings.json"
+    fi
+    ALLOY_TMP="${SETTINGS_FILE}.alloy-new"
+    cat > "$ALLOY_TMP" << PROJ_EOF
 {
   "agent": "steel",
   "env": {"BASH_DEFAULT_TIMEOUT_MS": "420000", "BASH_MAX_TIMEOUT_MS": "420000"},
@@ -143,6 +165,34 @@ if [ "${1:-}" = "--project" ]; then
   }
 }
 PROJ_EOF
+    # Merge with existing settings if backup exists (preserve user's non-alloy hooks)
+    if [ -f "$BACKUP_FILE" ] && command -v jq &>/dev/null; then
+        if jq -s '
+          .[0] as $orig | .[1] as $alloy |
+          ($orig * {agent: $alloy.agent}) |
+          .env = (($orig.env // {}) * $alloy.env) |
+          .hooks.PreToolUse = ($alloy.hooks.PreToolUse) + ([($orig.hooks.PreToolUse // [])[]] | map(select((.hooks // [{}])[0].command // "" | test("alloy-hooks") | not))) |
+          .hooks.PostToolUse = ($alloy.hooks.PostToolUse) + ([($orig.hooks.PostToolUse // [])[]] | map(select((.hooks // [{}])[0].command // "" | test("alloy-hooks") | not))) |
+          .hooks.Stop = [{"hooks": (($alloy.hooks.Stop[0].hooks) + ([($orig.hooks.Stop // [{}])[0].hooks // []] | flatten | map(select(.command // "" | test("alloy-hooks") | not))))}] |
+          .hooks.PreCompact = $alloy.hooks.PreCompact |
+          .hooks.SubagentStart = $alloy.hooks.SubagentStart |
+          .hooks.SubagentStop = $alloy.hooks.SubagentStop |
+          .hooks.StopFailure = $alloy.hooks.StopFailure |
+          .hooks.SessionStart = $alloy.hooks.SessionStart |
+          .hooks.SessionEnd = $alloy.hooks.SessionEnd
+        ' "$BACKUP_FILE" "$ALLOY_TMP" > "${SETTINGS_FILE}.tmp"; then
+            mv "${SETTINGS_FILE}.tmp" "$SETTINGS_FILE"
+            info "Merged settings with existing project configuration"
+        else
+            warn "Settings merge failed. Using alloy defaults."
+            rm -f "${SETTINGS_FILE}.tmp"
+            mv "$ALLOY_TMP" "$SETTINGS_FILE"
+        fi
+    else
+        mv "$ALLOY_TMP" "$SETTINGS_FILE"
+        info "Created project settings.json"
+    fi
+    rm -f "$ALLOY_TMP" 2>/dev/null
     GITIGNORE="${TARGET_DIR}/.gitignore"
     if [ -f "$GITIGNORE" ]; then
         ADDED=""
@@ -194,7 +244,7 @@ for agent in $AGENTS; do
     fi
 done
 
-info "Installing 10 skills..."
+info "Installing 8 skills..."
 for skill in $SKILLS; do
     if [ -f "${SCRIPT_DIR}/skills/${skill}/SKILL.md" ]; then
         mkdir -p "${CLAUDE_DIR}/skills/${skill}"
@@ -315,7 +365,7 @@ echo -e "${GREEN}╚════════════════════
 echo ""
 success "Installed:"
 echo "  14 agents — steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint"
-echo "  10 skills — git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, wiki, learn"
+echo "  8 skills — git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop"
 echo "  14 commands — ignite, ig, loop, init-deep, refactor, start-work, handoff, halt, alloy, unalloy, status, wiki-update, notify-setup, learn"
 echo "  17 hooks  — comment-checker, agent-reminder, skill-reminder, todo-enforcer, loop-stop, write-guard, session-notify, branch-guard, auto-install, typecheck, lint, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end"
 echo "  14 memory — persistent agent memory files (generated per agent)"

@@ -39,16 +39,6 @@ Steel routes tasks based on what they need — not through a fixed sequence:
 | **DEPENDENCY** | Adding/updating packages, lock files | cobalt (automatic on dependency changes) |
 | **TESTING** | New features, bug fixes, refactors | flint (automatic for coverage analysis) |
 
-**Key differences from other harnesses:**
-- prism checks INLINE while research results stream — not a separate sequential step
-- gauge is OPTIONAL — only when carbon requests review, not always
-- sentinel/iridium/cobalt/flint fire AUTOMATICALLY after implementation via steel's Post-Implementation Review Gate — steel evaluates what changed and fires matching review agents in parallel before declaring done
-- No fixed pipeline — steel adapts per task
-
-## Background Agents
-
-Fire mercury and graphene agents in parallel for any non-trivial research. They run in the background while you continue working.
-
 ## Skills Available
 
 | Skill | Trigger |
@@ -61,8 +51,6 @@ Fire mercury and graphene agents in parallel for any non-trivial research. They 
 | `/ai-slop-remover` | Remove AI code smells (obvious comments, over-defensive code, spaghetti nesting) |
 | `/tdd-workflow` | Test-driven development: red-green-refactor cycle enforcement |
 | `/verification-loop` | Full verify cycle: build → typecheck → lint → test → E2E |
-| `/wiki` | Update project wiki with architecture, conventions, decisions |
-| `/learn` | Extract reusable patterns from session into skill files |
 
 ## Commands Available
 
@@ -100,12 +88,6 @@ This is a **behavioral mode**, not a skill or tool. Do NOT call `Skill(ignite)`.
 3. **Verify everything** — Run diagnostics, tests, and manual QA before declaring done
 4. **Parallel by default** — Fire multiple background agents simultaneously
 5. **Complete the task** — Never stop at 80%. Finish 100% of what was asked.
-
-## Model Tiering
-
-- **Opus**: Orchestration, architecture, security, complex reasoning
-- **Sonnet**: Implementation, debugging, documentation, research
-- **Haiku**: Fast exploration, simple searches, trivial tasks
 
 ## MCP Servers
 
