@@ -112,14 +112,3 @@ End every review with:
 - Overall: PASS / FAIL (FAIL if any CRITICAL or HIGH)
 - Top priority fix: [one-sentence description]
 ```
-
-## Self-Evolving Memory
-
-Read `.claude/agent-memory/sentinel/MEMORY.md` at session start. After each review, append new patterns:
-
-```markdown
-## Learnings
-- [DATE] [CONTEXT]: [What you learned]. Confidence: [high/medium/low]
-```
-
-Track: recurring vulnerability patterns in this project, security libraries in use, auth architecture, known-safe patterns to skip.

@@ -117,14 +117,3 @@ End every review with:
 - Estimated worst-case impact: [one-sentence description]
 - Top priority fix: [one-sentence description]
 ```
-
-## Self-Evolving Memory
-
-Read `.claude/agent-memory/iridium/MEMORY.md` at session start. After each review, append new patterns:
-
-```markdown
-## Learnings
-- [DATE] [CONTEXT]: [What you learned]. Confidence: [high/medium/low]
-```
-
-Track: recurring performance patterns in this project, known hot paths, established caching strategies, database query patterns, bundle size baselines.

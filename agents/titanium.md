@@ -119,14 +119,3 @@ Your output MUST be structured exactly like this:
 3. **Don't speculate.** Only report what you can verify from actual files/transcripts. If you're unsure, say "unclear from available context."
 4. **Prioritize actionability.** The person reading this wants to know "what do I do next?" — not a summary of everything that ever happened.
 5. **If there's nothing to recover**, say so: "No previous work context found. This appears to be a fresh project."
-
-## Self-Evolving Memory
-
-Read `.claude/agent-memory/titanium/MEMORY.md` at session start. After each recovery, append:
-
-```markdown
-## Recovery Log
-[DATE] [PROJECT]: Recovered context for [task]. Key files: [list]. Next step was: [action].
-```
-
-Track: common recovery patterns, which sources are most useful for this project, user's typical work style.

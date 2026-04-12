@@ -6,6 +6,22 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.3.0] — 2026-04-12
+
+### Fixed
+- **activate.sh**: Write jq merge output to `.tmp` file then `mv`, preventing empty `settings.json` on jq failure (was truncating via `>` redirect before jq ran)
+- **install.sh --uninstall**: Restore `settings.json` from backup instead of orphaning it with hooks pointing to deleted scripts (matches `deactivate.sh` behavior)
+- **install.sh --project**: Add backup + jq merge for `settings.json` instead of clobbering existing project settings (matches `activate.sh` merge logic)
+- **session-start.sh**: Skip wiki files that only contain template markers; truncate at last newline instead of mid-line at 4KB cap
+
+### Changed
+- **ig.md**: Replace 40-line duplicate with redirect to `/ignite` (protocol lives in one place now)
+- **12 agents**: Remove dead Self-Evolving Memory sections from agents that have `Write` in `disallowedTools` (saves ~200 tokens per subagent invocation)
+- **CLAUDE.md**: Remove steel-specific sections ("Key differences", "Background Agents", "Model Tiering") that duplicate `steel.md` content — reduces per-turn token overhead for all agents
+- **Skill count**: 10 → 8 — removed duplicate `wiki` and `learn` skills that were byte-for-byte identical to their `/wiki-update` and `/learn` commands
+
+---
+
 ## [1.2.0] — 2026-04-12
 
 ### Fixed
