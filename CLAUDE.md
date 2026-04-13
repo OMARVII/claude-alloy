@@ -93,4 +93,5 @@ This is a **behavioral mode**, not a skill or tool. Do NOT call `Skill(ignite)`.
 
 - **context7** — Official library documentation
 - **grep_app** — GitHub code search across public repos
-- **websearch** (Exa) — Real-time web search (optional, requires `EXA_API_KEY`)
+- **websearch** (Exa) — Real-time web search (always-on; set `EXA_API_KEY` for higher rate limits)
+- **playwright** — Browser automation for `/dev-browser` skill (optional, requires `ALLOY_BROWSER=1`)

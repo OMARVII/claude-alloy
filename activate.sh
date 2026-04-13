@@ -195,20 +195,35 @@ else
     info "Created settings.json"
 fi
 
+info "Configuring MCP servers..."
 if command -v claude &>/dev/null; then
-    if claude mcp add context7 --transport http -s user -- "https://mcp.context7.com/mcp" 2>/dev/null; then
-        info "Added context7 MCP server"
-    fi
-    if claude mcp add grep_app --transport http -s user -- "https://mcp.grep.app/search" 2>/dev/null; then
-        info "Added grep_app MCP server"
-    fi
-    # Auto-configure Exa websearch only if the user already has an API key
+    # Websearch: always-on keyless; EXA_API_KEY upgrades to higher rate limits
+    WEBSEARCH_URL="https://mcp.exa.ai/mcp"
     if [ -n "${EXA_API_KEY:-}" ]; then
-        # shellcheck disable=SC2016
-        if claude mcp add websearch --transport http -s user -- "https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}" 2>/dev/null; then
-            info "Added websearch MCP server (Exa)"
+        WEBSEARCH_URL="https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}"
+    fi
+    # Atomic remove+add per server (handles transport-type changes across versions)
+    claude mcp remove context7 -s user 2>/dev/null || true
+    claude mcp add context7 --transport http -s user -- "https://mcp.context7.com/mcp" 2>/dev/null || warn "Failed to add context7 MCP"
+    claude mcp remove grep_app -s user 2>/dev/null || true
+    claude mcp add grep_app --transport http -s user -- "https://mcp.grep.app" 2>/dev/null || warn "Failed to add grep_app MCP"
+    claude mcp remove websearch -s user 2>/dev/null || true
+    claude mcp add websearch --transport http -s user -- "$WEBSEARCH_URL" 2>/dev/null || warn "Failed to add websearch MCP"
+    success "Configured MCP servers (context7, grep_app, websearch)"
+    if [ -n "${EXA_API_KEY:-}" ]; then
+        success "Websearch upgraded with EXA API key (higher rate limits)"
+    fi
+    # Opt-in: Playwright MCP for browser automation (uses system Chrome, zero download)
+    if [ "${ALLOY_BROWSER:-}" = "1" ]; then
+        claude mcp remove playwright -s user 2>/dev/null || true
+        if claude mcp add playwright -s user -- npx @playwright/mcp@0.0.70 --browser=chrome 2>/dev/null; then
+            success "Added Playwright MCP server (browser automation)"
+        else
+            warn "Failed to add Playwright MCP"
         fi
     fi
+else
+    warn "Claude CLI not found. Add MCP servers manually."
 fi
 
 # Track installed version

@@ -45,6 +45,13 @@ if [ "${1:-}" = "--uninstall" ]; then
         info "Removed Alloy settings.json (no original to restore)."
     fi
     rm -f "${CLAUDE_DIR:?}/.alloy-version"
+    # Remove alloy-managed MCP servers
+    if command -v claude &>/dev/null; then
+        for srv in context7 grep_app websearch playwright; do
+            claude mcp remove "$srv" -s user 2>/dev/null || true
+        done
+        info "Removed MCP servers (context7, grep_app, websearch, playwright)"
+    fi
     success "claude-alloy uninstalled."
     exit 0
 fi
@@ -339,23 +346,34 @@ SETTINGS_EOF
 success "Created settings.json with all hooks"
 
 info "Configuring MCP servers..."
-CLAUDE_JSON="${HOME}/.claude.json"
-if [ -f "$CLAUDE_JSON" ] && grep -q "context7" "$CLAUDE_JSON" 2>/dev/null; then
-    warn "MCP servers appear to already be configured. Skipping."
-else
-    if command -v claude &>/dev/null; then
-        claude mcp add --transport http --scope user context7 "https://mcp.context7.com/mcp" 2>/dev/null || warn "Failed to add context7 MCP"
-        claude mcp add --transport http --scope user grep_app "https://mcp.grep.app/search" 2>/dev/null || warn "Failed to add grep_app MCP"
-        success "Added context7 and grep_app MCP servers"
-        # Auto-configure Exa websearch only if the user already has an API key
-        if [ -n "${EXA_API_KEY:-}" ]; then
-            # shellcheck disable=SC2016
-            claude mcp add --transport http --scope user websearch "https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}" 2>/dev/null || warn "Failed to add websearch MCP"
-            success "Added websearch MCP server (Exa)"
-        fi
-    else
-        warn "Claude CLI not found. Add MCP servers manually."
+if command -v claude &>/dev/null; then
+    # Websearch: always-on keyless; EXA_API_KEY upgrades to higher rate limits
+    WEBSEARCH_URL="https://mcp.exa.ai/mcp"
+    if [ -n "${EXA_API_KEY:-}" ]; then
+        WEBSEARCH_URL="https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}"
     fi
+    # Atomic remove+add per server (handles transport-type changes across versions)
+    claude mcp remove context7 -s user 2>/dev/null || true
+    claude mcp add --transport http --scope user context7 "https://mcp.context7.com/mcp" 2>/dev/null || warn "Failed to add context7 MCP"
+    claude mcp remove grep_app -s user 2>/dev/null || true
+    claude mcp add --transport http --scope user grep_app "https://mcp.grep.app" 2>/dev/null || warn "Failed to add grep_app MCP"
+    claude mcp remove websearch -s user 2>/dev/null || true
+    claude mcp add --transport http --scope user websearch "$WEBSEARCH_URL" 2>/dev/null || warn "Failed to add websearch MCP"
+    success "Configured MCP servers (context7, grep_app, websearch)"
+    if [ -n "${EXA_API_KEY:-}" ]; then
+        success "Websearch upgraded with EXA API key (higher rate limits)"
+    fi
+    # Opt-in: Playwright MCP for browser automation (uses system Chrome, zero download)
+    if [ "${ALLOY_BROWSER:-}" = "1" ]; then
+        claude mcp remove playwright -s user 2>/dev/null || true
+        if claude mcp add --scope user playwright -- npx @playwright/mcp@0.0.70 --browser=chrome 2>/dev/null; then
+            success "Added Playwright MCP server (browser automation)"
+        else
+            warn "Failed to add Playwright MCP"
+        fi
+    fi
+else
+    warn "Claude CLI not found. Add MCP servers manually."
 fi
 
 echo ""
@@ -369,7 +387,7 @@ echo "  8 skills — git-master, frontend-ui-ux, dev-browser, code-review, revie
 echo "  14 commands — ignite, ig, loop, init-deep, refactor, start-work, handoff, halt, alloy, unalloy, status, wiki-update, notify-setup, learn"
 echo "  17 hooks  — comment-checker, agent-reminder, skill-reminder, todo-enforcer, loop-stop, write-guard, session-notify, branch-guard, auto-install, typecheck, lint, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end"
 echo "  14 memory — persistent agent memory files (generated per agent)"
-echo "  2 MCPs    — context7, grep_app (+ websearch if EXA_API_KEY is set)"
+echo "  3 MCPs    — context7, grep_app, websearch (+ Playwright if ALLOY_BROWSER=1)"
 echo ""
 info "Usage modes:"
 echo "  bash install.sh              — Global install (all projects)"

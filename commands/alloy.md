@@ -37,7 +37,7 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 |---|---|---|
 | **git-master** | `/git-master` | Atomic commits, rebase, squash, blame, bisect |
 | **frontend-ui-ux** | `/frontend-ui-ux` | UI design, styling, animations, layout |
-| **dev-browser** | `/dev-browser` | Browser automation, screenshots, web testing |
+| **dev-browser** | `/dev-browser` | Browser automation via Playwright MCP (requires `ALLOY_BROWSER=1`) |
 | **code-review** | `/code-review` | Confidence-scored code review (only reports issues >= 80) |
 | **review-work** | `/review-work` | 5-agent parallel review (goal, QA, code, security, context) |
 | **ai-slop-remover** | `/ai-slop-remover` | Remove AI-generated code smells (comments, nesting, naming) |
