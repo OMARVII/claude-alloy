@@ -8,17 +8,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [1.3.0] — 2026-04-12
 
+### Added
+- **Playwright MCP**: Opt-in browser automation via `ALLOY_BROWSER=1` — installs `@playwright/mcp` with `--browser=chrome` (uses system Chrome, zero binary download) for the `/dev-browser` skill (in `install.sh` and `activate.sh`)
+- **Websearch MCP**: Always-on via keyless Exa hosted endpoint — zero config required. `EXA_API_KEY` upgrades to higher rate limits instead of gating access
+
+### Changed
+- **install.sh + activate.sh**: Remove MCP skip guard (`grep -q` check) — `claude mcp add` is idempotent, guard was unnecessary. Refactor MCP section for consistency across both files
+- **install.sh + activate.sh**: Add `--browser=chrome` flag to Playwright MCP — uses system Chrome instead of downloading bundled Chromium (~400MB)
+- **install.sh + activate.sh**: `EXA_API_KEY` now upgrades websearch rate limits instead of gating access — single registration (no double-register race)
+- **install.sh + activate.sh**: Pin `@playwright/mcp@0.0.70` instead of `@latest` — prevents supply-chain risk via floating tag
+- **install.sh + activate.sh**: `ALLOY_BROWSER` check uses strict `= "1"` instead of `-n` (setting `ALLOY_BROWSER=0` no longer accidentally enables Playwright)
+- **.mcp.json.example**: Use keyless Exa URL as default (was showing `${EXA_API_KEY}`-gated URL); fix grep_app URL
+- **install.sh + activate.sh**: Fix grep_app MCP URL from `https://mcp.grep.app/search` (404) to `https://mcp.grep.app`
+- **install.sh + activate.sh**: Add `claude mcp remove` before each `claude mcp add` to handle transport-type changes across versions (stale stdio entries blocked HTTP re-registration)
+- **ig.md**: Replace 40-line duplicate with redirect to `/ignite` (protocol lives in one place now)
+- **12 agents**: Remove dead Self-Evolving Memory sections from agents that have `Write` in `disallowedTools` (saves ~200 tokens per subagent invocation)
+- **CLAUDE.md**: Remove steel-specific sections ("Key differences", "Background Agents", "Model Tiering") that duplicate `steel.md` content — reduces per-turn token overhead for all agents
+- **Skill count**: 10 → 8 — removed duplicate `wiki` and `learn` skills that were byte-for-byte identical to their `/wiki-update` and `/learn` commands
+
 ### Fixed
 - **activate.sh**: Write jq merge output to `.tmp` file then `mv`, preventing empty `settings.json` on jq failure (was truncating via `>` redirect before jq ran)
 - **install.sh --uninstall**: Restore `settings.json` from backup instead of orphaning it with hooks pointing to deleted scripts (matches `deactivate.sh` behavior)
 - **install.sh --project**: Add backup + jq merge for `settings.json` instead of clobbering existing project settings (matches `activate.sh` merge logic)
 - **session-start.sh**: Skip wiki files that only contain template markers; truncate at last newline instead of mid-line at 4KB cap
-
-### Changed
-- **ig.md**: Replace 40-line duplicate with redirect to `/ignite` (protocol lives in one place now)
-- **12 agents**: Remove dead Self-Evolving Memory sections from agents that have `Write` in `disallowedTools` (saves ~200 tokens per subagent invocation)
-- **CLAUDE.md**: Remove steel-specific sections ("Key differences", "Background Agents", "Model Tiering") that duplicate `steel.md` content — reduces per-turn token overhead for all agents
-- **Skill count**: 10 → 8 — removed duplicate `wiki` and `learn` skills that were byte-for-byte identical to their `/wiki-update` and `/learn` commands
 
 ---
 

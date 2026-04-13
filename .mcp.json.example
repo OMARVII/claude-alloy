@@ -1,17 +1,16 @@
 {
   "mcpServers": {
-    "websearch": {
-      "type": "http",
-      "url": "https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}",
-      "headers": {}
-    },
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp"
     },
     "grep_app": {
       "type": "http",
-      "url": "https://mcp.grep.app/search"
+      "url": "https://mcp.grep.app"
+    },
+    "websearch": {
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp"
     }
   }
 }
