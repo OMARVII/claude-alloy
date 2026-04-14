@@ -113,5 +113,5 @@ fi
 # First attempt — block stop
 echo "1" > "$BLOCK_FILE"
 jq -nc --arg reason "IGNITE violations: ${VIOLATIONS}Fix before stopping." \
-    '{decision: "block", reason: $reason, hookSpecificOutput: {hookEventName: "Stop"}}'
+    '{decision: "block", reason: $reason}'
 exit 2

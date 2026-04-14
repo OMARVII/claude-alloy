@@ -191,7 +191,7 @@ if [ "${1:-}" = "--project" ]; then
     cat > "$ALLOY_TMP" << PROJ_EOF
 {
   "agent": "steel",
-  "env": {"BASH_DEFAULT_TIMEOUT_MS": "420000", "BASH_MAX_TIMEOUT_MS": "420000"},
+  "env": {"BASH_DEFAULT_TIMEOUT_MS": "420000", "BASH_MAX_TIMEOUT_MS": "420000", "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1"},
   "hooks": {
     "PreToolUse": [
       {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "timeout": 5}]},
@@ -384,7 +384,7 @@ HOOK_PREFIX="${HOME}/.claude/alloy-hooks"
 cat > "$SETTINGS_FILE" << SETTINGS_EOF
 {
   "agent": "steel",
-  "env": {"BASH_DEFAULT_TIMEOUT_MS": "420000", "BASH_MAX_TIMEOUT_MS": "420000"},
+  "env": {"BASH_DEFAULT_TIMEOUT_MS": "420000", "BASH_MAX_TIMEOUT_MS": "420000", "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1"},
   "hooks": {
     "PreToolUse": [
       {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "timeout": 5}]},

@@ -6,6 +6,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.4.1] — 2026-04-14
+
+### Fixed
+- **ignite-stop-gate.sh**: Stop hook JSON output included invalid `hookSpecificOutput` field — caused "Hook JSON output validation failed" error on session exit. Removed wrapper; now outputs correct `{decision, reason}` schema.
+- **todo-enforcer.sh**: Same invalid `hookSpecificOutput` field in Stop hook blocking output. Fixed to match Claude Code's Stop hook JSON schema.
+
+### Added
+- **install.sh + activate.sh**: `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS=1` env var added to settings — removes built-in git workflow instructions and git status snapshot from system prompt, saving tokens (alloy's own CLAUDE.md provides equivalent guidance)
+
+### Changed
+- **.claude-plugin/plugin.json + marketplace.json**: Bump stale version from 1.3.0 to 1.4.1
+
+---
+
 ## [1.4.0] — 2026-04-14
 
 ### Added

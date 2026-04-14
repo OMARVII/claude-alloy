@@ -61,7 +61,7 @@ if [ "$INCOMPLETE" -gt 0 ]; then
     echo "1" > "$BLOCK_FILE"
     # First attempt — block stop
     jq -nc --argjson n "$INCOMPLETE" \
-        '{decision: "block", reason: ("You have " + ($n | tostring) + " incomplete todos (pending/in_progress). Complete or cancel them before stopping."), hookSpecificOutput: {hookEventName: "Stop"}}'
+        '{decision: "block", reason: ("You have " + ($n | tostring) + " incomplete todos (pending/in_progress). Complete or cancel them before stopping.")}'
     exit 2
 fi
 

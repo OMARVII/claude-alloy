@@ -121,7 +121,8 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
   "agent": "steel",
   "env": {
     "BASH_DEFAULT_TIMEOUT_MS": "420000",
-    "BASH_MAX_TIMEOUT_MS": "420000"
+    "BASH_MAX_TIMEOUT_MS": "420000",
+    "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1"
   },
   "hooks": {
     "PreToolUse": [
