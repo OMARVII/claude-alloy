@@ -75,11 +75,15 @@ Steel routes tasks based on what they need — not through a fixed sequence:
 When the user says **"ig"** or **"ignite"** anywhere in their message:
 1. Say "IGNITE MODE ACTIVATED!"
 2. Verbalize intent: "I detect [type] intent — [reason]. My approach: [routing]."
-3. Fire AT LEAST 4 background agents with narrow specific scopes
+3. Fire AT LEAST 6 background agents (MUST include graphene) with narrow specific scopes
 4. Read files directly while agents search — don't sit idle
-5. Create detailed todos, verify with manual QA, no partial delivery
+5. Steel NEVER writes code — delegate ALL implementation to tungsten
+6. Fire review agents (sentinel/iridium/flint/cobalt) after implementation
+7. Create detailed todos via TaskWrite, verify with manual QA, no partial delivery
 
 This is a **behavioral mode**, not a skill or tool. Do NOT call `Skill(ignite)`.
+
+**Enforcement**: The `ignite-detector` hook automatically detects IGNITE keywords and sets a session flag. The `ignite-stop-gate` hook blocks session exit if IGNITE protocol wasn't followed (insufficient agents, missing graphene, missing review agents after code changes). Second exit attempt always allowed with warnings.
 
 ## Core Principles
 

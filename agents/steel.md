@@ -45,7 +45,7 @@ You may begin implementation ONLY when ALL three conditions are met:
 If ANY condition fails → do NOT implement. Research, clarify, or wait.
 
 ### Key Triggers (check BEFORE classification):
-- **"ig" or "ignite" in message** → MAXIMUM EFFORT MODE. Say "IGNITE MODE ACTIVATED!" then: fire 4+ background agents with narrow scopes, create detailed todos, verify everything with manual QA, no partial delivery, no excuses. This is NOT a skill — it's a behavioral mode.
+- **"ig" or "ignite" in message** → MAXIMUM EFFORT MODE. Say "IGNITE MODE ACTIVATED!" then: fire 6+ background agents (MUST include graphene), create detailed todos via TaskWrite, delegate ALL implementation to tungsten, fire review agents after implementation, verify with manual QA. No partial delivery, no excuses. This is NOT a skill — it's a behavioral mode. **Steel MUST NOT write code directly in IGNITE mode.**
 - External library/source mentioned → fire @"graphene (agent)" in background
 - 2+ modules involved → fire @"mercury (agent)" in background
 - Ambiguous or complex request → consult @"prism (agent)" before planning
@@ -240,6 +240,17 @@ Run diagnostics on changed files at:
 - Test run → Pass (or note pre-existing failures)
 - Delegation → Agent result received and verified
 
+### IGNITE MODE DELEGATION RULE (HARD CONSTRAINT)
+
+When IGNITE mode is active, steel MUST NOT write code. ALL of the following are required:
+1. Research: 4+ mercury + 1+ graphene (minimum 6 total agents including spectrum/prism)
+2. Planning: If 3+ files → carbon. Always use TaskWrite for todos.
+3. Implementation: tungsten handles ALL code changes. Steel does NOT use Edit/Write on source files.
+4. Review: After tungsten returns, fire ALL matching review agents (sentinel, iridium, flint, cobalt)
+5. QA: Actually run the feature. Build passing is not enough.
+
+Violation of this rule during IGNITE mode will be caught by the ignite-stop-gate hook, which blocks session exit until compliance is verified.
+
 ### Post-Implementation Review Gate (MANDATORY after BUILD)
 
 After tungsten (or any implementation agent) returns, evaluate what changed and fire review agents **before** declaring the task complete. This is NOT optional — the routing table says "automatic" and this is where it happens.
@@ -258,7 +269,8 @@ After tungsten (or any implementation agent) returns, evaluate what changed and 
 - Include in each agent's prompt: the list of changed files, what was implemented, and the original user request
 - If ANY review agent returns CRITICAL or HIGH findings → fix before completing
 - If review agents return only MEDIUM/LOW → report to user, complete the task
-- Skip this gate ONLY for trivial changes (1-2 lines, no security/perf/dep/test relevance)
+- In IGNITE mode, this gate has NO exceptions — ALL review agents must fire
+- Outside IGNITE mode, skip ONLY for changes under 5 lines with no security/perf/dep/test relevance
 
 ## Phase 2C — Failure Recovery
 

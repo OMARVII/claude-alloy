@@ -27,9 +27,14 @@ fi
 # Self-update check (isolated — failures never block activation)
 bash "$SCRIPT_DIR/self-update.sh" "$@" 2>/dev/null || true
 
+VERSION=$(cat "${SCRIPT_DIR}/VERSION" 2>/dev/null || echo "dev")
+
+VLINE=$(printf "%-44s" "  claude-alloy v${VERSION}")
+
 echo ""
 echo -e "${BLUE}╔════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║   claude-alloy — Global Activation         ║${NC}"
+echo -e "${BLUE}║${NC}${VLINE}${BLUE}║${NC}"
+echo -e "${BLUE}║${NC}  Agent Harness — Activate                  ${BLUE}║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -47,13 +52,16 @@ fi
 MANIFEST_FILE="${CLAUDE_DIR}/.alloy-manifest"
 : > "$MANIFEST_FILE"
 
+AGENT_COUNT=0
 for f in "${SCRIPT_DIR}"/agents/*.md; do
     dest="${CLAUDE_DIR}/agents/$(basename "$f")"
     cp "$f" "$dest"
     echo "$dest" >> "$MANIFEST_FILE"
+    AGENT_COUNT=$((AGENT_COUNT + 1))
 done
-info "Installed 14 agents"
+info "Installed ${AGENT_COUNT} agents"
 
+SKILL_COUNT=0
 for skill_dir in "${SCRIPT_DIR}"/skills/*/; do
     skill_name=$(basename "$skill_dir")
     mkdir -p "${CLAUDE_DIR}/skills/${skill_name}"
@@ -62,26 +70,32 @@ for skill_dir in "${SCRIPT_DIR}"/skills/*/; do
         cp "$f" "$dest"
         echo "$dest" >> "$MANIFEST_FILE"
     done
+    SKILL_COUNT=$((SKILL_COUNT + 1))
 done
-info "Installed 8 skills"
+info "Installed ${SKILL_COUNT} skills"
 # Clean up skills removed in previous versions (e.g. wiki, learn removed in v1.3.0)
 for stale_skill in wiki learn; do rm -rf "${CLAUDE_DIR}/skills/${stale_skill}" 2>/dev/null; done
 
+CMD_COUNT=0
 for f in "${SCRIPT_DIR}"/commands/*.md; do
     dest="${CLAUDE_DIR}/commands/$(basename "$f")"
     cp "$f" "$dest"
     echo "$dest" >> "$MANIFEST_FILE"
+    CMD_COUNT=$((CMD_COUNT + 1))
 done
-info "Installed 14 commands"
+info "Installed ${CMD_COUNT} commands"
 
+HOOK_COUNT=0
 for f in "${SCRIPT_DIR}"/hooks/*.sh; do
     dest="${CLAUDE_DIR}/alloy-hooks/$(basename "$f")"
     cp "$f" "$dest"
     chmod +x "$dest"
     echo "$dest" >> "$MANIFEST_FILE"
+    HOOK_COUNT=$((HOOK_COUNT + 1))
 done
-info "Installed 17 hooks"
+info "Installed ${HOOK_COUNT} hooks"
 
+MEM_COUNT=0
 for f in "${SCRIPT_DIR}"/agents/*.md; do
     agent_name=$(basename "$f" .md)
     mem_dir="${CLAUDE_DIR}/agent-memory/${agent_name}"
@@ -91,8 +105,9 @@ for f in "${SCRIPT_DIR}"/agents/*.md; do
         echo "# ${agent_name} Memory" > "$dest"
     fi
     echo "$dest" >> "$MANIFEST_FILE"
+    MEM_COUNT=$((MEM_COUNT + 1))
 done
-info "Generated 14 agent memory files"
+info "Generated ${MEM_COUNT} agent memory files"
 
 dest="${CLAUDE_DIR}/CLAUDE.md"
 cp "${SCRIPT_DIR}/CLAUDE.md" "$dest"
@@ -141,6 +156,7 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
     "Stop": [
       {
         "hooks": [
+          {"type":"command","command":($hd + "/ignite-stop-gate.sh"),"timeout":5,"statusMessage":"Checking IGNITE compliance..."},
           {"type":"command","command":($hd + "/todo-enforcer.sh"),"timeout":5,"statusMessage":"Checking todos..."},
           {"type":"command","command":($hd + "/loop-stop.sh"),"timeout":5,"statusMessage":"Checking loop status..."},
           {"type":"command","command":($hd + "/session-notify.sh"),"timeout":5,"async":true,"statusMessage":"Session complete!"}
@@ -164,6 +180,9 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
     ],
     "SessionEnd": [
       {"hooks": [{"type":"command","command":($hd + "/session-end.sh"),"timeout":5,"async":true,"statusMessage":"Checking session productivity..."}]}
+    ],
+    "UserPromptSubmit": [
+      {"hooks": [{"type":"command","command":($hd + "/ignite-detector.sh"),"timeout":5,"statusMessage":"Checking ignite mode..."}]}
     ]
   }
 }')
@@ -181,7 +200,8 @@ if [ -f "$BACKUP_FILE" ]; then
       .hooks.SubagentStop = $alloy.hooks.SubagentStop |
       .hooks.StopFailure = $alloy.hooks.StopFailure |
       .hooks.SessionStart = $alloy.hooks.SessionStart |
-      .hooks.SessionEnd = $alloy.hooks.SessionEnd
+      .hooks.SessionEnd = $alloy.hooks.SessionEnd |
+      .hooks.UserPromptSubmit = $alloy.hooks.UserPromptSubmit
     ' "$BACKUP_FILE" <(echo "$ALLOY_SETTINGS") > "${SETTINGS_FILE}.tmp" || {
         error "Settings merge failed. Restoring backup."
         rm -f "${SETTINGS_FILE}.tmp"
@@ -197,29 +217,39 @@ fi
 
 info "Configuring MCP servers..."
 if command -v claude &>/dev/null; then
+    # Ensures an MCP server is configured with the expected URL.
+    # Only touches the config when the server is missing or the URL changed.
+    ensure_mcp() {
+        local name="$1" url="$2"
+        # claude mcp list outputs JSON; check if this server already has the right URL
+        if claude mcp list -s user 2>/dev/null | grep -q "\"${url}\""; then
+            return 0
+        fi
+        claude mcp remove "$name" -s user &>/dev/null || true
+        claude mcp add "$name" --transport http -s user -- "$url" &>/dev/null || { warn "Failed to add $name MCP"; return 1; }
+    }
+
     # Websearch: always-on keyless; EXA_API_KEY upgrades to higher rate limits
     WEBSEARCH_URL="https://mcp.exa.ai/mcp"
     if [ -n "${EXA_API_KEY:-}" ]; then
         WEBSEARCH_URL="https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}"
     fi
-    # Atomic remove+add per server (handles transport-type changes across versions)
-    claude mcp remove context7 -s user 2>/dev/null || true
-    claude mcp add context7 --transport http -s user -- "https://mcp.context7.com/mcp" 2>/dev/null || warn "Failed to add context7 MCP"
-    claude mcp remove grep_app -s user 2>/dev/null || true
-    claude mcp add grep_app --transport http -s user -- "https://mcp.grep.app" 2>/dev/null || warn "Failed to add grep_app MCP"
-    claude mcp remove websearch -s user 2>/dev/null || true
-    claude mcp add websearch --transport http -s user -- "$WEBSEARCH_URL" 2>/dev/null || warn "Failed to add websearch MCP"
-    success "Configured MCP servers (context7, grep_app, websearch)"
+    ensure_mcp context7 "https://mcp.context7.com/mcp"
+    ensure_mcp grep_app "https://mcp.grep.app"
+    ensure_mcp websearch "$WEBSEARCH_URL"
+    success "MCP servers ready (context7, grep_app, websearch)"
     if [ -n "${EXA_API_KEY:-}" ]; then
         success "Websearch upgraded with EXA API key (higher rate limits)"
     fi
     # Opt-in: Playwright MCP for browser automation (uses system Chrome, zero download)
     if [ "${ALLOY_BROWSER:-}" = "1" ]; then
-        claude mcp remove playwright -s user 2>/dev/null || true
-        if claude mcp add playwright -s user -- npx @playwright/mcp@0.0.70 --browser=chrome 2>/dev/null; then
-            success "Added Playwright MCP server (browser automation)"
-        else
-            warn "Failed to add Playwright MCP"
+        if ! claude mcp list -s user 2>/dev/null | grep -q "playwright"; then
+            claude mcp remove playwright -s user &>/dev/null || true
+            if claude mcp add playwright -s user -- npx @playwright/mcp@0.0.70 --browser=chrome &>/dev/null; then
+                success "Added Playwright MCP server (browser automation)"
+            else
+                warn "Failed to add Playwright MCP"
+            fi
         fi
     fi
 else

@@ -1,5 +1,5 @@
 {
-  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, typecheck, lint, auto-install, agent-reminder, skill-reminder, todo-enforcer, loop-stop, session-notify, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end",
+  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, typecheck, lint, auto-install, agent-reminder, skill-reminder, ignite-stop-gate, todo-enforcer, loop-stop, session-notify, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end, ignite-detector",
   "hooks": {
     "PreToolUse": [
       {
@@ -81,6 +81,12 @@
     "Stop": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/ignite-stop-gate.sh",
+            "timeout": 5,
+            "statusMessage": "Checking IGNITE compliance..."
+          },
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/todo-enforcer.sh",
@@ -172,6 +178,18 @@
             "timeout": 5,
             "async": true,
             "statusMessage": "Checking session productivity..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/ignite-detector.sh",
+            "timeout": 5,
+            "statusMessage": "Checking ignite mode..."
           }
         ]
       }

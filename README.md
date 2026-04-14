@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.3.0"><img src="https://img.shields.io/badge/version-1.3.0-green.svg" alt="Version 1.3.0"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.4.0"><img src="https://img.shields.io/badge/version-1.4.0-green.svg" alt="Version 1.4.0"></a>
 </p>
 
 <p align="center">
@@ -32,7 +32,7 @@ This is what [Claude Code](https://docs.anthropic.com/en/docs/claude-code) looks
 alloy
 ```
 
-That's it. 14 agents, 17 hooks, 8 skills, 14 commands. Globally active. Open Claude in any directory and go.
+That's it. 14 agents, 19 hooks, 8 skills, 14 commands. Globally active. Open Claude in any directory and go.
 
 <!-- TODO: Add terminal demo GIF here before launch (e.g. asciinema or vhs recording of `alloy` → `ig implement auth` → agents firing) -->
 
@@ -129,7 +129,7 @@ bash setup-global.sh
 ├── agents/               14 agents (steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint)
 ├── skills/               8 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop)
 ├── commands/             14 commands (/ignite, /ig, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status, /wiki-update, /notify-setup, /learn)
-├── alloy-hooks/          17 hooks (all automatic, listed below)
+├── alloy-hooks/          19 hooks (all automatic, listed below)
 ├── wiki/                 project wiki (architecture, conventions, decisions)
 ├── agent-memory/         14 memory files (generated at install — agents learn across sessions)
 ├── settings.json         hook config + env vars
@@ -157,12 +157,14 @@ bash setup-global.sh
 | **rate-limit-resume** | On stop failure | Auto-resumes on rate limit (up to 3x) |
 | **session-start** | On session start | Injects wiki context into session |
 | **session-end** | On session end | Nudges wiki update if session was productive |
+| **ignite-detector** | On user prompt | Detects `ig`/`ignite` keywords, sets IGNITE session flag |
+| **ignite-stop-gate** | Before stopping | Blocks exit if IGNITE protocol wasn't followed (6+ agents, graphene, review) |
 
 ### Commands
 
 | Command | What it does |
 |---|---|
-| **`/ignite`** (or just **`ig`**) | Maximum effort mode. 4+ agents fire in parallel, todos tracked obsessively, manual QA before completion. The signature move. |
+| **`/ignite`** (or just **`ig`**) | Maximum effort mode. 6+ agents fire in parallel, todos tracked obsessively, manual QA before completion. The signature move. |
 | `/loop` | Autonomous loop — agent works until task is 100% complete |
 | `/halt` | Stop the loop |
 | `/alloy` | Show all agents, skills, commands, hooks |
@@ -197,7 +199,7 @@ User → steel ──├─ RESEARCH: mercury ×N + graphene ×N (parallel)
 
 **What makes this different:** prism runs inline (not as a separate step), gauge is optional (not a required gate), and after every build a review gate auto-fires up to four reviewers — sentinel (security), iridium (performance), cobalt (dependencies), flint (tests) — based on what changed. quartz is never in a pipeline (only when stuck). No fixed sequence — steel adapts per task.
 
-Type **`ig`** (or `/ignite`) for maximum effort: 4+ agents fired in parallel, todos tracked obsessively, manual QA before every completion claim. Two letters. Full team engaged.
+Type **`ig`** (or `/ignite`) for maximum effort: 6+ agents fired in parallel, todos tracked obsessively, manual QA before every completion claim. Two letters. Full team engaged.
 
 ---
 
@@ -303,6 +305,7 @@ exit 0
 | `StopFailure` | When session stops due to error | No |
 | `SessionStart` | When a session starts/resumes | No |
 | `SessionEnd` | When a session ends | No |
+| `UserPromptSubmit` | When user submits a prompt | No |
 
 ---
 
@@ -361,7 +364,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.3.0**.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.4.0**.
 
 ---
 
