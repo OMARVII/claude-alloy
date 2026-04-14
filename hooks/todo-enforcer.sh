@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Todo Continuation Enforcer — Blocks exit if todos remain incomplete
 # Runs as Stop hook
-# Exit 0 = allow stop, Exit 2 = block stop with error message
+# Exit 0 = allow stop, Exit 2 = block stop
 
 set -u
 
@@ -10,6 +10,12 @@ INPUT=$(cat)
 
 # Require jq for JSON parsing
 command -v jq &>/dev/null || exit 0
+
+# Prevent infinite re-blocking loop
+STOP_HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false' 2>/dev/null || echo "false")
+if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
+    exit 0
+fi
 
 # Extract transcript path
 TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/null || echo "")
@@ -46,13 +52,16 @@ if [ "$INCOMPLETE" -gt 0 ]; then
 
     if [ -f "$BLOCK_FILE" ]; then
         rm -f "$BLOCK_FILE"
-        # Second attempt — allow stop but notify
-        echo "Stopping with incomplete todos. Use /handoff to save progress for the next session." >&2
+        # Second attempt — allow stop but warn
+        jq -nc --arg msg "Stopping with incomplete todos. Use /handoff to save progress." \
+            '{systemMessage: $msg}'
         exit 0
     fi
 
     echo "1" > "$BLOCK_FILE"
-    echo "You have incomplete todo items. Review your todo list — there are tasks marked 'pending' or 'in_progress'. Complete them or mark them as cancelled before stopping." >&2
+    # First attempt — block stop
+    jq -nc --argjson n "$INCOMPLETE" \
+        '{decision: "block", reason: ("You have " + ($n | tostring) + " incomplete todos (pending/in_progress). Complete or cancel them before stopping."), hookSpecificOutput: {hookEventName: "Stop"}}'
     exit 2
 fi
 

@@ -62,7 +62,7 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | **notify-setup** | `/notify-setup` | Configure desktop, Slack, and Discord notifications |
 | **learn** | `/learn` | Extract reusable patterns from session into skills |
 
-## Hooks (17, automatic)
+## Hooks (19, automatic)
 
 | Hook | When | What |
 |---|---|---|
@@ -83,6 +83,8 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | **rate-limit-resume** | On stop failure | Auto-resumes on rate limit (up to 3x) |
 | **session-start** | On session start | Injects wiki context into session |
 | **session-end** | On session end | Nudges wiki update if session was productive |
+| **ignite-detector** | On user prompt | Detects `ig`/`ignite` keywords, sets IGNITE session flag |
+| **ignite-stop-gate** | Before stopping | Blocks exit if IGNITE protocol wasn't followed |
 
 ## Quick Examples
 

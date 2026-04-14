@@ -6,6 +6,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.4.0] — 2026-04-14
+
+### Added
+- **ignite-stop-gate hook**: Blocks session exit if IGNITE protocol wasn't followed — validates 6+ agents spawned, graphene included, review agents fired after code changes (Stop hook, block-once pattern)
+- **ignite-detector hook**: Detects `ig`/`ignite` keywords in user prompts via UserPromptSubmit hook, sets session flag and injects IGNITE protocol requirements
+- **UserPromptSubmit hook event**: New hook lifecycle event for pre-processing user input before it reaches the agent
+
+### Changed
+- **install.sh**: Replace 70+ per-file success lines with compact summary output (~15 lines on success). Dynamic counts from variables instead of hardcoded. Version banner in header. Silent success / loud failure pattern.
+- **install.sh --project**: Same compact output treatment (was ~65 lines, now ~11)
+- **install.sh --uninstall**: Suppress `claude mcp remove` stdout noise (`2>/dev/null` → `&>/dev/null`)
+- **activate.sh**: Dynamic file counts instead of hardcoded "14 agents", "8 skills", etc. Version banner from VERSION file.
+- **setup-global.sh**: Fix stale "17 hooks" → "19 hooks" in alloy-init.md heredoc
+- **agents/steel.md**: Add IGNITE MODE DELEGATION RULE section — steel MUST NOT write code in IGNITE mode, 6+ agents required (including graphene), review agents mandatory
+- **commands/ignite.md**: Expand protocol from 6 to 8 steps — graphene mandatory, steel never writes code, review agents non-negotiable, self-audit step
+- **hooks/subagent-start.sh**: Track per-session agent count and agent types in state files for IGNITE enforcement
+- **hooks/todo-enforcer.sh**: Fix JSON output schema for Stop hooks (was stderr text, now proper `decision`/`reason` JSON). Add `stop_hook_active` check to prevent infinite re-blocking.
+- **CLAUDE.md**: Update IGNITE keyword triggers to match new 6+ agent / graphene / review agent requirements. Add enforcement hook documentation.
+- **hooks/hooks.json**: Add ignite-stop-gate to Stop section, add UserPromptSubmit section with ignite-detector
+
+### Fixed
+- **todo-enforcer.sh**: Output was plain text to stderr — Claude Code expected JSON with `decision`/`reason` fields. Fixed all output paths to use `jq -nc` JSON construction.
+- **todo-enforcer.sh**: Missing `stop_hook_active` check caused infinite re-blocking loops when multiple Stop hooks fired.
+- **install.sh + activate.sh**: `claude mcp remove`/`add` printed "Removed/Added MCP server..." on every activation even when nothing changed. Added `ensure_mcp()` helper that checks before touching config.
+
+---
+
 ## [1.3.0] — 2026-04-12
 
 ### Added
