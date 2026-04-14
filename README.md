@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.4.0"><img src="https://img.shields.io/badge/version-1.4.0-green.svg" alt="Version 1.4.0"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.4.1"><img src="https://img.shields.io/badge/version-1.4.1-green.svg" alt="Version 1.4.1"></a>
 </p>
 
 <p align="center">
@@ -317,6 +317,7 @@ Set in `settings.json`:
 |---|---|---|
 | `BASH_DEFAULT_TIMEOUT_MS` | `420000` (7 min) | Prevents timeout on long builds and test suites |
 | `BASH_MAX_TIMEOUT_MS` | `420000` (7 min) | Same |
+| `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS` | `1` | Removes built-in git workflow instructions and git status snapshot from system prompt — saves tokens (alloy provides its own via CLAUDE.md) |
 
 ---
 
@@ -364,7 +365,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.4.0**.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.4.1**.
 
 ---
 
