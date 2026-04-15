@@ -19,7 +19,9 @@ jobs:
           shellcheck \
             activate.sh \
             deactivate.sh \
+            doctor.sh \
             install.sh \
+            self-update.sh \
             setup-global.sh \
             setup-aliases.sh \
             hooks/*.sh
@@ -54,6 +56,12 @@ jobs:
           echo "Verifying manifest was created..."
           test -f /tmp/test-project/.claude/.alloy-manifest
 
+          echo "Verifying project install creates .alloy-meta..."
+          test -f /tmp/test-project/.claude/.alloy-meta || { echo "install.sh --project should create .alloy-meta"; exit 1; }
+          jq . /tmp/test-project/.claude/.alloy-meta > /dev/null || { echo ".alloy-meta is not valid JSON"; exit 1; }
+          PROJECT_META_MODE=$(jq -r '.install_mode' /tmp/test-project/.claude/.alloy-meta)
+          [ "$PROJECT_META_MODE" = "copy" ] || { echo "Project install should be copy mode, got: $PROJECT_META_MODE"; exit 1; }
+
           echo "All smoke tests passed."
 
       - name: Smoke test — project cleanup
@@ -74,11 +82,25 @@ jobs:
           test -d ~/.claude/alloy-hooks
           test -f ~/.claude/settings.json
 
+          echo "Verifying global install creates manifest..."
+          test -f ~/.claude/.alloy-manifest || { echo "install.sh should create .alloy-manifest"; exit 1; }
+
+          echo "Verifying global install creates .alloy-meta..."
+          test -f ~/.claude/.alloy-meta || { echo "install.sh should create .alloy-meta"; exit 1; }
+          jq . ~/.claude/.alloy-meta > /dev/null || { echo ".alloy-meta is not valid JSON"; exit 1; }
+          META_MODE=$(jq -r '.install_mode' ~/.claude/.alloy-meta)
+          META_VER=$(jq -r '.version' ~/.claude/.alloy-meta)
+          REPO_VER=$(cat VERSION)
+          [ "$META_VER" = "$REPO_VER" ] || { echo "Meta version mismatch: $META_VER vs $REPO_VER"; exit 1; }
+          [ "$META_MODE" = "copy" ] || { echo "Global install should be copy mode, got: $META_MODE"; exit 1; }
+
           echo "Testing global --uninstall..."
           bash install.sh --uninstall
           test ! -f ~/.claude/agents/steel.md
           test ! -d ~/.claude/alloy-hooks
           test ! -d ~/.claude/agent-memory
+          test ! -f ~/.claude/.alloy-meta || { echo ".alloy-meta should be removed after uninstall"; exit 1; }
+          test ! -f ~/.claude/.alloy-manifest || { echo ".alloy-manifest should be removed after uninstall"; exit 1; }
 
           echo "Global install/uninstall test passed."
 
@@ -95,9 +117,50 @@ jobs:
           test -f ~/.claude/.alloy-manifest
           jq . ~/.claude/settings.json > /dev/null
 
+          echo "Testing --version flag..."
+          VERSION_OUTPUT=$(bash activate.sh --version)
+          echo "$VERSION_OUTPUT" | grep -qE "claude-alloy.*[0-9]+\.[0-9]+\.[0-9]+" || { echo "Version output missing semver: $VERSION_OUTPUT"; exit 1; }
+
+          echo "Testing --check flag..."
+          bash activate.sh --check --verbose || { echo "activate.sh --check failed after clean install"; exit 1; }
+
+          echo "Testing .alloy-meta content..."
+          test -f ~/.claude/.alloy-meta
+          jq . ~/.claude/.alloy-meta > /dev/null
+          META_MODE=$(jq -r '.install_mode' ~/.claude/.alloy-meta)
+          META_VER=$(jq -r '.version' ~/.claude/.alloy-meta)
+          REPO_VER=$(cat VERSION)
+          [ "$META_MODE" = "symlink" ] || [ "$META_MODE" = "copy" ] || { echo "Invalid install_mode: $META_MODE"; exit 1; }
+          [ "$META_VER" = "$REPO_VER" ] || { echo "Meta version mismatch: $META_VER vs $REPO_VER"; exit 1; }
+
+          echo "Testing doctor.sh pass path (verbose)..."
+          bash doctor.sh --verbose || { echo "doctor.sh failed after fresh install"; exit 1; }
+
+          echo "Testing doctor.sh pass path (non-verbose)..."
+          SUMMARY=$(bash doctor.sh 2>&1)
+          echo "$SUMMARY" | grep -q "alloy doctor:" || { echo "Missing summary line in non-verbose mode"; exit 1; }
+
+          echo "Testing doctor.sh fail path..."
+          rm -f ~/.claude/agents/steel.md
+          bash doctor.sh 2>&1 && { echo "Expected doctor.sh to fail with missing agent"; exit 1; } || true
+          bash activate.sh > /dev/null 2>&1
+
+          echo "Testing customized file backup..."
+          echo "# my custom content" > ~/.claude/agents/steel.md
+          bash activate.sh > /dev/null 2>&1
+          test -f ~/.claude/agents/steel.md.user-backup || { echo "Expected .user-backup to be created"; exit 1; }
+
+          echo "Testing copy-fallback path (simulated WSL)..."
+          bash deactivate.sh > /dev/null 2>&1
+          WSL_DISTRO_NAME=Ubuntu bash activate.sh > /dev/null 2>&1
+          test ! -L ~/.claude/agents/steel.md || { echo "Expected copy, got symlink in WSL mode"; exit 1; }
+          test -f ~/.claude/agents/steel.md || { echo "steel.md missing in copy mode"; exit 1; }
+
           echo "Testing deactivate..."
           bash deactivate.sh
 
           test ! -d ~/.claude/agents || [ -z "$(ls -A ~/.claude/agents 2>/dev/null)" ]
+          test ! -f ~/.claude/.alloy-meta || { echo ".alloy-meta should be removed after deactivate"; exit 1; }
+          test ! -f ~/.claude/.alloy-manifest || { echo ".alloy-manifest should be removed after deactivate"; exit 1; }
 
           echo "Roundtrip test passed."

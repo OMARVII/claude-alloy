@@ -60,7 +60,12 @@ else
     SKIPPED=0
     while IFS= read -r filepath; do
         [ -z "$filepath" ] && continue
-        if [ -f "$filepath" ]; then
+        # Validate path is within CLAUDE_DIR to prevent out-of-scope deletion
+        case "$filepath" in
+            "${CLAUDE_DIR}/"*|"${CLAUDE_DIR}") ;;
+            *) warn "Skipping out-of-scope path: $filepath"; continue ;;
+        esac
+        if [ -f "$filepath" ] || [ -L "$filepath" ]; then
             rm -f "$filepath"
             REMOVED=$((REMOVED + 1))
         else
@@ -77,6 +82,10 @@ else
     done
     info "Cleaned up empty directories"
 fi
+
+# Clean up metadata files
+rm -f "${CLAUDE_DIR}/.alloy-meta"
+rm -f "${CLAUDE_DIR}/.alloy-manifest"
 
 if [ -f "$BACKUP_FILE" ]; then
     mv "$BACKUP_FILE" "$SETTINGS_FILE"

@@ -31,6 +31,15 @@ echo ""
 
 mkdir -p "${CLAUDE_DIR}/commands"
 
+# Stale check — warn if alloy-dist is outdated
+if [ -d "$DIST_DIR" ] && [ -f "$DIST_DIR/VERSION" ]; then
+    DIST_VER=$(cat "$DIST_DIR/VERSION" 2>/dev/null || echo "unknown")
+    REPO_VER=$(cat "${SCRIPT_DIR}/VERSION" 2>/dev/null || echo "unknown")
+    if [ "$DIST_VER" != "$REPO_VER" ]; then
+        warn "alloy-dist is stale (dist: ${DIST_VER}, repo: ${REPO_VER}) — refreshing..."
+    fi
+fi
+
 # Copy the full install payload so /alloy-init survives if the user moves the cloned repo.
 rm -rf "${DIST_DIR:?}"
 mkdir -p "$DIST_DIR"
@@ -41,6 +50,7 @@ cp -R "${SCRIPT_DIR}/skills" "$DIST_DIR/skills"
 cp -R "${SCRIPT_DIR}/commands" "$DIST_DIR/commands"
 cp -R "${SCRIPT_DIR}/hooks" "$DIST_DIR/hooks"
 cp -R "${SCRIPT_DIR}/wiki" "$DIST_DIR/wiki"
+cp "${SCRIPT_DIR}/VERSION" "$DIST_DIR/VERSION"
 chmod +x "$DIST_DIR/install.sh"
 info "Copied installer payload to ${DIST_DIR}"
 

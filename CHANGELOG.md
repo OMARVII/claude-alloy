@@ -6,6 +6,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.5.0] — 2026-04-15
+
+### Added
+- **doctor.sh**: New health check command — validates agents, skills, commands, hooks, symlinks, settings, manifest, version, and MCP servers. Exit 0 = healthy, non-zero = problems. Run via `alloy --check` or `bash doctor.sh`
+- **--version flag**: `alloy --version` shows installed version (short-circuits before self-update). Shows repo vs installed version when they differ
+- **.alloy-meta**: JSON metadata file tracking install mode and version (`{"install_mode":"symlink","version":"1.5.0"}`)
+- **README.md**: Added "Updating" section covering global update flow, per-project update, auto-update opt-out, and troubleshooting guide
+
+### Changed
+- **activate.sh**: Global installs use symlinks by default (macOS/Linux). WSL/Windows auto-detected and falls back to copy mode. Probe test verifies symlink support on the actual filesystem
+- **activate.sh**: Atomic manifest write — writes to `.tmp` then `mv` on success, preventing corrupt manifests on failure
+- **activate.sh**: `install_file()` detects customized files before converting copy to symlink — backs up as `.user-backup` and warns
+- **activate.sh**: `--version` and `--check` flags short-circuit before self-update.sh and jq check
+- **self-update.sh**: Mode-aware success messaging — symlink mode says "changes are live immediately", copy mode says "run alloy to apply"
+- **self-update.sh**: Divergence warning now includes exact fix command (`git pull --rebase origin main`)
+- **setup-global.sh**: Copies VERSION file to alloy-dist payload. Warns when dist payload is stale before refreshing
+
+### Fixed
+- **deactivate.sh**: Handles broken symlinks during cleanup (`[ -f ] || [ -L ]` instead of `[ -f ]` alone)
+- **deactivate.sh**: Cleans up `.alloy-meta` and `.alloy-manifest` on deactivation
+
+---
+
 ## [1.4.1] — 2026-04-14
 
 ### Fixed

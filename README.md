@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.4.1"><img src="https://img.shields.io/badge/version-1.4.1-green.svg" alt="Version 1.4.1"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.5.0"><img src="https://img.shields.io/badge/version-1.5.0-green.svg" alt="Version 1.5.0"></a>
 </p>
 
 <p align="center">
@@ -224,6 +224,68 @@ Type **`ig`** (or `/ignite`) for maximum effort: 6+ agents fired in parallel, to
 | Remove per-project install | `bash install.sh --uninstall` |
 | Remove everything | All of the above |
 
+## Updating
+
+> **TL;DR** — `cd /path/to/claude-alloy && git pull`. Global symlink installs update instantly. Copy-mode and per-project installs need one extra step: run `alloy` or `bash install.sh --project .` again.
+
+### Global install (alloy/unalloy)
+
+Global installs (`alloy`) use **symlinks** by default on macOS and Linux. This means `git pull` in the claude-alloy repo updates all agents, skills, commands, and hooks immediately — no re-activation required.
+
+```bash
+cd /path/to/claude-alloy
+git pull                 # symlink mode: changes are live immediately
+```
+
+If you prefer explicit control:
+
+```bash
+alloy --update           # pull latest + re-activate in one step
+alloy --check            # run health checks (alloy doctor)
+alloy --version          # show installed version
+```
+
+To disable auto-update on activation:
+
+```bash
+export ALLOY_AUTO_UPDATE=0   # env var (per-session)
+touch ~/.claude/.alloy-no-update  # persistent opt-out
+```
+
+On WSL/Windows or filesystems that don't support symlinks, alloy automatically falls back to **copy mode**. In copy mode, run `alloy` after `git pull` to apply updates.
+
+### Per-project update
+
+Per-project installs always use copies (not symlinks), so updates require re-running the installer:
+
+```bash
+cd /path/to/claude-alloy
+git pull
+bash install.sh --project /path/to/your/project
+```
+
+### Global command update (/alloy-init)
+
+If you used `setup-global.sh` + `/alloy-init` to install projects, update the cached payload first:
+
+```bash
+cd /path/to/claude-alloy
+git pull
+bash setup-global.sh         # refreshes ~/.claude/alloy-dist/
+```
+
+Then re-run `/alloy-init` inside each project in Claude Code to apply the update.
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Broken symlinks after moving the clone | Symlinks point to old repo path | Run `alloy` again from the new location |
+| `git pull` fails with diverged error | Local commits on main branch | `cd /path/to/claude-alloy && git pull --rebase origin main` |
+| WSL uses copy mode instead of symlinks | NTFS/drvfs doesn't support real symlinks | Expected behavior — run `alloy` after `git pull` |
+| Stale `/alloy-init` payloads | `setup-global.sh` payload outdated | Run `bash setup-global.sh` again |
+| Hooks firing twice after update | Duplicate hook entries in settings.json | Run `unalloy && alloy` to regenerate clean settings |
+
 ---
 
 ## Development Guide
@@ -365,7 +427,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.4.1**.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.5.0**.
 
 ---
 
