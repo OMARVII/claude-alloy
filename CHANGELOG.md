@@ -26,6 +26,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - **deactivate.sh**: Handles broken symlinks during cleanup (`[ -f ] || [ -L ]` instead of `[ -f ]` alone)
 - **deactivate.sh**: Cleans up `.alloy-meta` and `.alloy-manifest` on deactivation
+- **activate.sh**: Non-atomic `ln -sf` replaced with `ln -s .tmp && mv` — eliminates ENOENT window during symlink updates
+- **activate.sh**: Version tracking switched from `git describe --tags` to `VERSION` file — consistent across branches and forks
+- **install.sh**: Global path was missing `.alloy-meta` creation — metadata now written for both `--project` and global installs
+- **install.sh**: Global path had no manifest tracking — all installed files now tracked for clean uninstall
+- **install.sh --uninstall**: `.alloy-meta` was not cleaned up on uninstall
+- **CI**: Backup test wrote through symlink instead of creating regular file — `rm -f` before `echo` fixes it
+- **CI**: `.user-backup` file left behind caused deactivate emptiness assertion to fail
 
 ---
 
