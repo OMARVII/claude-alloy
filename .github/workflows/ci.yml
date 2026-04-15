@@ -150,6 +150,7 @@ jobs:
           echo "# my custom content" > ~/.claude/agents/steel.md
           bash activate.sh > /dev/null 2>&1
           test -f ~/.claude/agents/steel.md.user-backup || { echo "Expected .user-backup to be created"; exit 1; }
+          rm -f ~/.claude/agents/steel.md.user-backup
 
           echo "Testing copy-fallback path (simulated WSL)..."
           bash deactivate.sh > /dev/null 2>&1
