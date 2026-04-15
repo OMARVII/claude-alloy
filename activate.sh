@@ -19,6 +19,91 @@ SETTINGS_FILE="${CLAUDE_DIR}/settings.json"
 BACKUP_FILE="${CLAUDE_DIR}/settings.json.alloy-backup"
 HOOK_DIR="${CLAUDE_DIR}/alloy-hooks"
 
+# --- Platform detection ---
+
+detect_install_mode() {
+    # WSL detection
+    if [ -n "${WSL_DISTRO_NAME:-}" ]; then
+        echo "copy"
+        return
+    fi
+    if [ -f /proc/version ] && grep -qi "microsoft" /proc/version 2>/dev/null; then
+        echo "copy"
+        return
+    fi
+    case "$(uname -s 2>/dev/null)" in
+        MINGW*|MSYS*|CYGWIN*)
+            echo "copy"
+            return
+            ;;
+    esac
+
+    # Probe test: verify symlinks actually work (NTFS drvfs creates text files)
+    local probe_dir="${CLAUDE_DIR}"
+    mkdir -p "$probe_dir"
+    local probe_src="${probe_dir}/.alloy-probe-src"
+    local probe_lnk="${probe_dir}/.alloy-probe-lnk"
+    echo "probe" > "$probe_src" 2>/dev/null || { echo "copy"; return; }
+    ln -sf "$probe_src" "$probe_lnk" 2>/dev/null || { rm -f "$probe_src"; echo "copy"; return; }
+    if [ -L "$probe_lnk" ]; then
+        rm -f "$probe_src" "$probe_lnk"
+        echo "symlink"
+    else
+        rm -f "$probe_src" "$probe_lnk"
+        echo "copy"
+    fi
+}
+
+install_file() {
+    local src="$1" dest="$2" manifest_tmp="$3"
+    if [ "$INSTALL_MODE" = "symlink" ]; then
+        if [ -f "$dest" ] && [ ! -L "$dest" ]; then
+            # Regular file exists — check if it differs from source
+            if ! diff -q "$src" "$dest" &>/dev/null; then
+                cp "$dest" "${dest}.user-backup"
+                warn "Backed up customized file: $(basename "$dest") → $(basename "$dest").user-backup"
+            fi
+            ln -sf "$src" "$dest"
+        elif [ -L "$dest" ]; then
+            local current_target
+            current_target=$(readlink "$dest" 2>/dev/null || echo "")
+            if [ "$current_target" = "$src" ]; then
+                : # Already correct symlink — skip
+            else
+                ln -sf "$src" "$dest"
+            fi
+        else
+            ln -sf "$src" "$dest"
+        fi
+    else
+        cp "$src" "$dest"
+    fi
+    echo "$dest" >> "$manifest_tmp"
+}
+
+# --- Flag handling (short-circuit before self-update) ---
+
+for arg in "$@"; do
+    case "$arg" in
+        --version)
+            VERSION=$(cat "${SCRIPT_DIR}/VERSION" 2>/dev/null || echo "dev")
+            INSTALLED_VER=""
+            if [ -f "${CLAUDE_DIR}/.alloy-version" ]; then
+                INSTALLED_VER=$(cat "${CLAUDE_DIR}/.alloy-version" 2>/dev/null || echo "")
+            fi
+            if [ -n "$INSTALLED_VER" ] && [ "$INSTALLED_VER" != "$VERSION" ] && [ "$INSTALLED_VER" != "v${VERSION}" ]; then
+                echo "claude-alloy repo: ${VERSION} | installed: ${INSTALLED_VER}"
+            else
+                echo "claude-alloy ${VERSION}"
+            fi
+            exit 0
+            ;;
+        --check)
+            exec bash "${SCRIPT_DIR}/doctor.sh" "$@"
+            ;;
+    esac
+done
+
 if ! command -v jq &>/dev/null; then
     error "jq is required. Install: brew install jq (macOS) or apt install jq (Linux)"
     exit 1
@@ -38,6 +123,8 @@ echo -e "${BLUE}║${NC}  Agent Harness — Activate                  ${BLUE}║
 echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}"
 echo ""
 
+INSTALL_MODE=$(detect_install_mode)
+
 mkdir -p "${CLAUDE_DIR}/agents" "${CLAUDE_DIR}/skills" "${CLAUDE_DIR}/commands" "${CLAUDE_DIR}/alloy-hooks" "${CLAUDE_DIR}/agent-memory"
 
 if [ ! -f "$BACKUP_FILE" ]; then
@@ -50,16 +137,16 @@ else
 fi
 
 MANIFEST_FILE="${CLAUDE_DIR}/.alloy-manifest"
-: > "$MANIFEST_FILE"
+MANIFEST_TMP="${MANIFEST_FILE}.tmp"
+: > "$MANIFEST_TMP"
 
 AGENT_COUNT=0
 for f in "${SCRIPT_DIR}"/agents/*.md; do
     dest="${CLAUDE_DIR}/agents/$(basename "$f")"
-    cp "$f" "$dest"
-    echo "$dest" >> "$MANIFEST_FILE"
+    install_file "$f" "$dest" "$MANIFEST_TMP"
     AGENT_COUNT=$((AGENT_COUNT + 1))
 done
-info "Installed ${AGENT_COUNT} agents"
+info "Installed ${AGENT_COUNT} agents (${INSTALL_MODE} mode)"
 
 SKILL_COUNT=0
 for skill_dir in "${SCRIPT_DIR}"/skills/*/; do
@@ -67,8 +154,7 @@ for skill_dir in "${SCRIPT_DIR}"/skills/*/; do
     mkdir -p "${CLAUDE_DIR}/skills/${skill_name}"
     for f in "${skill_dir}"*; do
         dest="${CLAUDE_DIR}/skills/${skill_name}/$(basename "$f")"
-        cp "$f" "$dest"
-        echo "$dest" >> "$MANIFEST_FILE"
+        install_file "$f" "$dest" "$MANIFEST_TMP"
     done
     SKILL_COUNT=$((SKILL_COUNT + 1))
 done
@@ -79,22 +165,25 @@ for stale_skill in wiki learn; do rm -rf "${CLAUDE_DIR}/skills/${stale_skill}" 2
 CMD_COUNT=0
 for f in "${SCRIPT_DIR}"/commands/*.md; do
     dest="${CLAUDE_DIR}/commands/$(basename "$f")"
-    cp "$f" "$dest"
-    echo "$dest" >> "$MANIFEST_FILE"
+    install_file "$f" "$dest" "$MANIFEST_TMP"
     CMD_COUNT=$((CMD_COUNT + 1))
 done
 info "Installed ${CMD_COUNT} commands"
 
 HOOK_COUNT=0
+chmod +x "${SCRIPT_DIR}"/hooks/*.sh 2>/dev/null || true
 for f in "${SCRIPT_DIR}"/hooks/*.sh; do
     dest="${CLAUDE_DIR}/alloy-hooks/$(basename "$f")"
-    cp "$f" "$dest"
-    chmod +x "$dest"
-    echo "$dest" >> "$MANIFEST_FILE"
+    install_file "$f" "$dest" "$MANIFEST_TMP"
+    # Ensure dest is executable (for copy mode; symlinks inherit source perms)
+    if [ ! -L "$dest" ]; then
+        chmod +x "$dest"
+    fi
     HOOK_COUNT=$((HOOK_COUNT + 1))
 done
 info "Installed ${HOOK_COUNT} hooks"
 
+# Agent memory: always copy, never symlink
 MEM_COUNT=0
 for f in "${SCRIPT_DIR}"/agents/*.md; do
     agent_name=$(basename "$f" .md)
@@ -104,18 +193,27 @@ for f in "${SCRIPT_DIR}"/agents/*.md; do
     if [ ! -f "$dest" ]; then
         echo "# ${agent_name} Memory" > "$dest"
     fi
-    echo "$dest" >> "$MANIFEST_FILE"
+    echo "$dest" >> "$MANIFEST_TMP"
     MEM_COUNT=$((MEM_COUNT + 1))
 done
 info "Generated ${MEM_COUNT} agent memory files"
 
+# CLAUDE.md: always copy (may be customized per-project)
 dest="${CLAUDE_DIR}/CLAUDE.md"
 cp "${SCRIPT_DIR}/CLAUDE.md" "$dest"
-echo "$dest" >> "$MANIFEST_FILE"
+echo "$dest" >> "$MANIFEST_TMP"
 info "Installed CLAUDE.md"
 
-echo "$MANIFEST_FILE" >> "$MANIFEST_FILE"
+echo "$MANIFEST_FILE" >> "$MANIFEST_TMP"
+mv "$MANIFEST_TMP" "$MANIFEST_FILE"
 info "Wrote manifest ($(wc -l < "$MANIFEST_FILE" | tr -d ' ') files tracked)"
+
+# Write install metadata
+VERSION=$(cat "${SCRIPT_DIR}/VERSION" 2>/dev/null || echo "dev")
+META_TMP="${CLAUDE_DIR}/.alloy-meta.tmp"
+jq -n --arg mode "$INSTALL_MODE" --arg ver "$VERSION" \
+    '{"install_mode": $mode, "version": $ver}' > "$META_TMP"
+mv "$META_TMP" "${CLAUDE_DIR}/.alloy-meta"
 
 ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
   "agent": "steel",
