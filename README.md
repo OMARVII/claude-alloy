@@ -226,6 +226,8 @@ Type **`ig`** (or `/ignite`) for maximum effort: 6+ agents fired in parallel, to
 
 ## Updating
 
+> **TL;DR** — `cd /path/to/claude-alloy && git pull`. Global symlink installs update instantly. Copy-mode and per-project installs need one extra step: run `alloy` or `bash install.sh --project .` again.
+
 ### Global install (alloy/unalloy)
 
 Global installs (`alloy`) use **symlinks** by default on macOS and Linux. This means `git pull` in the claude-alloy repo updates all agents, skills, commands, and hooks immediately — no re-activation required.
@@ -261,6 +263,18 @@ cd /path/to/claude-alloy
 git pull
 bash install.sh --project /path/to/your/project
 ```
+
+### Global command update (/alloy-init)
+
+If you used `setup-global.sh` + `/alloy-init` to install projects, update the cached payload first:
+
+```bash
+cd /path/to/claude-alloy
+git pull
+bash setup-global.sh         # refreshes ~/.claude/alloy-dist/
+```
+
+Then re-run `/alloy-init` inside each project in Claude Code to apply the update.
 
 ### Troubleshooting
 

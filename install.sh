@@ -45,6 +45,7 @@ if [ "${1:-}" = "--uninstall" ]; then
         info "Removed Alloy settings.json (no original to restore)."
     fi
     rm -f "${CLAUDE_DIR:?}/.alloy-version"
+    rm -f "${CLAUDE_DIR:?}/.alloy-meta"
     # Remove alloy-managed MCP servers
     if command -v claude &>/dev/null; then
         for srv in context7 grep_app websearch playwright; do
@@ -247,6 +248,13 @@ PROJ_EOF
     rm -f "$ALLOY_TMP" 2>/dev/null
     success "Settings: configured"
     success "Manifest: $(wc -l < "$MANIFEST_FILE" | tr -d ' ') files tracked"
+
+    # Write install metadata
+    META_TMP="${CLAUDE_DIR}/.alloy-meta.tmp"
+    jq -n --arg mode "copy" --arg ver "$VERSION" \
+        '{"install_mode": $mode, "version": $ver}' > "$META_TMP"
+    mv "$META_TMP" "${CLAUDE_DIR}/.alloy-meta"
+
     GITIGNORE="${TARGET_DIR}/.gitignore"
     if [ -f "$GITIGNORE" ]; then
         if ! grep -qxF '.claude/' "$GITIGNORE" 2>/dev/null; then
@@ -274,6 +282,10 @@ echo ""
 
 mkdir -p "${CLAUDE_DIR}"/{agents,skills,commands,alloy-hooks}
 
+MANIFEST_FILE="${CLAUDE_DIR}/.alloy-manifest"
+MANIFEST_TMP="${MANIFEST_FILE}.tmp"
+: > "$MANIFEST_TMP"
+
 NEEDS_BACKUP=false
 for agent in $AGENTS; do [ -f "${CLAUDE_DIR}/agents/${agent}.md" ] && NEEDS_BACKUP=true; done
 if [ "$NEEDS_BACKUP" = true ]; then
@@ -288,6 +300,7 @@ AGENT_OK=0; AGENT_FAIL=0; AGENT_ERRORS=""
 for agent in $AGENTS; do
     if [ -f "${SCRIPT_DIR}/agents/${agent}.md" ]; then
         cp "${SCRIPT_DIR}/agents/${agent}.md" "${CLAUDE_DIR}/agents/${agent}.md"
+        echo "${CLAUDE_DIR}/agents/${agent}.md" >> "$MANIFEST_TMP"
         AGENT_OK=$((AGENT_OK + 1))
     else
         AGENT_FAIL=$((AGENT_FAIL + 1))
@@ -306,6 +319,7 @@ for skill in $SKILLS; do
     if [ -f "${SCRIPT_DIR}/skills/${skill}/SKILL.md" ]; then
         mkdir -p "${CLAUDE_DIR}/skills/${skill}"
         cp "${SCRIPT_DIR}/skills/${skill}/SKILL.md" "${CLAUDE_DIR}/skills/${skill}/SKILL.md"
+        echo "${CLAUDE_DIR}/skills/${skill}/SKILL.md" >> "$MANIFEST_TMP"
         SKILL_OK=$((SKILL_OK + 1))
     else
         SKILL_FAIL=$((SKILL_FAIL + 1))
@@ -323,6 +337,7 @@ CMD_OK=0; CMD_FAIL=0; CMD_ERRORS=""
 for cmd in $COMMANDS; do
     if [ -f "${SCRIPT_DIR}/commands/${cmd}.md" ]; then
         cp "${SCRIPT_DIR}/commands/${cmd}.md" "${CLAUDE_DIR}/commands/${cmd}.md"
+        echo "${CLAUDE_DIR}/commands/${cmd}.md" >> "$MANIFEST_TMP"
         CMD_OK=$((CMD_OK + 1))
     else
         CMD_FAIL=$((CMD_FAIL + 1))
@@ -341,6 +356,7 @@ for hook in $HOOKS; do
     if [ -f "${SCRIPT_DIR}/hooks/${hook}" ]; then
         cp "${SCRIPT_DIR}/hooks/${hook}" "${CLAUDE_DIR}/alloy-hooks/${hook}"
         chmod +x "${CLAUDE_DIR}/alloy-hooks/${hook}"
+        echo "${CLAUDE_DIR}/alloy-hooks/${hook}" >> "$MANIFEST_TMP"
         HOOK_OK=$((HOOK_OK + 1))
     else
         HOOK_FAIL=$((HOOK_FAIL + 1))
@@ -361,6 +377,7 @@ for agent in $AGENTS; do
     if [ ! -f "$mem_dir/MEMORY.md" ]; then
         echo "# ${agent} Memory" > "$mem_dir/MEMORY.md"
     fi
+    echo "$mem_dir/MEMORY.md" >> "$MANIFEST_TMP"
     MEM_OK=$((MEM_OK + 1))
 done
 success "Memory:   ${MEM_OK} initialized"
@@ -373,6 +390,7 @@ for wiki_file in "${SCRIPT_DIR}"/wiki/*.md; do
     dest="${WIKI_DIR}/$(basename "$wiki_file")"
     if [ ! -f "$dest" ]; then
         cp "$wiki_file" "$dest"
+        echo "$dest" >> "$MANIFEST_TMP"
     fi
     WIKI_OK=$((WIKI_OK + 1))
 done
@@ -412,6 +430,15 @@ cat > "$SETTINGS_FILE" << SETTINGS_EOF
 }
 SETTINGS_EOF
 success "Settings: configured (hooks + env)"
+
+# Write install metadata
+META_TMP="${CLAUDE_DIR}/.alloy-meta.tmp"
+jq -n --arg ver "$VERSION" \
+    '{"install_mode": "copy", "version": $ver}' > "$META_TMP"
+mv "$META_TMP" "${CLAUDE_DIR}/.alloy-meta"
+
+echo "$MANIFEST_FILE" >> "$MANIFEST_TMP"
+mv "$MANIFEST_TMP" "$MANIFEST_FILE"
 
 MCP_OK=0; MCP_NAMES=""
 if command -v claude &>/dev/null; then

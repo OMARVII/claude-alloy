@@ -56,6 +56,12 @@ jobs:
           echo "Verifying manifest was created..."
           test -f /tmp/test-project/.claude/.alloy-manifest
 
+          echo "Verifying project install creates .alloy-meta..."
+          test -f /tmp/test-project/.claude/.alloy-meta || { echo "install.sh --project should create .alloy-meta"; exit 1; }
+          jq . /tmp/test-project/.claude/.alloy-meta > /dev/null || { echo ".alloy-meta is not valid JSON"; exit 1; }
+          PROJECT_META_MODE=$(jq -r '.install_mode' /tmp/test-project/.claude/.alloy-meta)
+          [ "$PROJECT_META_MODE" = "copy" ] || { echo "Project install should be copy mode, got: $PROJECT_META_MODE"; exit 1; }
+
           echo "All smoke tests passed."
 
       - name: Smoke test — project cleanup
@@ -76,11 +82,25 @@ jobs:
           test -d ~/.claude/alloy-hooks
           test -f ~/.claude/settings.json
 
+          echo "Verifying global install creates manifest..."
+          test -f ~/.claude/.alloy-manifest || { echo "install.sh should create .alloy-manifest"; exit 1; }
+
+          echo "Verifying global install creates .alloy-meta..."
+          test -f ~/.claude/.alloy-meta || { echo "install.sh should create .alloy-meta"; exit 1; }
+          jq . ~/.claude/.alloy-meta > /dev/null || { echo ".alloy-meta is not valid JSON"; exit 1; }
+          META_MODE=$(jq -r '.install_mode' ~/.claude/.alloy-meta)
+          META_VER=$(jq -r '.version' ~/.claude/.alloy-meta)
+          REPO_VER=$(cat VERSION)
+          [ "$META_VER" = "$REPO_VER" ] || { echo "Meta version mismatch: $META_VER vs $REPO_VER"; exit 1; }
+          [ "$META_MODE" = "copy" ] || { echo "Global install should be copy mode, got: $META_MODE"; exit 1; }
+
           echo "Testing global --uninstall..."
           bash install.sh --uninstall
           test ! -f ~/.claude/agents/steel.md
           test ! -d ~/.claude/alloy-hooks
           test ! -d ~/.claude/agent-memory
+          test ! -f ~/.claude/.alloy-meta || { echo ".alloy-meta should be removed after uninstall"; exit 1; }
+          test ! -f ~/.claude/.alloy-manifest || { echo ".alloy-manifest should be removed after uninstall"; exit 1; }
 
           echo "Global install/uninstall test passed."
 

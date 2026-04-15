@@ -63,17 +63,17 @@ install_file() {
                 cp "$dest" "${dest}.user-backup"
                 warn "Backed up customized file: $(basename "$dest") → $(basename "$dest").user-backup"
             fi
-            ln -sf "$src" "$dest"
+            ln -s "$src" "${dest}.alloy-tmp" && mv "${dest}.alloy-tmp" "$dest"
         elif [ -L "$dest" ]; then
             local current_target
             current_target=$(readlink "$dest" 2>/dev/null || echo "")
             if [ "$current_target" = "$src" ]; then
                 : # Already correct symlink — skip
             else
-                ln -sf "$src" "$dest"
+                ln -s "$src" "${dest}.alloy-tmp" && mv "${dest}.alloy-tmp" "$dest"
             fi
         else
-            ln -sf "$src" "$dest"
+            ln -s "$src" "${dest}.alloy-tmp" && mv "${dest}.alloy-tmp" "$dest"
         fi
     else
         cp "$src" "$dest"
@@ -356,9 +356,7 @@ else
 fi
 
 # Track installed version
-if [ -d "$SCRIPT_DIR/.git" ]; then
-    git -C "$SCRIPT_DIR" describe --tags --always 2>/dev/null > "${CLAUDE_DIR}/.alloy-version" || true
-fi
+cat "${SCRIPT_DIR}/VERSION" > "${CLAUDE_DIR}/.alloy-version" 2>/dev/null || true
 
 echo ""
 success "claude-alloy is now active globally!"
