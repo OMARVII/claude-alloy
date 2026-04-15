@@ -77,10 +77,20 @@ done
 if [ "$FORCE_UPDATE" = true ] || [ "${ALLOY_AUTO_UPDATE:-}" = "1" ]; then
     info "Pulling latest from origin/main..."
     if git pull --ff-only origin main 2>/dev/null; then
-        success "Updated ${LOCAL_VER} → ${REMOTE_VER} (${BEHIND} new commits)"
+        # Read install mode from metadata
+        META_FILE="${CLAUDE_DIR}/.alloy-meta"
+        CURRENT_MODE="copy"
+        if [ -f "$META_FILE" ] && command -v jq &>/dev/null; then
+            CURRENT_MODE=$(jq -r '.install_mode // "copy"' "$META_FILE" 2>/dev/null || echo "copy")
+        fi
+        if [ "$CURRENT_MODE" = "symlink" ]; then
+            success "Updated ${LOCAL_VER} → ${REMOTE_VER} (${BEHIND} new commits). Changes are live immediately."
+        else
+            success "Updated ${LOCAL_VER} → ${REMOTE_VER} (${BEHIND} new commits). Run 'alloy' to apply the update."
+        fi
     else
         warn "Update available (${LOCAL_VER} → ${REMOTE_VER}) but your local repo has diverged."
-        warn "Run 'git pull --rebase' manually in: ${SCRIPT_DIR}"
+        warn "Fix: cd ${SCRIPT_DIR} && git pull --rebase origin main"
     fi
 else
     echo ""
