@@ -146,6 +146,7 @@ jobs:
           bash activate.sh > /dev/null 2>&1
 
           echo "Testing customized file backup..."
+          rm -f ~/.claude/agents/steel.md
           echo "# my custom content" > ~/.claude/agents/steel.md
           bash activate.sh > /dev/null 2>&1
           test -f ~/.claude/agents/steel.md.user-backup || { echo "Expected .user-backup to be created"; exit 1; }
