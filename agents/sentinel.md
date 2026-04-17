@@ -14,10 +14,10 @@ disallowedTools:
   - Edit
   - Agent
   - Skill
-permissionMode: plan
 maxTurns: 30
 effort: high
 color: red
+background: true
 memory: project
 ---
 

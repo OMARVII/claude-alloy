@@ -51,6 +51,7 @@ Steel routes tasks based on what they need — not through a fixed sequence:
 | `/ai-slop-remover` | Remove AI code smells (obvious comments, over-defensive code, spaghetti nesting) |
 | `/tdd-workflow` | Test-driven development: red-green-refactor cycle enforcement |
 | `/verification-loop` | Full verify cycle: build → typecheck → lint → test → E2E |
+| `/pipeline` | Batch processing with Claude Code headless mode (fan-out across files) |
 
 ## Commands Available
 
@@ -69,6 +70,8 @@ Steel routes tasks based on what they need — not through a fixed sequence:
 | `/wiki-update` | Update project wiki with session learnings |
 | `/notify-setup` | Configure desktop, Slack, and Discord notifications |
 | `/learn` | Extract reusable patterns from session into skills |
+| `/assess` | Scan project health and Claude Code readiness |
+| `/ig` | Shorthand alias for `/ignite` — max-effort mode |
 
 ## Keyword Triggers
 

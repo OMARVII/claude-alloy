@@ -1,6 +1,7 @@
 ---
 name: verification-loop
 description: "Full verification cycle: build, test, lint, typecheck. Run after implementation to prove it works. Triggers: 'verify', 'does it work', 'run tests', 'check everything', 'make sure it works'."
+allowed-tools: Bash, Read, Grep, Glob, Edit
 ---
 
 You are running a verification loop. The goal is to PROVE the code works — not assume it does.

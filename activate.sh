@@ -222,6 +222,10 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
     "BASH_MAX_TIMEOUT_MS": "420000",
     "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1"
   },
+  "statusLine": {
+    "type": "command",
+    "command": ($hd + "/statusline.sh")
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -250,6 +254,10 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
       {
         "matcher": "Edit|Write|Bash|Read|Grep|Glob",
         "hooks": [{"type":"command","command":($hd + "/skill-reminder.sh"),"timeout":5,"statusMessage":"Checking skill usage..."}]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [{"type":"command","command":($hd + "/context-pressure.sh"),"timeout":3,"async":true}]
       }
     ],
     "Stop": [
@@ -300,7 +308,8 @@ if [ -f "$BACKUP_FILE" ]; then
       .hooks.StopFailure = $alloy.hooks.StopFailure |
       .hooks.SessionStart = $alloy.hooks.SessionStart |
       .hooks.SessionEnd = $alloy.hooks.SessionEnd |
-      .hooks.UserPromptSubmit = $alloy.hooks.UserPromptSubmit
+      .hooks.UserPromptSubmit = $alloy.hooks.UserPromptSubmit |
+      .statusLine = ($orig.statusLine // $alloy.statusLine)
     ' "$BACKUP_FILE" <(echo "$ALLOY_SETTINGS") > "${SETTINGS_FILE}.tmp" || {
         error "Settings merge failed. Restoring backup."
         rm -f "${SETTINGS_FILE}.tmp"

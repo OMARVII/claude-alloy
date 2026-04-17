@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.5.0"><img src="https://img.shields.io/badge/version-1.5.0-green.svg" alt="Version 1.5.0"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.6.0"><img src="https://img.shields.io/badge/version-1.6.0-green.svg" alt="Version 1.6.0"></a>
 </p>
 
 <p align="center">
@@ -22,19 +22,21 @@
 
 ---
 
-Fourteen agents. Named after what they're made of.
+Claude Code with a team.
+
+Fourteen specialist agents. Model-tiered (Opus/Sonnet/Haiku) so you stop overpaying for searches. Zero runtime. One config overlay. One command to activate, one to remove.
 
 Steel holds the structure. Tungsten doesn't melt under pressure. Mercury moves fast. Graphene conducts everything.
-
-This is what [Claude Code](https://docs.anthropic.com/en/docs/claude-code) looks like with a team.
 
 ```bash
 alloy
 ```
 
-That's it. 14 agents, 19 hooks, 8 skills, 14 commands. Globally active. Open Claude in any directory and go.
+That's it. 14 agents, 21 hooks, 9 skills, 15 commands + HUD statusline. Globally active. Open [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in any directory and go.
 
-<!-- TODO: Add terminal demo GIF here before launch (e.g. asciinema or vhs recording of `alloy` → `ig implement auth` → agents firing) -->
+<p align="center">
+  <strong>If this saves you time, give it a ⭐ — that's how I know to keep building.</strong>
+</p>
 
 ```bash
 unalloy
@@ -64,6 +66,22 @@ Back to vanilla Claude. Your original settings restored exactly.
 | **flint** | sonnet | Test engineer. Coverage gaps, flaky tests, missing edge cases. | Strikes sparks. Finds what breaks. |
 
 **Model tiering is intentional.** Opus handles orchestration and judgment. Sonnet handles research and analysis. Haiku handles grep. You pay for thinking, not searching.
+
+---
+
+## How This Compares
+
+| | claude-alloy | oh-my-openagent | oh-my-claudecode |
+|---|---|---|---|
+| Target agent | Claude Code | OpenCode | Claude Code |
+| Runtime | None (pure config) | Plugin runtime | Plugin runtime |
+| Agent count | 14 | 20+ | 10+ |
+| Model tiering | Opus/Sonnet/Haiku by role | No | No |
+| Install modes | Global toggle · plugin · per-project · global command | Plugin install | Plugin install |
+| Reversible | `unalloy` restores exactly | Manual removal | Manual removal |
+| License | MIT | MIT | MIT |
+
+Honest positioning: oh-my-openagent and oh-my-claudecode are excellent — they inspired this project. claude-alloy's contribution is the pure-config approach and deliberate model tiering. Pick whichever fits your stack.
 
 ---
 
@@ -127,9 +145,9 @@ bash setup-global.sh
 ```
 .claude/
 ├── agents/               14 agents (steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint)
-├── skills/               8 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop)
-├── commands/             14 commands (/ignite, /ig, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status, /wiki-update, /notify-setup, /learn)
-├── alloy-hooks/          19 hooks (all automatic, listed below)
+├── skills/               9 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, pipeline)
+├── commands/             15 commands (/ignite, /ig, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status, /wiki-update, /notify-setup, /learn, /assess)
+├── alloy-hooks/          21 hooks (all automatic, listed below) + statusline HUD
 ├── wiki/                 project wiki (architecture, conventions, decisions)
 ├── agent-memory/         14 memory files (generated at install — agents learn across sessions)
 ├── settings.json         hook config + env vars
@@ -159,6 +177,8 @@ bash setup-global.sh
 | **session-end** | On session end | Nudges wiki update if session was productive |
 | **ignite-detector** | On user prompt | Detects `ig`/`ignite` keywords, sets IGNITE session flag |
 | **ignite-stop-gate** | Before stopping | Blocks exit if IGNITE protocol wasn't followed (6+ agents, graphene, review) |
+| **context-pressure** | After any tool | Advisory warnings at ~70% / ~85% context usage (100 / 140 tool calls) |
+| **statusline** | Persistent HUD | HUD: model, ctx%, session duration, tool count, cwd (via settings.json statusLine) |
 
 ### Commands
 
@@ -177,6 +197,7 @@ bash setup-global.sh
 | `/wiki-update` | Update project wiki with session learnings |
 | `/notify-setup` | Configure desktop, Slack, and Discord notifications |
 | `/learn` | Extract reusable patterns from the current session into skills |
+| `/assess` | Scan project health — rate Claude Code maturity 0–10 and suggest next steps |
 
 ---
 
@@ -427,7 +448,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.5.0**.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.6.0**.
 
 ---
 
@@ -436,6 +457,12 @@ See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.5.0**
 Built on Claude Code. Inspired by the agent orchestration patterns pioneered by [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent).
 
 The alloy concept: individual agents are metals — each with specific properties. Together, they're stronger than any single element. The same principle applies to AI agents.
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=OMARVII/claude-alloy&type=Date)](https://star-history.com/#OMARVII/claude-alloy&Date)
 
 ---
 

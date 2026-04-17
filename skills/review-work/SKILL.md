@@ -1,6 +1,7 @@
 ---
 name: review-work
 description: 5-agent parallel review orchestrator. Fire all reviewers simultaneously, collect verdicts, fix failures, re-review until all pass.
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Review Work

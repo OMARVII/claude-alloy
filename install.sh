@@ -17,9 +17,9 @@ warn() { echo -e "${YELLOW}[ALLOY]${NC} $1"; }
 error() { echo -e "${RED}[ALLOY]${NC} $1"; }
 
 AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium iridium cobalt flint"
-SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop"
-COMMANDS="ignite ig loop init-deep refactor start-work handoff halt alloy unalloy status wiki-update notify-setup learn"
-HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh ignite-stop-gate.sh ignite-detector.sh"
+SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop pipeline"
+COMMANDS="ignite ig loop init-deep refactor start-work handoff halt alloy unalloy status wiki-update notify-setup learn assess"
+HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh ignite-stop-gate.sh ignite-detector.sh context-pressure.sh statusline.sh"
 
 if [ "${1:-}" = "--uninstall" ]; then
     info "Uninstalling claude-alloy..."
@@ -397,12 +397,20 @@ done
 success "Wiki:     ${WIKI_OK} templates"
 
 SETTINGS_FILE="${CLAUDE_DIR}/settings.json"
+BACKUP_FILE="${CLAUDE_DIR}/settings.json.alloy-backup"
 HOOK_PREFIX="${HOME}/.claude/alloy-hooks"
 
-cat > "$SETTINGS_FILE" << SETTINGS_EOF
+# Back up existing settings on first install (preserve original)
+if [ -f "$SETTINGS_FILE" ] && [ ! -f "$BACKUP_FILE" ]; then
+    cp "$SETTINGS_FILE" "$BACKUP_FILE"
+fi
+
+ALLOY_TMP="${SETTINGS_FILE}.alloy-new"
+cat > "$ALLOY_TMP" << SETTINGS_EOF
 {
   "agent": "steel",
   "env": {"BASH_DEFAULT_TIMEOUT_MS": "420000", "BASH_MAX_TIMEOUT_MS": "420000", "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1"},
+  "statusLine": {"type": "command", "command": "${HOOK_PREFIX}/statusline.sh"},
   "hooks": {
     "PreToolUse": [
       {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "timeout": 5}]},
@@ -411,7 +419,8 @@ cat > "$SETTINGS_FILE" << SETTINGS_EOF
     "PostToolUse": [
       {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/comment-checker.sh", "timeout": 10}, {"type": "command", "command": "${HOOK_PREFIX}/typecheck.sh", "timeout": 60}, {"type": "command", "command": "${HOOK_PREFIX}/lint.sh", "timeout": 30}, {"type": "command", "command": "${HOOK_PREFIX}/auto-install.sh", "timeout": 60}]},
       {"matcher": "Grep|Glob|WebFetch|WebSearch|mcp__.*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-reminder.sh", "timeout": 5}]},
-      {"matcher": "Edit|Write|Bash|Read|Grep|Glob", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/skill-reminder.sh", "timeout": 5}]}
+      {"matcher": "Edit|Write|Bash|Read|Grep|Glob", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/skill-reminder.sh", "timeout": 5}]},
+      {"matcher": ".*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/context-pressure.sh", "timeout": 3, "async": true}]}
     ],
     "Stop": [{"hooks": [
       {"type": "command", "command": "${HOOK_PREFIX}/ignite-stop-gate.sh", "timeout": 5},
@@ -429,6 +438,36 @@ cat > "$SETTINGS_FILE" << SETTINGS_EOF
   }
 }
 SETTINGS_EOF
+
+# Merge with existing settings if backup exists. Keeps user's non-alloy hooks
+# and preserves a pre-existing statusLine (user might already use one).
+if [ -f "$BACKUP_FILE" ] && command -v jq &>/dev/null; then
+    if jq -s '
+      .[0] as $orig | .[1] as $alloy |
+      ($orig * {agent: $alloy.agent}) |
+      .env = (($orig.env // {}) * $alloy.env) |
+      .statusLine = ($orig.statusLine // $alloy.statusLine) |
+      .hooks.PreToolUse = ($alloy.hooks.PreToolUse) + ([($orig.hooks.PreToolUse // [])[]] | map(select((.hooks // [{}])[0].command // "" | test("alloy-hooks") | not))) |
+      .hooks.PostToolUse = ($alloy.hooks.PostToolUse) + ([($orig.hooks.PostToolUse // [])[]] | map(select((.hooks // [{}])[0].command // "" | test("alloy-hooks") | not))) |
+      .hooks.Stop = [{"hooks": (($alloy.hooks.Stop[0].hooks) + ([($orig.hooks.Stop // [{}])[0].hooks // []] | flatten | map(select(.command // "" | test("alloy-hooks") | not))))}] |
+      .hooks.PreCompact = $alloy.hooks.PreCompact |
+      .hooks.SubagentStart = $alloy.hooks.SubagentStart |
+      .hooks.SubagentStop = $alloy.hooks.SubagentStop |
+      .hooks.StopFailure = $alloy.hooks.StopFailure |
+      .hooks.SessionStart = $alloy.hooks.SessionStart |
+      .hooks.SessionEnd = $alloy.hooks.SessionEnd |
+      .hooks.UserPromptSubmit = $alloy.hooks.UserPromptSubmit
+    ' "$BACKUP_FILE" "$ALLOY_TMP" > "${SETTINGS_FILE}.tmp"; then
+        mv "${SETTINGS_FILE}.tmp" "$SETTINGS_FILE"
+        rm -f "$ALLOY_TMP"
+    else
+        warn "Settings merge failed — using alloy defaults"
+        rm -f "${SETTINGS_FILE}.tmp"
+        mv "$ALLOY_TMP" "$SETTINGS_FILE"
+    fi
+else
+    mv "$ALLOY_TMP" "$SETTINGS_FILE"
+fi
 success "Settings: configured (hooks + env)"
 
 # Write install metadata

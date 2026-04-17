@@ -1,5 +1,5 @@
 {
-  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, typecheck, lint, auto-install, agent-reminder, skill-reminder, ignite-stop-gate, todo-enforcer, loop-stop, session-notify, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end, ignite-detector",
+  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, typecheck, lint, auto-install, agent-reminder, skill-reminder, ignite-stop-gate, todo-enforcer, loop-stop, session-notify, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end, ignite-detector, context-pressure",
   "hooks": {
     "PreToolUse": [
       {
@@ -74,6 +74,17 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/skill-reminder.sh",
             "timeout": 5,
             "statusMessage": "Checking skill usage..."
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/context-pressure.sh",
+            "timeout": 3,
+            "async": true
           }
         ]
       }
