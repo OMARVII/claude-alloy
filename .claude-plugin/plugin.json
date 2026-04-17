@@ -1,7 +1,7 @@
 {
   "name": "claude-alloy",
-  "version": "1.5.0",
-  "description": "A mixture stronger than its parts. 14 agents, 8 skills, 14 commands, 19 hooks. Multi-agent orchestration harness for Claude Code.",
+  "version": "1.6.0",
+  "description": "A mixture stronger than its parts. 14 agents, 9 skills, 15 commands, 20 hooks + HUD statusline. Multi-agent orchestration harness for Claude Code.",
   "author": {
     "name": "Omar Khaled",
     "email": "hello@omar-khaled.com",
@@ -10,5 +10,5 @@
   "homepage": "https://omar-khaled.com",
   "repository": "https://github.com/OMARVII/claude-alloy",
   "license": "MIT",
-  "keywords": ["orchestration", "agents", "multi-agent", "claude-code", "alloy", "harness", "steel", "tungsten"]
+  "keywords": ["orchestration", "agents", "multi-agent", "claude-code", "alloy", "harness", "steel", "tungsten", "statusline", "hud", "hooks", "productivity"]
 }

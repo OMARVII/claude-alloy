@@ -15,7 +15,6 @@ disallowedTools:
   - Agent
   - Skill
   - TodoWrite
-permissionMode: plan
 maxTurns: 30
 effort: max
 memory: project

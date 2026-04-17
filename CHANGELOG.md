@@ -6,6 +6,44 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.6.0] — 2026-04-17
+
+### Added
+- **HUD statusline** (`hooks/statusline.sh`): Bash-native one-line status bar. Pure-config, no runtime. Reads Claude Code session JSON on stdin; reuses the existing `.alloy-state/tool-count-*` counter. Shellcheck clean, ~43ms median wall-clock. Segments:
+  - `[alloy X.Y.Z]` version tag (reads from `.claude-plugin/plugin.json` via `CLAUDE_PLUGIN_ROOT`)
+  - `[IGNITE]` badge when IGNITE mode is active
+  - Model display name (e.g. `Opus 4.7`)
+  - Git branch with dirty marker (`⎇ feature/foo*`) + worktree name when inside a worktree
+  - Context percentage with 3-tier fallback: (1) `.context_window.used_percentage` from stdin, (2) `input_tokens + cache_read + cache_creation / context_window_size`, (3) tool-count heuristic. Model-aware via Claude-reported window size — no hardcoded 200k/1M limits
+  - Session cost + hourly burn rate (`$0.47 ~$1.4/h`) computed from `.cost.total_cost_usd` and `.cost.total_duration_ms`. Burn rate hidden for sessions under 1 minute
+  - Always-on 5-hour and 7-day rate-limit quotas (`5h:23% @14:30 7d:12%`) with wall-clock reset tag on 5h from `.rate_limits.five_hour.resets_at` (epoch → `date -r` on macOS / `date -d @` on Linux). Green/yellow/red color gradient at 70%/90% thresholds
+  - Lines-changed delta (`+410/-89`) from `.cost.total_lines_added` / `_removed`
+  - Session duration (`session:19h23m`) from `.cost.total_duration_ms`
+  - Tool-call counter (`⚒N`) — the same counter `context-pressure.sh` maintains
+  - `COMPACT SOON` warning at context ≥85%; `!200k` overflow warning when `.context_window.exceeds_200k_tokens` is true
+  - CWD basename (colorized)
+- **context-pressure hook** (`hooks/context-pressure.sh`): PostToolUse hook that counts tool calls per session and injects advisory warnings at 70% (~100 calls) and 85% (~140 calls) context thresholds. Non-blocking, state cleaned up after 24h. Derives `SESSION_ID` from stdin (not env var) so counter path matches what `statusline.sh` reads. Atomic write via `.tmp` + `mv` to prevent half-written counters if the hook is killed.
+- **/assess command** (`commands/assess.md`): Project health scanner that rates Claude Code maturity 0–10 (Terminal Tourist → Swarm Architect) by auditing CLAUDE.md, MCP servers, skills, commands, hooks, tests, lint config, and agent memory. Prints scoring card + specific next-step recommendations.
+- **pipeline skill** (`skills/pipeline/SKILL.md`): Guide for headless batch processing with `claude -p`. Covers fan-out patterns, tool scoping via `--allowedTools`, output formats, auto mode, and parallel processing. Generates ready-to-run bash scripts from user descriptions.
+- **Background reviewer agents**: sentinel, cobalt, flint, and iridium now declare `background: true` frontmatter, so Claude Code runs them concurrently without blocking the main conversation. Matches alloy's parallel-review model without requiring orchestrator opt-in per call.
+
+### Changed
+- **Plugin-safe agent permissions**: Removed `permissionMode: plan` from all 12 reviewer/read-only agents (carbon, mercury, titanium, quartz, prism, iridium, sentinel, cobalt, flint, graphene, spectrum, gauge). Safety is now enforced purely via `tools:` + `disallowedTools:` frontmatter, which works identically across global, per-project, and plugin install paths. Previously `permissionMode` was silently ignored when installed via plugin marketplace (per Claude Code plugin restrictions); this was a real safety regression now eliminated.
+- **Skill tool scoping**: All 7 alloy skills declare `allowed-tools:` frontmatter for explicit capability scoping. `dev-browser` and `pipeline` additionally use `disable-model-invocation: true` — invoked only on explicit user request, never autonomously.
+- **Plugin metadata**: `plugin.json` description updated for new counts; expanded `keywords`. `marketplace.json` gains `$schema`, `category: productivity`, and `tags` for marketplace discoverability.
+- **README positioning**: New tagline ("Claude Code with a team"), "How This Compares" table vs oh-my-openagent and oh-my-claudecode, model-tiering emphasis, star history chart, star CTA.
+- **CLAUDE.md link**: The `alloy` one-liner now links to Anthropic's Claude Code docs.
+
+### Fixed
+- **`activate.sh` statusLine merge**: Merge logic now preserves `statusLine` when merging with pre-existing user settings, matching the pattern used for `hooks` and `env`.
+- **`SESSION_ID` parity** (`hooks/context-pressure.sh`): Hook previously read `$CLAUDE_SESSION_ID` from env, which diverged from stdin `.session_id` in some Claude Code builds. Counter file path now derives from stdin, matching what `statusline.sh` reads. This was the root cause of `⚒0` showing even when the session had many tool calls.
+
+### Security
+- **`SESSION_ID` path-traversal gate** (`hooks/context-pressure.sh`): CWE-22 defense — rejects session IDs that aren't `[A-Za-z0-9_-]+` before using them in filesystem paths under `~/.claude/.alloy-state/`.
+- **`resets_at` numeric gate** (`hooks/statusline.sh`): CWE-88 defense in depth — `rate_limits.*.resets_at` from stdin is gated through `^[0-9]+$` before being passed to `date -r` / `date -d`, preventing flag-injection (`--help`, `-d`) from malformed JSON. Not exploitable (bash variable expansion doesn't re-tokenize), but hardening is free.
+
+---
+
 ## [1.5.0] — 2026-04-15
 
 ### Added

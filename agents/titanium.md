@@ -14,7 +14,6 @@ disallowedTools:
   - Skill
   - WebFetch
   - WebSearch
-permissionMode: plan
 maxTurns: 15
 effort: medium
 color: teal
