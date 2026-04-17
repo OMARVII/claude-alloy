@@ -12,7 +12,6 @@ disallowedTools:
   - Edit
   - Agent
   - Skill
-permissionMode: plan
 maxTurns: 15
 memory: project
 effort: low

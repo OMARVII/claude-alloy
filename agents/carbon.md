@@ -14,7 +14,6 @@ disallowedTools:
   - Write
   - Edit
   - Skill
-permissionMode: plan
 maxTurns: 50
 effort: max
 memory: project

@@ -60,9 +60,13 @@ else
     SKIPPED=0
     while IFS= read -r filepath; do
         [ -z "$filepath" ] && continue
-        # Validate path is within CLAUDE_DIR to prevent out-of-scope deletion
+        # Validate path is within CLAUDE_DIR (or parent dir for project CLAUDE.md)
+        # to prevent out-of-scope deletion while still allowing the injected
+        # CLAUDE.md that activate.sh writes one level above .claude/.
+        PARENT_DIR="$(dirname "$CLAUDE_DIR")"
         case "$filepath" in
             "${CLAUDE_DIR}/"*|"${CLAUDE_DIR}") ;;
+            "${PARENT_DIR}/CLAUDE.md") ;;
             *) warn "Skipping out-of-scope path: $filepath"; continue ;;
         esac
         if [ -f "$filepath" ] || [ -L "$filepath" ]; then
@@ -86,6 +90,7 @@ fi
 # Clean up metadata files
 rm -f "${CLAUDE_DIR}/.alloy-meta"
 rm -f "${CLAUDE_DIR}/.alloy-manifest"
+rm -f "${CLAUDE_DIR}/.alloy-version"
 
 if [ -f "$BACKUP_FILE" ]; then
     mv "$BACKUP_FILE" "$SETTINGS_FILE"

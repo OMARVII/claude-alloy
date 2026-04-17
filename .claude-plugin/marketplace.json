@@ -9,9 +9,11 @@
     {
       "name": "claude-alloy",
       "source": "./",
-      "version": "1.5.0",
-      "description": "A mixture stronger than its parts. 14 agents, 8 skills, 14 commands, 19 hooks. Multi-agent orchestration for Claude Code.",
-      "keywords": ["agents", "orchestration", "multi-agent", "harness", "alloy"]
+      "version": "1.6.0",
+      "description": "A mixture stronger than its parts. 14 agents, 9 skills, 15 commands, 20 hooks + HUD statusline. Multi-agent orchestration for Claude Code.",
+      "category": "productivity",
+      "tags": ["orchestration", "multi-agent", "review-agents", "statusline", "hud", "hooks", "model-tiering", "zero-runtime"],
+      "keywords": ["agents", "orchestration", "multi-agent", "harness", "alloy", "statusline"]
     }
   ]
 }
