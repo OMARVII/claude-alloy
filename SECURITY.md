@@ -36,6 +36,20 @@ This policy does NOT cover:
 
 ## Known Security Considerations
 
-**Project-local tool execution:** The `typecheck.sh` and `lint.sh` hooks run `npx tsc`, `npx eslint`, `npx biome`, and `npx prettier` from the project directory. These resolve binaries from `node_modules/.bin/` first. If you open Claude Code in a directory containing a malicious `package.json` with trojanized linter packages, the hooks will execute that code automatically after file edits. This is the same trust model as running `npm test` in any project — do not open untrusted repositories without reviewing their dependencies first.
+### Opt-in hook gates (off by default since v1.6.1)
 
-**pip install:** The `auto-install.sh` hook runs `pip install -e .` for `pyproject.toml` changes, which may execute `setup.py` if present. This only runs inside a detected virtual environment.
+Two hooks can execute project-local code and are therefore disabled unless you explicitly opt in with an environment variable.
+
+**`ALLOY_AUTO_LINT=1` — enables `hooks/lint.sh` + `hooks/typecheck.sh`**
+These hooks run `npx --no-install tsc`, `npx --no-install eslint`, `npx --no-install @biomejs/biome`, and `npx --no-install prettier` from the project directory after file edits. `npx` resolves binaries from the project's `node_modules/.bin/` first — if you open Claude Code in a directory containing a malicious `package.json` with trojanized linter packages (or a malicious `eslint.config.js` / `prettier.config.js` that's loaded as code), those hooks will execute that code. Same trust model as running `npm test` in any project. `--no-install` prevents `npx` from fetching unknown packages, but does not protect against already-installed malicious binaries. Enable only in trusted repos.
+
+**`ALLOY_AUTO_INSTALL=1` — enables `hooks/auto-install.sh`**
+When enabled, this hook runs `npm install --ignore-scripts` on `package.json` edits, `pip install --no-deps --only-binary=:all: -r requirements.txt` on `requirements.txt` edits, and emits a reminder (does NOT execute) for `pyproject.toml` edits. Pip's `--only-binary=:all:` is intended to prevent build backends from executing arbitrary Python during install, but a typosquatted wheel can still contain malicious code that runs on import. Enable only when you trust every dependency name the agent might write into a manifest.
+
+Both variables default to unset → hooks early-exit with no action. Set them in your shell rc (`~/.zshrc` or equivalent) if you want the behavior.
+
+### Other notes
+
+**Webhook URL allowlist:** `hooks/session-notify.sh` rejects Slack/Discord webhook URLs that don't match `https://hooks.slack.com/*` or `https://discord.com/api/webhooks/*`. Prevents SSRF via malicious `notify-config.json`.
+
+**Self-update scope:** `self-update.sh` refuses to `git pull` unless the repo's `origin` remote is exactly `OMARVII/claude-alloy` (not a substring match). Prevents hostile forks from being auto-updated.

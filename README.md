@@ -20,6 +20,14 @@
   <a href="#contributing">Contributing</a>
 </p>
 
+<p align="center">
+  <img src="docs/ignite-mode.png" alt="claude-alloy in IGNITE mode — steel verbalizes intent, fires 7 specialists in parallel, and the HUD statusline tracks context / cost / quota live" width="900">
+</p>
+
+<p align="center">
+  <sub><code>ig</code> activates IGNITE mode — steel verbalizes intent, fires specialists in parallel, and the HUD tracks context / cost / quota live.</sub>
+</p>
+
 ---
 
 Claude Code with a team.
@@ -388,13 +396,24 @@ exit 0
 
 ## Environment Variables
 
-Set in `settings.json`:
+### Harness config (set in `settings.json`)
 
 | Variable | Value | Why |
 |---|---|---|
 | `BASH_DEFAULT_TIMEOUT_MS` | `420000` (7 min) | Prevents timeout on long builds and test suites |
 | `BASH_MAX_TIMEOUT_MS` | `420000` (7 min) | Same |
 | `CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS` | `1` | Removes built-in git workflow instructions and git status snapshot from system prompt — saves tokens (alloy provides its own via CLAUDE.md) |
+
+### Opt-in hook gates (set in your shell rc — off by default since v1.6.1)
+
+Two hooks can execute project-local code and are therefore disabled unless you explicitly opt in. See [SECURITY.md](SECURITY.md#opt-in-hook-gates-off-by-default-since-v161) for the full threat model.
+
+| Variable | Enables | What it does |
+|---|---|---|
+| `ALLOY_AUTO_LINT=1` | `hooks/lint.sh`, `hooks/typecheck.sh` | Runs `npx --no-install` for eslint / biome / prettier / tsc after file edits. Off by default — `npx` resolves binaries from `node_modules/.bin/` in the project you opened, which is a code-execution surface in untrusted repos. |
+| `ALLOY_AUTO_INSTALL=1` | `hooks/auto-install.sh` | Runs `npm install --ignore-scripts` / `pip install --no-deps --only-binary=:all:` after manifest edits. Off by default — dependency names written into `package.json` / `requirements.txt` by the agent could be typosquats. Editable pip installs (`pip install -e .`) are never run automatically even when this is set. |
+| `ALLOY_AUTO_UPDATE=0` | `self-update.sh` | Set to `0` to disable the weekly self-update check (default: enabled, checks at most once per 7 days; only pulls if `origin` remote is exactly `OMARVII/claude-alloy`). |
+| `ALLOY_BROWSER=1` | `/dev-browser` skill | Enables Playwright MCP browser automation. Requires `@playwright/mcp` to be installed. |
 
 ---
 
