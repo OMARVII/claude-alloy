@@ -6,6 +6,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.6.2] - 2026-04-18
+
+### Fixed
+- **CI shellcheck failures** (SC2015, SC2221, SC2222) introduced in v1.6.1:
+  - `hooks/session-end.sh`: replaced `[ -d ] && ... || true` with explicit `if`-block (SC2015). Script is `set -u` not `set -e`, so `|| true` wasn't needed anyway.
+  - `hooks/write-guard.sh`: collapsed overlapping case patterns `*../*|*/..*|*..|../*` into non-overlapping segment-safe set `..|../*|*/..|*/../*`. More precise — no longer false-positives on weird-but-legitimate filenames like `my..file` or `..hidden`. Still catches every real traversal variant (bare `..`, leading, mid-path, trailing).
+- **Stale `[alloy X.Y.Z]` version in HUD statusline**: `hooks/statusline.sh` previously read only from `~/.claude/.alloy-version`, which is written ONCE by `activate.sh` and never updated on `git pull`. Users who upgraded via git saw the old version forever. Fix: self-locating fallback chain reading `$CLAUDE_PLUGIN_ROOT/VERSION` → `<script-dir>/VERSION` → `<script-dir>/../VERSION` → legacy `~/.claude/.alloy-version`.
+
+### Changed
+- **Hide `$0.00` cost segment at session start**: statusline no longer renders the cost field until cost > 0. The zeroed field looked like a stuck widget to users starting fresh sessions. Cost still shows correctly once the first API call lands (and colors yellow/red at the existing thresholds).
+- **Install scripts now copy `VERSION` alongside hooks** (`install.sh`, `activate.sh`). The VERSION file ships to `${CLAUDE_DIR}/alloy-hooks/VERSION` so the statusline self-locating fallback works for install.sh-installed users (not just marketplace plugin users who receive `$CLAUDE_PLUGIN_ROOT`). `deactivate.sh` removes it on uninstall.
+
+---
+
 ## [1.6.1] — 2026-04-18
 
 ### Security

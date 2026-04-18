@@ -24,7 +24,15 @@ jobs:
             self-update.sh \
             setup-global.sh \
             setup-aliases.sh \
-            hooks/*.sh
+            hooks/*.sh \
+            tests/lib/testlib.sh \
+            tests/*.sh
+
+      - name: Run hook unit tests
+        run: |
+          chmod +x tests/*.sh
+          bash tests/write-guard.sh
+          bash tests/statusline.sh
 
       - name: Smoke test — project install
         run: |

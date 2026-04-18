@@ -119,12 +119,32 @@ if [ -z "$CTX" ]; then
 fi
 [ -z "$CTX" ] && CTX=0
 
-# ---- Alloy version (BUG-1) --------------------------------------------------
-# activate.sh writes to ~/.claude/.alloy-version. Previous probes pointed at
-# paths that were never written.
+# ---- Alloy version ----------------------------------------------------------
+# Self-locating fallback chain. In preference order:
+#   1. $CLAUDE_PLUGIN_ROOT/VERSION — set by Claude Code for plugin-marketplace installs.
+#   2. <script-dir>/VERSION        — install.sh/activate.sh ship VERSION alongside hooks.
+#   3. <script-dir>/../VERSION     — repo-root checkout (development use).
+#   4. ~/.claude/.alloy-version    — legacy pin written by activate.sh (last-resort fallback).
+# Fallback #4 is stale on `git pull` upgrades; #2 is the canonical source for installed users.
 ALLOY_VERSION="?"
-ALLOY_VERSION_FILE="$HOME/.claude/.alloy-version"
-[ -f "$ALLOY_VERSION_FILE" ] && ALLOY_VERSION=$(tr -d '[:space:]' < "$ALLOY_VERSION_FILE")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)"
+for _candidate in \
+    "${CLAUDE_PLUGIN_ROOT:-}/VERSION" \
+    "${SCRIPT_DIR}/VERSION" \
+    "${SCRIPT_DIR}/../VERSION" \
+    "$HOME/.claude/.alloy-version"
+do
+    [ -n "$_candidate" ] && [ -f "$_candidate" ] || continue
+    # Sanitize to a strict semver-ish allowlist and cap length.
+    # Blocks ANSI escape injection (ESC[...m) and any other control bytes
+    # that a malicious VERSION file could try to smuggle into the statusline.
+    _v=$(LC_ALL=C tr -cd 'A-Za-z0-9.+-' < "$_candidate" 2>/dev/null | head -c 32)
+    if [ -n "$_v" ]; then
+        ALLOY_VERSION="$_v"
+        break
+    fi
+done
+unset _candidate _v
 
 # ---- Session duration (ms → human) ------------------------------------------
 DUR_S=$((DUR_MS / 1000))
@@ -201,22 +221,26 @@ if [ "$EXCEEDS_200K" = "true" ]; then
 fi
 
 # ---- ENH-1: Session cost ----------------------------------------------------
-# Always render (even $0.00 — useful signal that the session just started).
+# Render only when cost > 0. The $0.00 at session start was confusing (user
+# feedback v1.6.2 — looks like a stuck field instead of an idle session).
 # Color: dim <$0.10, yellow $0.10–$1.00, red >$1.00.
 # COST is a string from jq's tostring; compare numerically via awk (no bc dep).
-COST_COLOR=$DIM
-if awk -v c="$COST" 'BEGIN{exit !(c+0 > 1.0)}' 2>/dev/null; then
-    COST_COLOR=$RED
-elif awk -v c="$COST" 'BEGIN{exit !(c+0 >= 0.10)}' 2>/dev/null; then
-    COST_COLOR=$YELLOW
-fi
-COST_FMT=$(awk -v c="$COST" 'BEGIN{printf "%.2f", c+0}' 2>/dev/null)
-[ -z "$COST_FMT" ] && COST_FMT="0.00"
-COST_SEG="${COST_COLOR}\$${COST_FMT}${RESET}"
-# v2.1: Append hourly burn rate once the session has accumulated >1min of signal.
-if [ "$DUR_MS" -gt 60000 ] 2>/dev/null && awk -v c="$COST" 'BEGIN{exit !(c+0 > 0)}' 2>/dev/null; then
-    RATE=$(awk -v c="$COST" -v m="$DUR_MS" 'BEGIN{printf "%.1f", c/(m/3600000)}' 2>/dev/null)
-    [ -n "$RATE" ] && COST_SEG="${COST_SEG} ${DIM}~\$${RATE}/h${RESET}"
+COST_SEG=""
+if awk -v c="$COST" 'BEGIN{exit !(c+0 > 0)}' 2>/dev/null; then
+    COST_COLOR=$DIM
+    if awk -v c="$COST" 'BEGIN{exit !(c+0 > 1.0)}' 2>/dev/null; then
+        COST_COLOR=$RED
+    elif awk -v c="$COST" 'BEGIN{exit !(c+0 >= 0.10)}' 2>/dev/null; then
+        COST_COLOR=$YELLOW
+    fi
+    COST_FMT=$(awk -v c="$COST" 'BEGIN{printf "%.2f", c+0}' 2>/dev/null)
+    [ -z "$COST_FMT" ] && COST_FMT="0.00"
+    COST_SEG="${SEP}${COST_COLOR}\$${COST_FMT}${RESET}"
+    # Hourly burn rate once we have >1min of data.
+    if [ "$DUR_MS" -gt 60000 ] 2>/dev/null; then
+        RATE=$(awk -v c="$COST" -v m="$DUR_MS" 'BEGIN{printf "%.1f", c/(m/3600000)}' 2>/dev/null)
+        [ -n "$RATE" ] && COST_SEG="${COST_SEG} ${DIM}~\$${RATE}/h${RESET}"
+    fi
 fi
 
 # ---- ENH-3: Rate limits (5h + 7d), always-on (v2.1) -------------------------
@@ -273,11 +297,11 @@ SESSION_SEG="${SEP}session:${SESSION}"
 TOOLS_SEG="${SEP}⚒${TOOLS}"
 CWD_SEG="${SEP}${CYAN}${CWD_BASE}${RESET}"
 
-# CTX_SEG, COST_SEG are always-present but self-coloring.
-# IGNITE_SEG, GIT_SEG, WORKTREE_SEG, RATE_SEG, LINES_SEG are conditional:
+# CTX_SEG is always-present but self-coloring.
+# IGNITE_SEG, GIT_SEG, WORKTREE_SEG, COST_SEG, RATE_SEG, LINES_SEG are conditional:
 # each is either empty or pre-wrapped with its leading separator + trailing
 # space, so they vanish cleanly when not applicable.
-printf '%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n' \
+printf '%s%s%s%s%s%s%s%s%s%s%s%s%s\n' \
     "$ALLOY_SEG" \
     "$IGNITE_SEG" \
     "$MODEL_SEG" \
@@ -285,7 +309,6 @@ printf '%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n' \
     "$WORKTREE_SEG" \
     "$SEP" \
     "$CTX_SEG" \
-    "$SEP" \
     "$COST_SEG" \
     "$RATE_SEG" \
     "$LINES_SEG" \

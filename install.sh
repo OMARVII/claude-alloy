@@ -143,6 +143,9 @@ if [ "${1:-}" = "--project" ]; then
             HOOK_ERRORS="${HOOK_ERRORS}\n    ✗ ${hook}"
         fi
     done
+    # Ship VERSION alongside hooks so statusline.sh can self-locate it (v1.6.2+)
+    cp "${SCRIPT_DIR}/VERSION" "${CLAUDE_DIR}/alloy-hooks/VERSION" 2>/dev/null || true
+    echo "${CLAUDE_DIR}/alloy-hooks/VERSION" >> "$MANIFEST_FILE"
     if [ "$HOOK_FAIL" -eq 0 ]; then
         success "Hooks:    ${HOOK_OK} installed"
     else
@@ -363,6 +366,9 @@ for hook in $HOOKS; do
         HOOK_ERRORS="${HOOK_ERRORS}\n    ✗ ${hook}"
     fi
 done
+# Ship VERSION alongside hooks so statusline.sh can self-locate it (v1.6.2+)
+cp "${SCRIPT_DIR}/VERSION" "${CLAUDE_DIR}/alloy-hooks/VERSION" 2>/dev/null || true
+echo "${CLAUDE_DIR}/alloy-hooks/VERSION" >> "$MANIFEST_TMP"
 if [ "$HOOK_FAIL" -eq 0 ]; then
     success "Hooks:    ${HOOK_OK} installed"
 else

@@ -181,6 +181,8 @@ for f in "${SCRIPT_DIR}"/hooks/*.sh; do
     fi
     HOOK_COUNT=$((HOOK_COUNT + 1))
 done
+# Ship VERSION alongside hooks so statusline.sh can self-locate it (v1.6.2+)
+install_file "${SCRIPT_DIR}/VERSION" "${CLAUDE_DIR}/alloy-hooks/VERSION" "$MANIFEST_TMP"
 info "Installed ${HOOK_COUNT} hooks"
 
 # Agent memory: always copy, never symlink
