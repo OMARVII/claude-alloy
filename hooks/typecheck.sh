@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -u
 
+# Opt-in only: runs project-local npx binaries — see SECURITY.md
+[ "${ALLOY_AUTO_LINT:-}" = "1" ] || exit 0
+
 INPUT=$(cat)
 
 # Require jq for JSON parsing
@@ -37,7 +40,7 @@ if [ ! -f "$PROJ_DIR/tsconfig.json" ]; then
     exit 0
 fi
 
-OUTPUT=$(cd "$PROJ_DIR" && npx tsc --noEmit --incremental 2>&1) || true
+OUTPUT=$(cd "$PROJ_DIR" && npx --no-install tsc --noEmit --incremental 2>&1) || true
 ERRORS=$(echo "$OUTPUT" | grep "error TS" | head -10)
 
 if [ -n "$ERRORS" ]; then

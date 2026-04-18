@@ -22,6 +22,16 @@ if [ -f "$CONFIG_FILE" ] && command -v jq &>/dev/null; then
     DISCORD_WEBHOOK=$(jq -r '.discord_webhook // ""' "$CONFIG_FILE" 2>/dev/null) || DISCORD_WEBHOOK=""
 fi
 
+# Validate webhook URLs to prevent SSRF (e.g. 169.254.169.254 metadata endpoint).
+case "$SLACK_WEBHOOK" in
+    ""|https://hooks.slack.com/*) ;;
+    *) echo "session-notify: rejecting non-Slack webhook URL: $SLACK_WEBHOOK" >&2; SLACK_WEBHOOK="" ;;
+esac
+case "$DISCORD_WEBHOOK" in
+    ""|https://discord.com/api/webhooks/*|https://discordapp.com/api/webhooks/*) ;;
+    *) echo "session-notify: rejecting non-Discord webhook URL: $DISCORD_WEBHOOK" >&2; DISCORD_WEBHOOK="" ;;
+esac
+
 # Desktop notification
 if [ "$DESKTOP" = "true" ]; then
     PLATFORM=$(uname -s)

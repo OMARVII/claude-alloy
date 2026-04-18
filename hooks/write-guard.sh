@@ -13,8 +13,9 @@ if [ -z "$FILE_PATH" ]; then
 fi
 
 # Reject path traversal (fail closed — block the write)
+# Patterns: mid-path ../, trailing /.., exact .., and bare leading ../file.
 case "$FILE_PATH" in
-    *../*|*/..*|*..)
+    *../*|*/..*|*..|../*)
         echo "Path traversal detected in '$FILE_PATH'. Blocked." >&2
         exit 2
         ;;

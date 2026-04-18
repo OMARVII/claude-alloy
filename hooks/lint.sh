@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -u
 
+# Opt-in only: runs project-local npx binaries — see SECURITY.md
+[ "${ALLOY_AUTO_LINT:-}" = "1" ] || exit 0
+
 INPUT=$(cat)
 
 # Require jq for JSON parsing
@@ -43,17 +46,17 @@ ERRORS=""
 
 # Detect and run Biome
 if [ -f "$PROJ_DIR/biome.json" ] || [ -f "$PROJ_DIR/biome.jsonc" ]; then
-    OUTPUT=$(cd "$PROJ_DIR" && npx @biomejs/biome check "$FILE_PATH" 2>&1) || true
+    OUTPUT=$(cd "$PROJ_DIR" && npx --no-install @biomejs/biome check "$FILE_PATH" 2>&1) || true
     ERRORS=$(echo "$OUTPUT" | grep -E "^.+:[0-9]+:[0-9]+" | head -10)
 
 # Detect and run ESLint
 elif [ -f "$PROJ_DIR/.eslintrc" ] || [ -f "$PROJ_DIR/.eslintrc.js" ] || [ -f "$PROJ_DIR/.eslintrc.cjs" ] || [ -f "$PROJ_DIR/.eslintrc.json" ] || [ -f "$PROJ_DIR/.eslintrc.yml" ] || [ -f "$PROJ_DIR/eslint.config.js" ] || [ -f "$PROJ_DIR/eslint.config.mjs" ] || [ -f "$PROJ_DIR/eslint.config.cjs" ]; then
-    OUTPUT=$(cd "$PROJ_DIR" && npx eslint --no-warn-ignored "$FILE_PATH" 2>&1) || true
+    OUTPUT=$(cd "$PROJ_DIR" && npx --no-install eslint --no-warn-ignored "$FILE_PATH" 2>&1) || true
     ERRORS=$(echo "$OUTPUT" | grep -E "^.+:[0-9]+:[0-9]+" | head -10)
 
 # Detect and run Prettier (check mode only)
 elif [ -f "$PROJ_DIR/.prettierrc" ] || [ -f "$PROJ_DIR/.prettierrc.js" ] || [ -f "$PROJ_DIR/.prettierrc.json" ] || [ -f "$PROJ_DIR/.prettierrc.yml" ] || [ -f "$PROJ_DIR/.prettierrc.cjs" ] || [ -f "$PROJ_DIR/prettier.config.js" ] || [ -f "$PROJ_DIR/prettier.config.cjs" ]; then
-    OUTPUT=$(cd "$PROJ_DIR" && npx prettier --check "$FILE_PATH" 2>&1) || true
+    OUTPUT=$(cd "$PROJ_DIR" && npx --no-install prettier --check "$FILE_PATH" 2>&1) || true
     if echo "$OUTPUT" | grep -q "Code style issues"; then
         ERRORS="Formatting issues detected in $FILE_PATH"
     fi

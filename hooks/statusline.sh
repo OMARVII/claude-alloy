@@ -172,7 +172,7 @@ if command -v git &>/dev/null && [ -d "$CWD" ]; then
     if GIT_BRANCH=$(git -C "$CWD" rev-parse --abbrev-ref HEAD 2>/dev/null) && [ -n "$GIT_BRANCH" ]; then
         # If working tree has uncommitted changes, append "*" dirty indicator.
         GIT_DIRTY=""
-        if GIT_STATUS=$(git -C "$CWD" status --porcelain 2>/dev/null) && [ -n "$GIT_STATUS" ]; then
+        if GIT_STATUS=$(git -C "$CWD" status --porcelain -uno 2>/dev/null) && [ -n "$GIT_STATUS" ]; then
             GIT_DIRTY="*"
         fi
         GIT_SEG="${SEP}${BLUE}⎇ ${GIT_BRANCH}${GIT_DIRTY}${RESET}"

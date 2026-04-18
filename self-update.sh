@@ -5,7 +5,6 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="${HOME}/.claude"
 NO_UPDATE_FILE="${CLAUDE_DIR}/.alloy-no-update"
-EXPECTED_REMOTE="github.com/OMARVII/claude-alloy"
 
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
@@ -42,10 +41,11 @@ BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "")
 
 # Remote URL safety check — only fetch from known origin
 REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
-case "$REMOTE_URL" in
-    *"$EXPECTED_REMOTE"*) ;;
-    *) exit 0 ;;
-esac
+# Exact match (not substring) — prevents e.g. github.com/OMARVII/claude-alloy-evil from passing
+NORMALIZED_REMOTE="$(echo "$REMOTE_URL" | sed -E 's#^(https://)?(git@)?github\.com[:/]##; s#\.git$##')"
+if [ "$NORMALIZED_REMOTE" != "OMARVII/claude-alloy" ]; then
+    exit 0
+fi
 
 # --- Fetch with timeout ---
 

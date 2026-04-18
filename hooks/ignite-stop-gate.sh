@@ -11,9 +11,7 @@ command -v jq &>/dev/null || exit 0
 
 STATE_DIR="${HOME}/.claude/.alloy-state"
 mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
-
-# Clean up stale state files (older than 7 days)
-find "$STATE_DIR" -type f -mtime +7 -delete 2>/dev/null || true
+# Stale-file cleanup is centralized in hooks/session-end.sh.
 
 # Extract fields from input
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
@@ -70,7 +68,7 @@ fi
 
 # Check 3: If code was edited, review agents must have been spawned
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-    if grep -qE 'Edit|Write' "$TRANSCRIPT_PATH" 2>/dev/null; then
+    if tail -500 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE 'Edit|Write'; then
         MISSING_REVIEWERS=""
         if [ -f "$AGENTS_FILE" ]; then
             if ! grep -qi "sentinel" "$AGENTS_FILE" 2>/dev/null; then

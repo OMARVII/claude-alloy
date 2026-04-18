@@ -9,7 +9,7 @@
     {
       "name": "claude-alloy",
       "source": "./",
-      "version": "1.6.0",
+      "version": "1.6.1",
       "description": "A mixture stronger than its parts. 14 agents, 9 skills, 15 commands, 20 hooks + HUD statusline. Multi-agent orchestration for Claude Code.",
       "category": "productivity",
       "tags": ["orchestration", "multi-agent", "review-agents", "statusline", "hud", "hooks", "model-tiering", "zero-runtime"],

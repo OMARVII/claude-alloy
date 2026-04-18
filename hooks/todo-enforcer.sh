@@ -27,11 +27,19 @@ fi
 # Find the LAST TodoWrite call in the transcript.
 # TodoWrite replaces the full list each time, so the last call IS the current state.
 # We must check ONLY the last call — not historical entries where items were "pending".
-LAST_TODO_LINE=$(grep -n -i 'todowrite\|TodoWrite\|todo_write' "$TRANSCRIPT_PATH" 2>/dev/null | tail -1 | cut -d: -f1)
+# Scan only the tail of the transcript for speed — the last TodoWrite is always recent.
+LAST_TODO_LINE=$(tail -500 "$TRANSCRIPT_PATH" 2>/dev/null | grep -n -i 'todowrite\|TodoWrite\|todo_write' | tail -1 | cut -d: -f1)
 
 if [ -z "$LAST_TODO_LINE" ]; then
     # No todos were ever created — nothing to enforce
     exit 0
+fi
+
+# LAST_TODO_LINE is relative to the tail-500 window. Translate to absolute line number
+# so the sed window below reads from the correct location in the full transcript.
+TRANSCRIPT_LINES=$(wc -l < "$TRANSCRIPT_PATH" 2>/dev/null | tr -d ' ')
+if [ "${TRANSCRIPT_LINES:-0}" -gt 500 ]; then
+    LAST_TODO_LINE=$((TRANSCRIPT_LINES - 500 + LAST_TODO_LINE))
 fi
 
 # Extract a window around the last TodoWrite (its JSON payload follows within ~50 lines)
@@ -46,7 +54,7 @@ INCOMPLETE=$((PENDING + IN_PROGRESS))
 if [ "$INCOMPLETE" -gt 0 ]; then
     STATE_DIR="${HOME}/.claude/.alloy-state"
     mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
-    find "$STATE_DIR" -type f -mtime +7 -delete 2>/dev/null || true
+    # Stale-file cleanup is centralized in hooks/session-end.sh.
     BLOCK_KEY=$(echo "$TRANSCRIPT_PATH" | cksum | cut -d' ' -f1)
     BLOCK_FILE="${STATE_DIR}/todo-blocked-${BLOCK_KEY}"
 

@@ -8,6 +8,11 @@ set -u
 # Consume hook input from stdin (required by hook protocol)
 cat > /dev/null
 
+# Centralized stale-file cleanup (moved out of hot-path hooks in v1.6.1).
+# State dir convention: ~/.claude/.alloy-state
+STATE_DIR="${HOME}/.claude/.alloy-state"
+[ -d "$STATE_DIR" ] && find "$STATE_DIR" -type f -mtime +7 -delete 2>/dev/null || true
+
 command -v jq &>/dev/null || exit 0
 
 # Count files changed in this session

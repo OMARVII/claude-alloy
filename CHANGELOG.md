@@ -6,6 +6,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.6.1] — 2026-04-18
+
+### Security
+- Gate `hooks/auto-install.sh` behind `ALLOY_AUTO_INSTALL=1` opt-in. Auto-installing `package.json`/`requirements.txt`/`pyproject.toml` is a supply-chain RCE surface (typosquats, pip build backends). Pip install path now uses `--no-deps --only-binary=:all:`.
+- Gate `hooks/lint.sh` and `hooks/typecheck.sh` behind `ALLOY_AUTO_LINT=1` opt-in. All `npx` invocations now use `--no-install` to prevent fetching untrusted packages from malicious repos.
+- Fix path-traversal case pattern in `hooks/write-guard.sh` to catch bare leading `../file` (previously only caught `/../`, `../` mid-path, and exact `..`).
+- Validate Slack and Discord webhook URLs in `hooks/session-notify.sh` — allowlist `hooks.slack.com` and `discord.com/api/webhooks`. Prevents SSRF.
+- Tighten `self-update.sh` remote match from substring to exact normalized comparison.
+- Untrack `.claude/settings.local.json` (user-specific, never ship committed).
+
+### Performance
+- Remove redundant `find -mtime +7 -delete` from 5 hot-path hooks (agent-reminder, ignite-detector, ignite-stop-gate, skill-reminder, subagent-start). Centralized in `session-end.sh` (async, fires once per session). Saves ~150-450ms per session.
+- Use `tail -500` before transcript grep in `ignite-stop-gate.sh` and `todo-enforcer.sh`. Saves ~100ms per session Stop on long transcripts.
+- Skip untracked-file scan in `hooks/statusline.sh` (`git status --porcelain -uno`). 2-5× faster on large repos.
+
+### Reliability
+- Fix `doctor.sh` skill count (add `pipeline`) and hook count (add `statusline.sh`, `context-pressure.sh`). Health check now matches `install.sh` and CI assertion (9 skills, 21 hooks).
+
+---
+
 ## [1.6.0] — 2026-04-17
 
 ### Added

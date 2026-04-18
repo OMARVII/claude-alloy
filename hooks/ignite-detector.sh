@@ -11,9 +11,7 @@ command -v jq &>/dev/null || exit 0
 
 STATE_DIR="${HOME}/.claude/.alloy-state"
 mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
-
-# Clean up stale state files (older than 7 days)
-find "$STATE_DIR" -type f -mtime +7 -delete 2>/dev/null || true
+# Stale-file cleanup is centralized in hooks/session-end.sh.
 
 # Extract session_id
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")

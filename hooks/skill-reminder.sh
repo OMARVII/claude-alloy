@@ -16,9 +16,7 @@ fi
 
 STATE_DIR="${HOME}/.claude/.alloy-state"
 mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
-
-# Clean up stale state files (older than 7 days)
-find "$STATE_DIR" -type f -mtime +7 -delete 2>/dev/null || true
+# Stale-file cleanup is centralized in hooks/session-end.sh.
 
 TOOL_LOWER=$(echo "$TOOL_NAME" | tr '[:upper:]' '[:lower:]')
 
