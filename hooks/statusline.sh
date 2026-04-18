@@ -134,7 +134,8 @@ for _candidate in \
     "${SCRIPT_DIR}/../VERSION" \
     "$HOME/.claude/.alloy-version"
 do
-    [ -n "$_candidate" ] && [ -f "$_candidate" ] || continue
+    [ -z "$_candidate" ] && continue
+    [ -f "$_candidate" ] || continue
     # Sanitize to a strict semver-ish allowlist and cap length.
     # Blocks ANSI escape injection (ESC[...m) and any other control bytes
     # that a malicious VERSION file could try to smuggle into the statusline.
