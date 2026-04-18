@@ -5,6 +5,8 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="${HOME}/.claude"
 NO_UPDATE_FILE="${CLAUDE_DIR}/.alloy-no-update"
+STATE_DIR="${CLAUDE_DIR}/.alloy-state"
+LAST_CHECK_FILE="${STATE_DIR}/last-update-check"
 
 BLUE='\033[0;34m'
 GREEN='\033[0;32m'
@@ -28,6 +30,17 @@ for arg in "$@"; do
     [ "$arg" = "--skip-update" ] && exit 0
 done
 
+# CLI flag / env bypass for the rate-limit gate below.
+# Users who explicitly ask for an immediate check should not be forced
+# to wait for the 7-day window.
+FORCE_CHECK=false
+if [ "${ALLOY_FORCE_UPDATE:-}" = "1" ]; then
+    FORCE_CHECK=true
+fi
+for arg in "$@"; do
+    [ "$arg" = "--force-update" ] && FORCE_CHECK=true
+done
+
 # --- Git repo checks ---
 
 # Not a git repo (tarball install) — skip silently
@@ -47,10 +60,30 @@ if [ "$NORMALIZED_REMOTE" != "OMARVII/claude-alloy" ]; then
     exit 0
 fi
 
+# --- Rate limit: at most one network check every 7 days ---
+# The state file's mtime records the last successful fetch attempt. If it is
+# less than 7 days old, skip silently so activation stays fast and we honor
+# the "at most once every 7 days" commitment in PRIVACY.md. Users who want to
+# bypass this can pass --force-update or set ALLOY_FORCE_UPDATE=1; the earlier
+# opt-outs (ALLOY_AUTO_UPDATE=0, --skip-update, ~/.claude/.alloy-no-update)
+# continue to short-circuit before this gate.
+if [ "$FORCE_CHECK" != "true" ] && [ -f "$LAST_CHECK_FILE" ]; then
+    # `find -mtime -7` matches files modified within the last 7 days.
+    # Portable across BSD (macOS) and GNU find on bash 3.2+.
+    if [ -n "$(find "$LAST_CHECK_FILE" -mtime -7 -print 2>/dev/null)" ]; then
+        exit 0
+    fi
+fi
+
 # --- Fetch with timeout ---
 
 GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=3 \
     git fetch --quiet origin main 2>/dev/null || exit 0
+
+# Record that a fetch completed. Done after the fetch so a transient network
+# failure does not suppress the next day's attempt.
+mkdir -p "$STATE_DIR" 2>/dev/null
+touch "$LAST_CHECK_FILE" 2>/dev/null || true
 
 # --- Compare versions ---
 
