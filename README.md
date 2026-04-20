@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.6.2"><img src="https://img.shields.io/badge/version-1.6.2-green.svg" alt="Version 1.6.2"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.6.3"><img src="https://img.shields.io/badge/version-1.6.3-green.svg" alt="Version 1.6.3"></a>
 </p>
 
 <p align="center">
@@ -161,7 +161,7 @@ bash setup-global.sh
 | Hook | When | What it does |
 |---|---|---|
 | **write-guard** | Before Write | Blocks overwriting existing files — use Edit instead |
-| **branch-guard** | Before Write/Edit | Blocks edits on main/master branches |
+| **branch-guard** | Before Write/Edit | Blocks edits on main/master; allows docs (warn), `ALLOY_BRANCH_GUARD=off\|warn`, or `.claude/branch-guard.off` marker |
 | **comment-checker** | After Write/Edit | Warns about AI slop comments |
 | **typecheck** | After .ts/.tsx edits | Runs `tsc --noEmit`, reports errors |
 | **auto-install** | After package.json/requirements.txt/pyproject.toml | Installs dependencies (lifecycle scripts disabled for safety) |
@@ -461,7 +461,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.6.2**.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.6.3**.
 
 ---
 

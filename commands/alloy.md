@@ -67,7 +67,7 @@ description: "Show all available claude-alloy agents, skills, commands, and hook
 | Hook | When | What |
 |---|---|---|
 | **write-guard** | Before Write tool | Blocks overwriting existing files (use Edit instead) |
-| **branch-guard** | Before Write/Edit | Blocks edits on main/master branches |
+| **branch-guard** | Before Write/Edit | Blocks edits on main/master; docs allowed (warn), `ALLOY_BRANCH_GUARD=off\|warn`, or `.claude/branch-guard.off` marker |
 | **comment-checker** | After Write/Edit | Warns about AI slop comments |
 | **typecheck** | After Write/Edit on .ts/.tsx | Runs TypeScript type-check, reports errors |
 | **lint** | After Write/Edit | Runs ESLint/Biome/Prettier, reports lint errors |

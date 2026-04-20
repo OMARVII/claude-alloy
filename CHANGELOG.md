@@ -6,6 +6,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.6.3] — 2026-04-20
+
+### Changed
+- **`hooks/branch-guard.sh`** — configurable without weakening the default. Zero-config for scratch repos and docs; default still blocks `main`/`master` edits.
+  - **No-remote skip**: repos with no `git remote` (scratch, pre-push local repos) pass silently.
+  - **Docs allowlist (warn, not silent)**: edits to `*.md`, `*.txt`, and root-level `README*`/`CHANGELOG*`/`LICENSE*` emit a one-line stderr notice and proceed.
+  - **`ALLOY_BRANCH_GUARD` env var**: tri-state `off` (silent bypass) / `warn` (stderr notice, proceed) / `block` (default, enforces).
+  - **Marker file opt-out**: `.claude/branch-guard.off` in the repo root permanently opts a repo out (replaces previous `.claude/allow-main-edits` marker).
+  - **Refined error message**: concrete bypass commands (`git checkout -b`, `ALLOY_BRANCH_GUARD=warn`, marker file) listed on block.
+  - Reads `tool_input.file_path` from stdin (jq with sed fallback) to classify docs vs code. Still exits 2 on block, 0 on pass, matching Claude Code PreToolUse hook protocol.
+
+---
+
 ## [1.6.2] - 2026-04-18
 
 ### Fixed
