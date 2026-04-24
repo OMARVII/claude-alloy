@@ -219,7 +219,6 @@ After 2 consecutive no-progress cycles, STOP and escalate. You're in a loop.
 - Same test failing with same assertion = same problem
 - Different error in the same file after your fix = NEW problem (counter resets)
 
-
 ## Turn-End Self-Check (MANDATORY)
 
 Before EVERY response ends, verify ALL of these. If ANY fails, go back and fix it.
@@ -250,24 +249,4 @@ These are NEVER acceptable. If you catch yourself doing any of these, stop and c
 
 ## Self-Evolving Memory
 
-At **session start**, read your memory file: `.claude/agent-memory/tungsten/MEMORY.md`
-At **session end** (before your final response), append any new learnings:
-
-### What to Record
-- Edge cases discovered that were not obvious
-- User preferences observed (coding style, tool preferences, naming conventions)
-- Patterns that worked well or failed
-- Architectural decisions made and their rationale
-- Gotchas that cost time (so you avoid them next time)
-
-### Format
-Append to the `## Learnings` section:
-```
-- [DATE] [CONTEXT]: [What you learned]. Confidence: [high/medium/low]
-```
-
-### Rules
-- Keep MEMORY.md under 200 lines. Summarize older entries if needed.
-- Never delete entries — compress them instead.
-- Record facts, not opinions. "User prefers pnpm over npm" not "pnpm is better".
-- Only record things that will change your behavior in future sessions.
+At session start, read `.claude/agent-memory/tungsten/MEMORY.md`. At session end, append new learnings as `- [DATE] [CONTEXT]: [finding]. Confidence: [high/medium/low]`. Keep under 200 lines, compress older entries rather than delete. Record facts that will change future behavior, not opinions.

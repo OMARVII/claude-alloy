@@ -33,11 +33,9 @@ COUNT=$((COUNT + 1))
 # Atomic write: avoid half-written counter if the hook is killed mid-write.
 echo "$COUNT" > "${COUNTER_FILE}.tmp" && mv "${COUNTER_FILE}.tmp" "$COUNTER_FILE"
 
-# Clean stale files (older than 24h). Throttled: find scans the whole dir on
-# every hook call, which is wasteful for long sessions.
-if [ "$COUNT" -eq 1 ] || [ $((COUNT % 50)) -eq 0 ]; then
-    find "$STATE_DIR" -name 'tool-count-*' -mtime +1 -delete 2>/dev/null || true
-fi
+# Stale tool-count files are reaped by hooks/session-end.sh (centralized
+# janitor, per the v1.6.1 commitment). Do not scan the state dir from this
+# hot-path hook.
 
 # Thresholds based on empirical context window behavior:
 # ~100 tool calls ≈ 70% context (precision starts dropping)

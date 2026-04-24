@@ -185,10 +185,12 @@ done
 install_file "${SCRIPT_DIR}/VERSION" "${CLAUDE_DIR}/alloy-hooks/VERSION" "$MANIFEST_TMP"
 info "Installed ${HOOK_COUNT} hooks"
 
-# Agent memory: always copy, never symlink
+# Agent memory: always copy, never symlink. Skip underscore-prefixed shared
+# templates (e.g. _review-template.md) — they're includes, not agents.
 MEM_COUNT=0
 for f in "${SCRIPT_DIR}"/agents/*.md; do
     agent_name=$(basename "$f" .md)
+    case "$agent_name" in _*) continue ;; esac
     mem_dir="${CLAUDE_DIR}/agent-memory/${agent_name}"
     mkdir -p "$mem_dir"
     dest="${mem_dir}/MEMORY.md"
@@ -200,7 +202,7 @@ for f in "${SCRIPT_DIR}"/agents/*.md; do
 done
 info "Generated ${MEM_COUNT} agent memory files"
 
-# CLAUDE.md: always copy (may be customized per-project)
+# CLAUDE.md: source of truth. Always copied to ~/.claude/.
 dest="${CLAUDE_DIR}/CLAUDE.md"
 cp "${SCRIPT_DIR}/CLAUDE.md" "$dest"
 echo "$dest" >> "$MANIFEST_TMP"

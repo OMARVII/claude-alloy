@@ -23,6 +23,12 @@ HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh l
 
 if [ "${1:-}" = "--uninstall" ]; then
     info "Uninstalling claude-alloy..."
+    # Glob to match what install wrote (includes _review-template.md and future additions)
+    for src in "${SCRIPT_DIR}"/agents/*.md; do
+        [ -f "$src" ] || continue
+        rm -f "${CLAUDE_DIR:?}/agents/$(basename "$src")"
+    done
+    # Back-compat: also remove any legacy enumerated agents no longer shipped
     for agent in $AGENTS; do rm -f "${CLAUDE_DIR:?}/agents/${agent}.md"; done
     for skill in $SKILLS; do rm -rf "${CLAUDE_DIR:?}/skills/${skill}"; done
     # Clean up skills removed in previous versions (e.g. wiki, learn removed in v1.3.0)
@@ -75,10 +81,14 @@ if [ "${1:-}" = "--project" ]; then
     MANIFEST_FILE="${CLAUDE_DIR}/.alloy-manifest"
     : > "$MANIFEST_FILE"
 
+    # Glob all agent .md files so new additions (e.g. _review-template.md)
+    # are picked up automatically without needing to update an explicit list.
     AGENT_OK=0; AGENT_FAIL=0; AGENT_ERRORS=""
-    for agent in $AGENTS; do
+    for src in "${SCRIPT_DIR}"/agents/*.md; do
+        [ -f "$src" ] || continue
+        agent=$(basename "$src" .md)
         dest="${CLAUDE_DIR}/agents/${agent}.md"
-        if cp "${SCRIPT_DIR}/agents/${agent}.md" "$dest" 2>/dev/null; then
+        if cp "$src" "$dest" 2>/dev/null; then
             echo "$dest" >> "$MANIFEST_FILE"
             AGENT_OK=$((AGENT_OK + 1))
         else
@@ -157,9 +167,15 @@ if [ "${1:-}" = "--project" ]; then
     if cp "${SCRIPT_DIR}/CLAUDE.md" "$dest" 2>/dev/null; then
         echo "$dest" >> "$MANIFEST_FILE"
     fi
+    warn "install.sh --project places CLAUDE.md at project root. This copy will be removed in v1.8.0. Use activate.sh for global install going forward."
 
+    # Glob agents for memory init; skip underscore-prefixed shared templates
+    # (e.g. _review-template.md is not an agent).
     MEM_OK=0
-    for agent in $AGENTS; do
+    for src in "${SCRIPT_DIR}"/agents/*.md; do
+        [ -f "$src" ] || continue
+        agent=$(basename "$src" .md)
+        case "$agent" in _*) continue ;; esac
         mem_dir="${CLAUDE_DIR}/agent-memory/${agent}"
         mkdir -p "$mem_dir"
         dest="${mem_dir}/MEMORY.md"
@@ -299,15 +315,17 @@ if [ "$NEEDS_BACKUP" = true ]; then
     cp -r "${CLAUDE_DIR}/commands/" "${BACKUP_DIR}/commands/" 2>/dev/null || true
 fi
 
+# Glob all agent .md files so new additions (e.g. _review-template.md)
+# are picked up automatically without needing to update an explicit list.
 AGENT_OK=0; AGENT_FAIL=0; AGENT_ERRORS=""
-for agent in $AGENTS; do
-    if [ -f "${SCRIPT_DIR}/agents/${agent}.md" ]; then
-        cp "${SCRIPT_DIR}/agents/${agent}.md" "${CLAUDE_DIR}/agents/${agent}.md"
+for src in "${SCRIPT_DIR}"/agents/*.md; do
+    if [ -f "$src" ]; then
+        agent=$(basename "$src" .md)
+        cp "$src" "${CLAUDE_DIR}/agents/${agent}.md"
         echo "${CLAUDE_DIR}/agents/${agent}.md" >> "$MANIFEST_TMP"
         AGENT_OK=$((AGENT_OK + 1))
     else
         AGENT_FAIL=$((AGENT_FAIL + 1))
-        AGENT_ERRORS="${AGENT_ERRORS}\n    ✗ ${agent}"
     fi
 done
 if [ "$AGENT_FAIL" -eq 0 ]; then
@@ -376,8 +394,13 @@ else
     echo -e "${HOOK_ERRORS}"
 fi
 
+# Glob agents for memory init; skip underscore-prefixed shared templates
+# (e.g. _review-template.md is not an agent).
 MEM_OK=0
-for agent in $AGENTS; do
+for src in "${SCRIPT_DIR}"/agents/*.md; do
+    [ -f "$src" ] || continue
+    agent=$(basename "$src" .md)
+    case "$agent" in _*) continue ;; esac
     mem_dir="${CLAUDE_DIR}/agent-memory/${agent}"
     mkdir -p "$mem_dir"
     if [ ! -f "$mem_dir/MEMORY.md" ]; then

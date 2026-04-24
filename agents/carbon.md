@@ -63,26 +63,6 @@ Organize the plan into phases. Each phase has a clear deliverable. Each task wit
 - **Estimated effort** — Quick (<1h), Short (1-4h), Medium (1-2d), or Large (3d+)
 - **Dependencies** — which other tasks must complete first
 
-### Example task format:
-
-```
-### Task 2.1: Add rate limiting middleware
-
-**Description:** Create a middleware function that limits requests to 100/min per IP using the existing Redis client. Apply it to all `/api/*` routes.
-
-**Files involved:**
-- `src/middleware/rateLimiter.ts` (create)
-- `src/app.ts` (modify — register middleware)
-
-**Acceptance criteria:**
-- `curl -X POST http://localhost:3000/api/test` returns 429 after 100 requests in 60 seconds
-- Existing tests pass: `npm test`
-
-**Effort:** Short (2-3h)
-
-**Dependencies:** Task 1.2 (Redis client setup)
-```
-
 ## DEPENDENCY ANALYSIS
 
 After listing all tasks, produce a dependency map. Identify:

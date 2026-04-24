@@ -14,6 +14,13 @@ command -v jq &>/dev/null || exit 0
 WIKI_DIR="${CLAUDE_PROJECT_DIR:+${CLAUDE_PROJECT_DIR}/.claude/wiki}"
 WIKI_DIR="${WIKI_DIR:-${HOME}/.claude/wiki}"
 
+# Opt-out marker: users can disable wiki injection entirely by creating
+# ${PROJ_DIR}/.claude/wiki.no-inject (or ~/.claude/wiki.no-inject for global).
+PROJ_DIR="${CLAUDE_PROJECT_DIR:-${HOME}}"
+if [ -e "${PROJ_DIR}/.claude/wiki.no-inject" ] || [ -e "${HOME}/.claude/wiki.no-inject" ]; then
+    exit 0
+fi
+
 # If no wiki directory exists, nothing to inject
 if [ ! -d "$WIKI_DIR" ] || [ ! -f "$WIKI_DIR/index.md" ]; then
     exit 0
@@ -39,8 +46,10 @@ if [ -z "$WIKI_CONTENT" ]; then
     exit 0
 fi
 
-# Cap at 4KB (4096 chars), truncate at last newline
-MAX_LEN=4096
+# Cap at 2KB (2048 chars), truncate at last newline.
+# Wiki files are concatenated top-to-bottom — trimming from the bottom preserves
+# the index.md header + earliest entries (which are assumed most-recent by wiki-update convention).
+MAX_LEN=2048
 if [ "${#WIKI_CONTENT}" -gt "$MAX_LEN" ]; then
     WIKI_CONTENT="${WIKI_CONTENT:0:$MAX_LEN}"
     # Truncate at last newline to avoid mid-line cut

@@ -1,0 +1,55 @@
+{
+  "scenario": "tests/benchmarks/v1.6.5-scenario.md",
+  "scenario_turns": 12,
+  "measured_at": "2026-04-24",
+  "measured_by": "static resident-prompt byte analysis",
+  "note": "This release's v1.6.5 `ccusage --json` run against the 12-turn scenario is pending — the release ships the scenario as a committed artifact and reports the static resident-prompt savings below, which is the honest upper bound: full ccusage will include live API output that v1.6.5 does not change. Do not claim more than these static numbers.",
+  "resident_prompt_bytes": {
+    "files_audited": [
+      "agents/steel.md",
+      "commands/alloy.md",
+      "agents/sentinel.md",
+      "agents/iridium.md",
+      "agents/cobalt.md",
+      "agents/flint.md",
+      "CLAUDE.md",
+      "agents/_review-template.md"
+    ],
+    "v1.6.4": {
+      "agents_steel_md": 18739,
+      "commands_alloy_md": 7719,
+      "agents_sentinel_md": 4624,
+      "agents_iridium_md": 5340,
+      "agents_cobalt_md": 5568,
+      "agents_flint_md": 6082,
+      "CLAUDE_md": 6415,
+      "agents__review_template_md": 0,
+      "sum": 54487
+    },
+    "v1.6.5": {
+      "agents_steel_md": 12175,
+      "commands_alloy_md": 428,
+      "agents_sentinel_md": 3812,
+      "agents_iridium_md": 4627,
+      "agents_cobalt_md": 4870,
+      "agents_flint_md": 5346,
+      "CLAUDE_md": 8528,
+      "agents__review_template_md": 2377,
+      "sum": 42163
+    },
+    "delta_bytes": -12324,
+    "delta_percent": -22.6
+  },
+  "resident_prompt_tokens_estimate": {
+    "method": "bytes / 4 (indicative only, real tokenizer varies)",
+    "v1.6.4_tokens_estimate": 13622,
+    "v1.6.5_tokens_estimate": 10541,
+    "delta_tokens_estimate": -3081
+  },
+  "caveats": [
+    "Steel + alloy + CLAUDE.md are loaded on every turn. Review agents are loaded only when fired (post-impl review gate).",
+    "_review-template.md is loaded transitively when any of sentinel/iridium/cobalt/flint fires. Net per-turn savings for a steel-only session is higher than 22.6%.",
+    "The 4-bytes-per-token heuristic is ROUGH. Claude's tokenizer varies. Use as directional only.",
+    "Live ccusage --json measurement over the committed 12-turn scenario is the next step. Numbers here are the honest STATIC upper-bound contribution from prompt slimming alone."
+  ]
+}

@@ -13,6 +13,10 @@ cat > /dev/null
 STATE_DIR="${HOME}/.claude/.alloy-state"
 if [ -d "$STATE_DIR" ]; then
     find "$STATE_DIR" -type f -mtime +7 -delete 2>/dev/null
+    # Tool-count counters rotate fast; prune aggressively so stale sessions
+    # don't accumulate. context-pressure.sh used to do this inline — moved
+    # here to finish the v1.6.1 centralization.
+    find "$STATE_DIR" -name 'tool-count-*' -mtime +1 -delete 2>/dev/null
 fi
 
 command -v jq &>/dev/null || exit 0

@@ -7,8 +7,10 @@ INPUT=$(cat)
 command -v jq &>/dev/null || exit 0
 
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || echo "")
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
-SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
+# SESSION_ID: match context-pressure.sh pattern — default "unknown", regex-sanitize against
+# CWE-22 path traversal before using in a filesystem path.
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"' 2>/dev/null || echo "unknown")
+[[ "$SESSION_ID" =~ ^[A-Za-z0-9_-]+$ ]] || SESSION_ID="unknown"
 
 if [ -z "$TOOL_NAME" ]; then
     exit 0

@@ -50,7 +50,10 @@ jobs:
           test -f /tmp/test-project/CLAUDE.md
 
           echo "Verifying file counts..."
-          AGENT_COUNT=$(ls /tmp/test-project/.claude/agents/*.md 2>/dev/null | wc -l)
+          # Exclude underscore-prefixed files (e.g. _review-template.md) — these are
+          # shared includes referenced by review agents, not agents themselves. Matches
+          # the skip-list behavior in install.sh and activate.sh memory-init loops.
+          AGENT_COUNT=$(ls /tmp/test-project/.claude/agents/*.md 2>/dev/null | grep -vc '/_')
           SKILL_COUNT=$(find /tmp/test-project/.claude/skills -name "SKILL.md" 2>/dev/null | wc -l)
           COMMAND_COUNT=$(ls /tmp/test-project/.claude/commands/*.md 2>/dev/null | wc -l)
           HOOK_COUNT=$(ls /tmp/test-project/.claude/alloy-hooks/*.sh 2>/dev/null | wc -l)
@@ -59,6 +62,9 @@ jobs:
           [ "$SKILL_COUNT" -eq 9 ] || { echo "Expected 9 skills, got $SKILL_COUNT"; exit 1; }
           [ "$COMMAND_COUNT" -eq 15 ] || { echo "Expected 15 commands, got $COMMAND_COUNT"; exit 1; }
           [ "$HOOK_COUNT" -eq 21 ] || { echo "Expected 21 hooks, got $HOOK_COUNT"; exit 1; }
+
+          echo "Verifying _review-template.md shared include is present..."
+          test -f /tmp/test-project/.claude/agents/_review-template.md || { echo "_review-template.md missing — install.sh regression"; exit 1; }
 
           echo "Verifying settings.json is valid JSON..."
           jq . /tmp/test-project/.claude/settings.json > /dev/null
@@ -91,6 +97,9 @@ jobs:
           test -d ~/.claude/agents
           test -d ~/.claude/alloy-hooks
           test -f ~/.claude/settings.json
+
+          echo "Verifying _review-template.md shared include is present (global install)..."
+          test -f ~/.claude/agents/_review-template.md || { echo "_review-template.md missing — install.sh regression"; exit 1; }
 
           echo "Verifying global install creates manifest..."
           test -f ~/.claude/.alloy-manifest || { echo "install.sh should create .alloy-manifest"; exit 1; }
@@ -126,6 +135,9 @@ jobs:
           test -d ~/.claude/alloy-hooks
           test -f ~/.claude/.alloy-manifest
           jq . ~/.claude/settings.json > /dev/null
+
+          echo "Verifying _review-template.md shared include is present (activate)..."
+          test -f ~/.claude/agents/_review-template.md || { echo "_review-template.md missing — activate.sh regression"; exit 1; }
 
           echo "Testing --version flag..."
           VERSION_OUTPUT=$(bash activate.sh --version)

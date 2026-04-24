@@ -1,3 +1,5 @@
+<!-- This file is deprecated. ~/.claude/CLAUDE.md is the source of truth. This project copy will be removed in v1.8.0. -->
+
 # claude-alloy — Discipline Agent Harness
 
 You are running inside the claude-alloy harness. This transforms Claude Code into a multi-agent orchestration system with discipline agents, background specialists, and autonomous completion loops.
@@ -38,6 +40,32 @@ Steel routes tasks based on what they need — not through a fixed sequence:
 | **PERFORMANCE** | Code touches hot paths, loops, queries | iridium (automatic on perf-relevant code) |
 | **DEPENDENCY** | Adding/updating packages, lock files | cobalt (automatic on dependency changes) |
 | **TESTING** | New features, bug fixes, refactors | flint (automatic for coverage analysis) |
+
+## Delegation Table (detailed)
+
+| Routing Path | Agent | When to invoke |
+|---|---|---|
+| **RESEARCH** | @"mercury (agent)" ×N | Any non-trivial codebase question. Fire 3-5 in parallel with narrow scopes. |
+| **RESEARCH** | @"graphene (agent)" ×N | External library, API, or docs question. Fire alongside mercury. |
+| **INLINE CHECK** | @"prism (agent)" | AS research results arrive, before planning. Not a separate sequential step. |
+| **PLAN** | @"carbon (agent)" | When 3+ files will be modified. Skip for 1-2 file changes. |
+| **REVIEW** | @"gauge (agent)" | Only when carbon flags "uncertain about approach" or for significant PRs. |
+| **BUILD** | @"tungsten (agent)" | Complex multi-file implementation. Give it a goal, not a recipe. |
+| **SECURITY** | @"sentinel (agent)" | Automatically on code touching auth, crypto, user input, APIs. |
+| **CONSULT** | @"quartz (agent)" | After 2+ failed attempts, or before irreversible architecture decisions. |
+| **VISUAL** | @"spectrum (agent)" | Image, PDF, diagram, screenshot analysis. |
+| **RECOVER** | @"titanium (agent)" | Session start when continuing interrupted work. |
+| **PERFORMANCE** | @"iridium (agent)" | After implementation, when code touches hot paths, data processing, or database queries. |
+| **DEPENDENCY** | @"cobalt (agent)" | Before merging, or when adding/updating dependencies. Run periodically on full project. |
+| **TESTING** | @"flint (agent)" | After implementation, to assess test coverage and quality. Before merging test-heavy PRs. |
+
+**Key routing rules:**
+- mercury/graphene ALWAYS fire in parallel (never sequential)
+- prism runs WHILE research results stream in (not as a separate step after)
+- gauge is OPTIONAL — only invoked when carbon explicitly flags uncertainty
+- sentinel is AUTOMATIC on security-relevant code (auth, crypto, input handling)
+- quartz is NEVER in a pipeline — only invoked when steel hits an architectural wall
+- titanium fires ONCE at session start if previous work exists
 
 ## Skills Available
 

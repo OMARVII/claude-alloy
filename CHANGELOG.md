@@ -6,6 +6,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.6.5] — 2026-04-24
+
+### Fixed
+- **`install.sh` now globs `agents/*.md`** instead of an enumerated list. `_review-template.md` (added earlier in this version) was silently missing from fresh installs — `sentinel`, `iridium`, `cobalt`, and `flint` reference it, so those 4 review agents were broken for any new user. Same glob pattern applied to uninstall. Memory-init loops now skip underscore-prefixed templates (they're includes, not agents). `activate.sh` already globbed agents, but its memory-init loop is likewise hardened against the same footgun.
+
+### Changed
+- **steel agent prompt slimmed** from 18.7KB to ~12KB (262 lines). Routing table extracted to `CLAUDE.md` (steel references it by link). "DELEGATE BY DEFAULT" behavior, all MUST / MUST NOT directives, IGNITE protocol, and Post-Implementation Review Gate preserved verbatim. Routing-regression check run against three scenarios (mercury on search, carbon on 3+ files, IGNITE activation).
+- **Deduplicated CLAUDE.md**. Global `~/.claude/CLAUDE.md` is now the canonical source. Project-root `CLAUDE.md` is marked deprecated via a leading HTML comment and will be removed in v1.8.0. `install.sh --project` now prints a deprecation notice; `activate.sh` comment updated to "CLAUDE.md: source of truth. Always copied to ~/.claude/."
+- **`/alloy` command shrunk** from 7.7KB to 428 bytes — it is now a reference stub pointing at `CLAUDE.md` for the full roster.
+- **Review-agent template extraction**: shared severity scale, scope-boundary statement, output format, and rules moved to `agents/_review-template.md`. `sentinel`, `iridium`, `cobalt`, `flint` now reference the template and keep only their domain-specific checklist, severity tier definitions, and specializations. Each review agent shed ~700–900 chars; ~2.9KB of duplication removed.
+- **`hooks/session-start.sh` wiki injection cap reduced** from 4096 to 2048 bytes. New opt-out: create `${CLAUDE_PROJECT_DIR}/.claude/wiki.no-inject` (or `~/.claude/wiki.no-inject`) to skip wiki injection entirely. Truncation still happens from the bottom, preserving the earliest (most-recent by convention) entries.
+- **`hooks/skill-reminder.sh` session-gating hardened**: reminder was already session-gated via the `REMINDER_FILE` check before threshold-counter increment (fires at most once per session), but the `SESSION_ID` extraction now follows the `context-pressure.sh` pattern — default `"unknown"`, regex-sanitized via `[[ =~ ^[A-Za-z0-9_-]+$ ]]` against CWE-22 path traversal before use in a filesystem path.
+
+### Hook transcript audit
+Audited all 21 hooks for redundant transcript emissions. Finding: the communicative hooks in the preserve list (comment-checker, ignite-detector, session-start, agent-reminder, skill-reminder, subagent-stop, ignite-stop-gate, session-end, context-pressure, auto-install/lint/typecheck guard outputs, rate-limit-resume) all emit only on real conditions with user-actionable content. `todo-enforcer.sh` emits two different outputs — a `{decision: "block", reason: ...}` first-attempt block (critical signal) and a `{systemMessage: ...}` second-attempt handoff nudge (informational); both are communicative and stay. No empty-string emissions were found. No hooks required conversion; the hook surface was already well-disciplined.
+
+### Upstream bugs tracked
+We tested three Anthropic env vars users have been sharing (`ENABLE_PROMPT_CACHING_1H`, `CLAUDE_CODE_FORK_SUBAGENT`, `ENABLE_TOOL_SEARCH`) and found active bugs on all three (issues #49139, #52833, #52121 respectively, all filed in the last 8 days). We don't recommend setting them yet. We'll ship efficiency guidance when the upstream fixes land.
+
+### Measured
+Benchmark scenario committed at `tests/benchmarks/v1.6.5-scenario.md`. Static resident-prompt analysis across the 8 touched files (steel.md, alloy.md, sentinel/iridium/cobalt/flint.md, CLAUDE.md, new `_review-template.md`):
+- v1.6.4 sum: **54,487 bytes** (~13,600 tokens estimate)
+- v1.6.5 sum: **42,163 bytes** (~10,500 tokens estimate)
+- Reduction: **-12,324 bytes (-22.6%)** across these 8 files.
+
+Caveats: this is the static resident-prompt contribution only. The committed 12-turn scenario is the vehicle for live `npx ccusage --json` comparison — full results in `tests/benchmarks/v1.6.5-results.json`. Steel + CLAUDE.md + alloy.md load every turn; `_review-template.md` loads only when a review agent fires, so per-turn savings for steel-only sessions are higher than the 22.6% average above. No marketing rounding — run `npx ccusage --json` against the committed scenario on v1.6.4 and v1.6.5 to verify for yourself.
+
+---
+
 ## [1.6.4] — 2026-04-24
 
 ### Fixed
