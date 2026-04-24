@@ -90,7 +90,9 @@ capture_stderr() {
 cleanup() {
     # Remove every tempdir ever allocated by the suite (covers macOS /private/tmp).
     rm -rf /tmp/alloy-branch-guard-test.* /tmp/alloy-branch-guard-remote.* \
-           /private/tmp/alloy-branch-guard-test.* /private/tmp/alloy-branch-guard-remote.*
+           /tmp/alloy-branch-guard-nojq.* \
+           /private/tmp/alloy-branch-guard-test.* /private/tmp/alloy-branch-guard-remote.* \
+           /private/tmp/alloy-branch-guard-nojq.*
 }
 trap cleanup EXIT INT TERM
 
@@ -123,15 +125,23 @@ esac
 REPO3=$(make_repo)
 attach_remote "$REPO3" >/dev/null
 mkdir -p "$REPO3/docs"
-# Build a PATH that excludes any directory containing jq. python3 stays available.
-NOJQ_PATH=""
-OLDIFS=$IFS; IFS=:
-for _p in $PATH; do
-    if [ -n "$_p" ] && [ ! -x "$_p/jq" ]; then
-        if [ -z "$NOJQ_PATH" ]; then NOJQ_PATH="$_p"; else NOJQ_PATH="$NOJQ_PATH:$_p"; fi
+# Build a minimal bin dir by symlinking every real binary the hook uses EXCEPT
+# jq, then use that dir alone as PATH. Filtering $PATH for "no jq" breaks on
+# Ubuntu where bash and jq both live in /usr/bin — dropping /usr/bin also drops
+# bash, making `#!/usr/bin/env bash` fail with "env: 'bash': No such file".
+NOJQ_BIN=$(mktemp -d /tmp/alloy-branch-guard-nojq.XXXXXX)
+for _tool in bash env python3 git grep cat printf sh sed awk tr mktemp rm ls cp mv chmod mkdir; do
+    _real=$(command -v "$_tool" 2>/dev/null || true)
+    if [ -n "$_real" ]; then
+        ln -s "$_real" "$NOJQ_BIN/$_tool" 2>/dev/null || true
     fi
 done
-IFS=$OLDIFS
+# Sanity: bash MUST be reachable via this PATH — otherwise the shebang fails.
+if [ ! -x "$NOJQ_BIN/bash" ] || [ ! -x "$NOJQ_BIN/env" ]; then
+    printf 'FATAL: could not build nojq PATH (bash or env missing)\n' >&2
+    exit 1
+fi
+NOJQ_PATH=$NOJQ_BIN
 STDERR3=$(capture_stderr "$REPO3" '{"tool_input":{"file_path":"'"$REPO3"'/docs/SETUP.md"}}' "PATH=$NOJQ_PATH")
 ( cd "$REPO3" && PATH="$NOJQ_PATH" bash "$HOOK" <<<'{"tool_input":{"file_path":"'"$REPO3"'/docs/SETUP.md"}}' >/dev/null 2>&1 )
 assert_exit 0 "$?" "docs allowlist (python3 fallback, no jq): exit 0"

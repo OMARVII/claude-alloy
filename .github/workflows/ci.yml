@@ -33,6 +33,8 @@ jobs:
           chmod +x tests/*.sh
           bash tests/write-guard.sh
           bash tests/statusline.sh
+          bash tests/branch-guard.sh
+          bash tests/thermal-runaway.sh
 
       - name: Smoke test — project install
         run: |

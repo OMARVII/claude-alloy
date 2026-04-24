@@ -6,6 +6,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.6.4] — 2026-04-24
+
+### Fixed
+- **Thermal-runaway guard in `hooks/lint.sh`, `hooks/typecheck.sh`, `hooks/auto-install.sh`**: PostToolUse hooks invoking `npx`/`npm`/`pip` orphaned their descendants when Claude Code's hook-level timeout fired. On rapid edits, orphans stacked — 26+ concurrent stuck hook processes observed in the wild, load average 36 on a 10-core machine, inducing CPU thermal stress. Fix adds three layers of in-hook defense identical across all three hooks:
+  - **Layer 1 — cooldown (30s)**: keyed on project dir (or manifest path for auto-install). Skips the second invocation inside the cooldown window and prints a stderr notice so users with `ALLOY_AUTO_LINT=1` / `ALLOY_AUTO_INSTALL=1` still see signal. Portable `stat -f %m || stat -c %Y` for BSD/GNU mtime read.
+  - **Layer 2 — concurrency lock** via `mkdir` (atomic on all POSIX filesystems, per BashFAQ/045) + pidfile + `kill -0` liveness check. Stale-lock recovery: if the recorded PID is dead, take over rather than blocking forever. Rejects pre-created lock/cooldown symlinks to harden against shared-/tmp redirection.
+  - **Layer 3 — process-group timeout**: prefers GNU `timeout --kill-after=5s` when available (POSIX — kills the full descendant tree); falls back to a perl `setpgid` supervisor with negative-PID signal delivery (`kill "-TERM", $pid`) on stock macOS. Signals SIGTERM, sleeps 2s, then SIGKILL — captures daemonized descendants (`npx` → `node` → `tsc`) that escape direct-child kill.
+- **Portability**: all three hooks now derive their state-file key via `shasum || sha1sum` so they work identically on macOS (ships `shasum`) and Ubuntu CI (ships `sha1sum`). State files prefer `$XDG_RUNTIME_DIR` (per-user, 0700 on systemd systems) and fall back to `$TMPDIR`/`/tmp`. Files are named `claude-alloy-<hook>-<sha1>.{cooldown,d}` for cross-project collision safety.
+
+### Added
+- **`tests/thermal-runaway.sh`** — 41 assertions covering cooldown, live-pid lock rejection, stale-pid lock recovery, pgroup-aware timeout (including descendant-kill verification via unique argv markers), `shasum`/`sha1sum` fallback, `$XDG_RUNTIME_DIR` preference, and lock/cooldown symlink rejection. Runs on macOS bash 3.2 and Ubuntu CI. Uses `pgrep -f` and `exec -a` for portable descendant detection.
+- **CI now runs `tests/branch-guard.sh` and `tests/thermal-runaway.sh`** (previously missing branch-guard coverage is now exercised on every push).
+
+---
+
 ## [1.6.3] — 2026-04-20
 
 ### Changed
