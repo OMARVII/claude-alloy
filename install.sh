@@ -52,6 +52,7 @@ if [ "${1:-}" = "--uninstall" ]; then
     fi
     rm -f "${CLAUDE_DIR:?}/.alloy-version"
     rm -f "${CLAUDE_DIR:?}/.alloy-meta"
+    rm -f "${CLAUDE_DIR:?}/.alloy-tips-shown"
     # Remove alloy-managed MCP servers
     if command -v claude &>/dev/null; then
         for srv in context7 grep_app websearch playwright; do
@@ -142,10 +143,15 @@ if [ "${1:-}" = "--project" ]; then
         echo -e "${CMD_ERRORS}"
     fi
 
+    # Glob all hook .sh files so new additions are picked up automatically
+    # without needing to update an explicit list. Matches the pattern used by
+    # activate.sh and the global install path below.
     HOOK_OK=0; HOOK_FAIL=0; HOOK_ERRORS=""
-    for hook in $HOOKS; do
+    for hook_file in "${SCRIPT_DIR}"/hooks/*.sh; do
+        [ -f "$hook_file" ] || continue
+        hook=$(basename "$hook_file")
         dest="${CLAUDE_DIR}/alloy-hooks/${hook}"
-        if cp "${SCRIPT_DIR}/hooks/${hook}" "$dest" 2>/dev/null && chmod +x "$dest"; then
+        if cp "$hook_file" "$dest" 2>/dev/null && chmod +x "$dest"; then
             echo "$dest" >> "$MANIFEST_FILE"
             HOOK_OK=$((HOOK_OK + 1))
         else
@@ -372,11 +378,14 @@ else
     echo -e "${CMD_ERRORS}"
 fi
 
+# Glob all hook .sh files so new additions are picked up automatically
+# without needing to update an explicit list. Matches activate.sh + the
+# --project install path above.
 HOOK_OK=0; HOOK_FAIL=0; HOOK_ERRORS=""
-for hook in $HOOKS; do
-    if [ -f "${SCRIPT_DIR}/hooks/${hook}" ]; then
-        cp "${SCRIPT_DIR}/hooks/${hook}" "${CLAUDE_DIR}/alloy-hooks/${hook}"
-        chmod +x "${CLAUDE_DIR}/alloy-hooks/${hook}"
+for hook_file in "${SCRIPT_DIR}"/hooks/*.sh; do
+    [ -f "$hook_file" ] || continue
+    hook=$(basename "$hook_file")
+    if cp "$hook_file" "${CLAUDE_DIR}/alloy-hooks/${hook}" 2>/dev/null && chmod +x "${CLAUDE_DIR}/alloy-hooks/${hook}"; then
         echo "${CLAUDE_DIR}/alloy-hooks/${hook}" >> "$MANIFEST_TMP"
         HOOK_OK=$((HOOK_OK + 1))
     else

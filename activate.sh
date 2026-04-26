@@ -327,6 +327,19 @@ else
     info "Created settings.json"
 fi
 
+# First-run env-var discovery — print BEFORE MCP probes so users see the
+# opt-out (ALLOY_BROWSER=0) before the Playwright auto-detect probe runs.
+# Marker file gates it so re-activation stays quiet.
+TIPS_MARKER="${CLAUDE_DIR}/.alloy-tips-shown"
+if [ ! -f "$TIPS_MARKER" ]; then
+    echo ""
+    info "Tips:"
+    echo -e "  ${BOLD}EXA_API_KEY=xxx${NC}       — websearch with higher rate limits"
+    echo -e "  ${BOLD}ALLOY_AUTO_UPDATE=0${NC}   — disable auto-update checks"
+    echo -e "  ${BOLD}ALLOY_BROWSER=0${NC}       — skip Playwright MCP install (auto-detect runs only if cached; ALLOY_BROWSER=1 forces ~20MB download)"
+    : > "$TIPS_MARKER"
+fi
+
 info "Configuring MCP servers..."
 if command -v claude &>/dev/null; then
     # Ensures an MCP server is configured with the expected URL.
@@ -353,12 +366,65 @@ if command -v claude &>/dev/null; then
     if [ -n "${EXA_API_KEY:-}" ]; then
         success "Websearch upgraded with EXA API key (higher rate limits)"
     fi
-    # Opt-in: Playwright MCP for browser automation (uses system Chrome, zero download)
-    if [ "${ALLOY_BROWSER:-}" = "1" ]; then
+    # Playwright MCP — cache-aware auto-detect, explicit opt-in for cold install.
+    #
+    # ALLOY_BROWSER=0 → hard-disable (skip probe entirely, user opted out).
+    # ALLOY_BROWSER=1 → force install regardless of cache (allows 30s download).
+    # Otherwise: only auto-install if @playwright/mcp is ALREADY in npm/npx
+    # cache. The 8s probe in v1.6.7 timed out on cold caches even when Node
+    # was installed — users with Node still didn't get auto-detect. The fix
+    # is to recognize the actual constraint: auto-install for users who've
+    # used Playwright before; require explicit opt-in for fresh ~20MB downloads
+    # so activation never silently hangs OR pulls a large dependency without
+    # disclosure.
+    PLAYWRIGHT_MODE="skip"
+    if [ "${ALLOY_BROWSER:-}" = "0" ]; then
+        PLAYWRIGHT_MODE="skip"
+    elif [ "${ALLOY_BROWSER:-}" = "1" ]; then
+        PLAYWRIGHT_MODE="forced"
+    elif command -v npx &>/dev/null; then
+        # Cache check: look for @playwright/mcp under either npm-global or the
+        # user's npx cache (~/.npm/_npx). Both are quick filesystem lookups,
+        # no network, no fork to npx.
+        PLAYWRIGHT_CACHED=false
+        NPM_GLOBAL_ROOT=$(npm root -g 2>/dev/null || true)
+        if [ -n "$NPM_GLOBAL_ROOT" ] && [ -d "$NPM_GLOBAL_ROOT/@playwright/mcp" ]; then
+            PLAYWRIGHT_CACHED=true
+        elif [ -d "$HOME/.npm/_npx" ] && find "$HOME/.npm/_npx" -maxdepth 4 -type d -name 'mcp' -path '*@playwright*' -print -quit 2>/dev/null | grep -q .; then
+            PLAYWRIGHT_CACHED=true
+        fi
+
+        if [ "$PLAYWRIGHT_CACHED" = "true" ] && command -v timeout &>/dev/null; then
+            # Cached → fast 5s confirm probe, version-pinned to install line.
+            if timeout 5 npx --yes @playwright/mcp@0.0.70 --version >/dev/null 2>&1; then
+                PLAYWRIGHT_MODE="auto"
+            fi
+        elif [ "$PLAYWRIGHT_CACHED" = "false" ]; then
+            # Not cached → don't auto-download ~20MB silently. Surface the
+            # opt-in toggle once so the user can choose.
+            info "Playwright MCP not in npm cache. Set ALLOY_BROWSER=1 to install (~20MB download)."
+        fi
+    elif [ -z "${ALLOY_BROWSER:-}" ]; then
+        # No npx available and the user hasn't asked for browser automation —
+        # mention it once so they know the toggle exists.
+        info "Browser automation requires Node.js + npm. Install Node and re-run alloy to enable Playwright."
+    fi
+
+    if [ "$PLAYWRIGHT_MODE" != "skip" ]; then
         if ! claude mcp list -s user 2>/dev/null | grep -q "playwright"; then
             claude mcp remove playwright -s user &>/dev/null || true
+            # Forced mode (ALLOY_BROWSER=1) → user accepted the cold-cache
+            # download cost; warn once so it's not silent and they don't
+            # think activation hung.
+            if [ "$PLAYWRIGHT_MODE" = "forced" ]; then
+                info "Installing Playwright MCP (ALLOY_BROWSER=1; cold-cache download may take ~30s)..."
+            fi
             if claude mcp add playwright -s user -- npx @playwright/mcp@0.0.70 --browser=chrome &>/dev/null; then
-                success "Added Playwright MCP server (browser automation)"
+                if [ "$PLAYWRIGHT_MODE" = "auto" ]; then
+                    success "Playwright MCP installed (auto-detected from cache). Set ALLOY_BROWSER=0 to skip in future."
+                else
+                    success "Added Playwright MCP server (browser automation)"
+                fi
             else
                 warn "Failed to add Playwright MCP"
             fi

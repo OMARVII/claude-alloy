@@ -91,6 +91,7 @@ fi
 rm -f "${CLAUDE_DIR}/.alloy-meta"
 rm -f "${CLAUDE_DIR}/.alloy-manifest"
 rm -f "${CLAUDE_DIR}/.alloy-version"
+rm -f "${CLAUDE_DIR}/.alloy-tips-shown"
 
 if [ -f "$BACKUP_FILE" ]; then
     mv "$BACKUP_FILE" "$SETTINGS_FILE"

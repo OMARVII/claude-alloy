@@ -1,4 +1,5 @@
 {
+  "_comment": "Optional Playwright MCP for browser automation: copy 'playwright_optional' to 'playwright' (and remove this comment + the _optional key) to enable. activate.sh now installs it automatically when npx is available — this entry is for users who provision MCP via .mcp.json instead.",
   "mcpServers": {
     "context7": {
       "type": "http",
@@ -11,6 +12,10 @@
     "websearch": {
       "type": "http",
       "url": "https://mcp.exa.ai/mcp"
+    },
+    "playwright_optional": {
+      "command": "npx",
+      "args": ["@playwright/mcp@0.0.70", "--browser=chrome"]
     }
   }
 }

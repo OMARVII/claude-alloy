@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.6.5"><img src="https://img.shields.io/badge/version-1.6.5-green.svg" alt="Version 1.6.5"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.6.7"><img src="https://img.shields.io/badge/version-1.6.7-green.svg" alt="Version 1.6.7"></a>
 </p>
 
 <p align="center">
@@ -415,6 +415,27 @@ Two hooks can execute project-local code and are therefore disabled unless you e
 | `ALLOY_AUTO_UPDATE=0` | `self-update.sh` | Set to `0` to disable the weekly self-update check (default: enabled, checks at most once per 7 days; only pulls if `origin` remote is exactly `OMARVII/claude-alloy`). |
 | `ALLOY_BROWSER=1` | `/dev-browser` skill | Enables Playwright MCP browser automation. Requires `@playwright/mcp` to be installed. |
 
+### Optional: MCP Tool Search opt-in (power-user tip)
+
+If you've added many MCP servers and your context fills up fast, Claude Code has a deferred-loading feature called **Tool Search** that loads MCP tool schemas only when needed. Anthropic's docs claim **over 85% MCP schema reduction** when active.
+
+**Default behavior:** Claude Code tries to auto-activate Tool Search when MCP tools exceed ~10% of context. Most users with a small MCP set don't need to do anything.
+
+**Force-enable (recommended only if you have 10+ MCP servers):**
+
+```bash
+# Add to ~/.zshrc or ~/.bash_profile
+export ENABLE_TOOL_SEARCH=true
+```
+
+**Caveats:**
+- Auto-activation has [known reliability bugs](https://github.com/anthropics/claude-code/issues/18397) — the env var is the workaround.
+- The env var is [silently ignored on Windows Desktop](https://github.com/anthropics/claude-code/issues/41472). macOS/Linux CLI works.
+- Adds a search round-trip per request — only worth it when MCP schemas are actually large.
+- Requires Sonnet 4+, Opus 4+, or Haiku 4.5+.
+
+claude-alloy ships only 3 always-on MCP servers (context7, grep_app, websearch), so most users won't need this. Power users adding Linear/Notion/Slack/HubSpot/etc. on top will see the biggest benefit.
+
 ---
 
 ## Platform Support
@@ -461,7 +482,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.6.5**.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.6.7**.
 
 ---
 
