@@ -59,7 +59,10 @@ else
 fi
 # Single-line code spans + quoted strings. Use sed with separate -e blocks
 # so single-quote stripping works (the literal single-quote in the pattern
-# would otherwise close the bash string).
+# would otherwise close the bash string). Sed scripts are deliberately in
+# single quotes — backticks and dollar signs in these regexes are literal
+# pattern characters, not bash expansions.
+# shellcheck disable=SC2016
 STRIPPED=$(printf '%s' "$STRIPPED" \
     | sed -E 's/`[^`]*`//g' \
     | sed -E 's/"[^"]*"//g')

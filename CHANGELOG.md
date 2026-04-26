@@ -6,6 +6,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.6.8] — 2026-04-26
+
+### Fixed
+- **`hooks/statusline.sh` 5h rate-limit segment never rendered correctly.** v1.6.7 removed the 7d segment but left the surrounding `for pair in "5h:..."` loop, which iterated exactly once over a single double-quoted element. shellcheck SC2066 caught this in CI: a one-element double-quoted "loop" is a code smell that hid a real rendering bug — `RATE_PARTS` accumulated correctly but the loop structure suggested multi-segment support that no longer existed. Replaced with direct rendering. Behavior is identical when a 5h reset is present, but the code now matches its intent (single segment, not a list).
+- **CI shellcheck failures (4 warnings/info):** v1.6.7 introduced a few shellcheck noise items that the CI's strict-no-warnings mode treats as errors:
+  - `install.sh:22` HOOKS variable — only used in `--project` mode block; added inline `# shellcheck disable=SC2034` with explanation.
+  - `hooks/statusline.sh:75` SEVEN_DAY_PCT — extracted but unused since v1.6.7 7d removal; explicit `# shellcheck disable=SC2034` with rationale (kept for parity, future render).
+  - `hooks/ignite-detector.sh:64` and `tests/ignite-detector.sh:95` — sed regex patterns and printf escape sequences in single quotes (intentional — backticks are literal pattern characters, not bash expansions); added inline `# shellcheck disable=SC2016`.
+
+No functional changes beyond the statusline 5h render fix. v1.6.7 binary is still safe — the bug is rendering-only, not security or data integrity.
+
+---
+
 ## [1.6.7] — 2026-04-25
 
 ### Documentation

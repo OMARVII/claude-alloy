@@ -72,6 +72,8 @@ COST=${_FIELDS[4]-}
 LINES_ADDED=${_FIELDS[5]-}
 LINES_REMOVED=${_FIELDS[6]-}
 FIVE_HOUR_PCT=${_FIELDS[7]-}
+# shellcheck disable=SC2034  # Extracted but not rendered — kept for parity with FIVE_HOUR_PCT
+# in case a future render needs it (see "v1.6.7 7d removal" comment near render).
 SEVEN_DAY_PCT=${_FIELDS[8]-}
 WORKTREE=${_FIELDS[9]-}
 EXCEEDS_200K=${_FIELDS[10]-}
@@ -249,32 +251,32 @@ fi
 # v1.6.7: a week-away reset is useless as a wall-clock percentage indicator,
 # and the segment cluttered the line for no signal. SEVEN_DAY_PCT is still
 # extracted upstream (cheap, in case a future render needs it).
+#
+# Pre-v1.6.7 this was a `for pair in "5h:..." "7d:..."` loop. With only one
+# segment now, direct rendering is simpler — and shellcheck SC2066 (single-
+# element loop) caught it correctly. If a future segment is added, restore
+# the array form: `for pair in "${RATE_PAIRS[@]}"; do ...`.
 RATE_SEG=""
-RATE_PARTS=""
-for pair in "5h:${FIVE_HOUR_PCT:-}:${FIVE_HOUR_RESET:-}"; do
-    label=${pair%%:*}
-    rest=${pair#*:}
-    val=${rest%%:*}
-    reset_at=${rest#*:}
-    [ -z "$val" ] && continue
+val=${FIVE_HOUR_PCT:-}
+reset_at=${FIVE_HOUR_RESET:-}
+if [ -n "$val" ]; then
     # Strip any decimal portion so bash integer arithmetic works.
     val_int=${val%%.*}
-    [[ "$val_int" =~ ^[0-9]+$ ]] || continue
-    clr=$GREEN
-    [ "$val_int" -ge 70 ] && clr=$YELLOW
-    [ "$val_int" -ge 90 ] && clr=$RED
-    reset_tag=""
-    # Gate reset_at to digits-only before passing to date (defense in depth:
-    # prevents flag-injection via e.g. "-r" or "--help" from malformed stdin).
-    if [[ "$reset_at" =~ ^[0-9]+$ ]] && [ "$reset_at" != "0" ]; then
-        # macOS: date -r EPOCH; GNU: date -d @EPOCH.
-        reset_time=$(date -r "$reset_at" '+%H:%M' 2>/dev/null || date -d "@$reset_at" '+%H:%M' 2>/dev/null)
-        [ -n "$reset_time" ] && reset_tag=" ${DIM}@${reset_time}${RESET}"
+    if [[ "$val_int" =~ ^[0-9]+$ ]]; then
+        clr=$GREEN
+        [ "$val_int" -ge 70 ] && clr=$YELLOW
+        [ "$val_int" -ge 90 ] && clr=$RED
+        reset_tag=""
+        # Gate reset_at to digits-only before passing to date (defense in
+        # depth: prevents flag-injection via e.g. "-r" or "--help" from
+        # malformed stdin).
+        if [[ "$reset_at" =~ ^[0-9]+$ ]] && [ "$reset_at" != "0" ]; then
+            # macOS: date -r EPOCH; GNU: date -d @EPOCH.
+            reset_time=$(date -r "$reset_at" '+%H:%M' 2>/dev/null || date -d "@$reset_at" '+%H:%M' 2>/dev/null)
+            [ -n "$reset_time" ] && reset_tag=" ${DIM}@${reset_time}${RESET}"
+        fi
+        RATE_SEG="${SEP}${clr}5h:${val_int}%${RESET}${reset_tag}"
     fi
-    RATE_PARTS="${RATE_PARTS}${clr}${label}:${val_int}%${RESET}${reset_tag} "
-done
-if [ -n "$RATE_PARTS" ]; then
-    RATE_SEG="${SEP}${RATE_PARTS% }"
 fi
 
 # ---- ENH-4: Lines-changed delta ---------------------------------------------

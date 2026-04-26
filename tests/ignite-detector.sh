@@ -92,6 +92,7 @@ call_hook "code reference: \`ignite\` is a slash command" "neg-q2" \
 assert_eq 0 "$PASS" "negative: backtick-quoted 'ignite' does NOT activate"
 
 # Code fence — multi-line. The detector strips the fenced block before scanning.
+# shellcheck disable=SC2016  # Backticks inside printf format are literal escape sequences, not command substitution
 call_hook "$(printf 'see the example below:\n\`\`\`\nig start\n\`\`\`\nthat is the ignite invocation form')" "neg-q3" \
     && PASS=1 || PASS=0
 # This one should NOT activate — both occurrences are in fenced/descriptive
