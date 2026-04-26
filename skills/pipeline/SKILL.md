@@ -1,6 +1,6 @@
 ---
 name: pipeline
-description: "Batch processing with Claude Code headless mode. Fan-out across files, parallel migrations, CI integration. Use when processing multiple files with the same operation."
+description: "Batch processing with Claude Code headless mode (fan-out across files)."
 disable-model-invocation: true
 allowed-tools: Bash, Read, Grep, Glob, Write
 ---

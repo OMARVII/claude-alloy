@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: "Confidence-scored code review. Rates each issue 0-100 and only reports issues with confidence >= 80. Quality over quantity. Use for PR reviews, code quality checks, or pre-commit review."
+description: "Confidence-scored code review. Reports issues with confidence ≥ 80."
 allowed-tools: Read, Grep, Glob, Bash
 ---
 

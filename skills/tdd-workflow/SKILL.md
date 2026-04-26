@@ -1,6 +1,6 @@
 ---
 name: tdd-workflow
-description: "Test-driven development enforcement. Red-green-refactor cycle. Write failing test FIRST, then minimal code to pass, then clean up. Triggers: 'tdd', 'test first', 'test driven', 'write tests', 'red green'."
+description: "Test-driven development: red-green-refactor with test-first discipline."
 allowed-tools: Bash, Read, Edit, Write, Grep, Glob
 ---
 

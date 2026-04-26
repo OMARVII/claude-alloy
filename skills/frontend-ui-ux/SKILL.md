@@ -1,6 +1,6 @@
 ---
 name: frontend-ui-ux
-description: "Designer-turned-developer who crafts stunning UI/UX even without design mockups. Use for any frontend, styling, animation, or design work."
+description: "UI/UX work: design, styling, animation, frontend implementation."
 allowed-tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: ai-slop-remover
-description: Identifies and removes AI-generated code smells without changing behavior. Targets obvious comments, over-defensive code, spaghetti nesting, and generic naming.
+description: "Remove AI code smells: obvious comments, over-defensive code, generic naming."
 allowed-tools: Read, Edit, Grep, Glob
 ---
 

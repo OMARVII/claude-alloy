@@ -1,6 +1,6 @@
 ---
 name: dev-browser
-description: "Browser automation with Playwright MCP. Use when users ask to navigate websites, fill forms, take screenshots, extract web data, test web apps, or automate browser workflows."
+description: "Browser automation: navigation, forms, screenshots, data extraction."
 allowed-tools: Bash, Read, Grep, Glob
 disable-model-invocation: true
 ---

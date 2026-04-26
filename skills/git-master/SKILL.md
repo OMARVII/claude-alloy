@@ -1,6 +1,6 @@
 ---
 name: git-master
-description: "MUST USE for ANY git operations. Atomic commits, rebase/squash, history search (blame, bisect, log -S). Triggers: 'commit', 'rebase', 'squash', 'who wrote', 'when was X added', 'find the commit that'."
+description: "Git operations: commit, rebase, history search (blame, bisect, log -S)."
 allowed-tools: Bash, Read, Grep, Glob
 ---
 

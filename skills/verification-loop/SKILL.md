@@ -1,6 +1,6 @@
 ---
 name: verification-loop
-description: "Full verification cycle: build, test, lint, typecheck. Run after implementation to prove it works. Triggers: 'verify', 'does it work', 'run tests', 'check everything', 'make sure it works'."
+description: "Full verify cycle: build → typecheck → lint → test before completion."
 allowed-tools: Bash, Read, Grep, Glob, Edit
 ---
 
