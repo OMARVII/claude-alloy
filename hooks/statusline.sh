@@ -244,11 +244,14 @@ if awk -v c="$COST" 'BEGIN{exit !(c+0 > 0)}' 2>/dev/null; then
     fi
 fi
 
-# ---- ENH-3: Rate limits (5h + 7d), always-on (v2.1) -------------------------
-# v2.1 adds @HH:MM reset tag to 5h only (7d reset is a week away — useless as wall-clock).
+# ---- ENH-3: Rate limits — 5h only (v1.6.7) ----------------------------------
+# 5h has an actionable @HH:MM reset clock. The 7d:P% segment was removed in
+# v1.6.7: a week-away reset is useless as a wall-clock percentage indicator,
+# and the segment cluttered the line for no signal. SEVEN_DAY_PCT is still
+# extracted upstream (cheap, in case a future render needs it).
 RATE_SEG=""
 RATE_PARTS=""
-for pair in "5h:${FIVE_HOUR_PCT:-}:${FIVE_HOUR_RESET:-}" "7d:${SEVEN_DAY_PCT:-}:"; do
+for pair in "5h:${FIVE_HOUR_PCT:-}:${FIVE_HOUR_RESET:-}"; do
     label=${pair%%:*}
     rest=${pair#*:}
     val=${rest%%:*}
@@ -288,7 +291,8 @@ CWD_BASE=$(basename "$CWD")
 
 # ---- Compose final line -----------------------------------------------------
 # Layout (conditional segments drop out cleanly when empty):
-#   [alloy VER] [IGNITE] MODEL | ⎇ branch* | wt:NAME | ctx:N% !200k | $X.XX | 5h:P% 7d:P% | +A/-R | session:DUR | ⚒N | cwd
+#   [alloy VER] [IGNITE] MODEL | ⎇ branch* | wt:NAME | ctx:N% !200k | $X.XX | 5h:P% @HH:MM | +A/-R | session:DUR | ⚒N | cwd
+# (7d:P% removed in v1.6.7 — week-away reset = no signal as wall-clock %.)
 #
 # Pre-compose fixed segments here to keep the final printf format string
 # short and unambiguous (no counting mistakes between specifiers and args).

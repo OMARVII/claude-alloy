@@ -42,12 +42,15 @@ echo "$COUNT" > "${COUNTER_FILE}.tmp" && mv "${COUNTER_FILE}.tmp" "$COUNTER_FILE
 # ~140 tool calls ≈ 85% context (hallucinations increase)
 # These are conservative estimates; actual usage depends on output size
 
+# Claude Code requires `hookEventName` inside `hookSpecificOutput` for the
+# additionalContext channel. Without it, the hook fails JSON validation
+# silently in the harness and the warning is dropped.
 if [ "$COUNT" -ge 140 ]; then
     jq -n --arg msg "[CONTEXT PRESSURE: CRITICAL] ~${COUNT} tool calls this session. Context window likely >85% full. Performance is degrading. Strongly recommend: /clear and restart, or compact now. Do NOT start new complex tasks." \
-        '{"hookSpecificOutput": {"additionalContext": $msg}}'
+        '{"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": $msg}}'
 elif [ "$COUNT" -ge 100 ]; then
     jq -n --arg msg "[CONTEXT PRESSURE: HIGH] ~${COUNT} tool calls this session. Context window estimated >70% full. Consider wrapping up current task and using /clear before starting new work." \
-        '{"hookSpecificOutput": {"additionalContext": $msg}}'
+        '{"hookSpecificOutput": {"hookEventName": "PostToolUse", "additionalContext": $msg}}'
 fi
 
 exit 0

@@ -17,6 +17,10 @@ if [ -d "$STATE_DIR" ]; then
     # don't accumulate. context-pressure.sh used to do this inline — moved
     # here to finish the v1.6.1 centralization.
     find "$STATE_DIR" -name 'tool-count-*' -mtime +1 -delete 2>/dev/null
+    # Pre-compact backup dirs (v1.6.7) — directory-level prune since the file
+    # janitor above empties dirs but doesn't remove them. -depth so children
+    # are reached first; -mindepth 1 so we never touch STATE_DIR itself.
+    find "$STATE_DIR" -mindepth 1 -depth -type d -name 'compact-backup-*' -mtime +7 -exec rm -rf {} + 2>/dev/null
 fi
 
 command -v jq &>/dev/null || exit 0

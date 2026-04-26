@@ -58,7 +58,9 @@ if [ "${#WIKI_CONTENT}" -gt "$MAX_LEN" ]; then
 [Wiki truncated — run /wiki-update to clean up]"
 fi
 
-# Output additionalContext via hookSpecificOutput
+# Output additionalContext via hookSpecificOutput. Claude Code requires
+# `hookEventName` inside `hookSpecificOutput` — without it, the hook fails
+# JSON validation with "Hook JSON output validation failed" at session start.
 jq -n --arg ctx "PROJECT WIKI:
 ${WIKI_CONTENT}" \
-    '{"hookSpecificOutput": {"additionalContext": $ctx}}'
+    '{"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": $ctx}}'
