@@ -117,4 +117,43 @@ call_hook "can you 'ignite' please" "neg-apos-1" \
     && PASS=1 || PASS=0
 assert_eq 0 "$PASS" "negative: balanced single-quoted 'ignite' (even count) still strips and does NOT activate"
 
+# ---- Fresh-activation reset (counter cleared on new IGNITE phase) ----------
+# Pre-fix: a session that IGNITEd, fired N agents, then IGNITEd AGAIN later
+# (in the same session) inherited the prior phase's count — the new phase's
+# 6-agent gate could be satisfied without spawning anything fresh.
+# Fix: detector clears agent-count + agents-spawned files when activating
+# either fresh OR after the flag's TTL expires.
+
+# Seed prior-phase counters for a fresh session id
+RESET_SID="reset-test-$$"
+echo "30" > "${STATE_DIR}/agent-count-${RESET_SID}"
+printf 'graphene\nmercury\nmercury\n' > "${STATE_DIR}/agents-spawned-${RESET_SID}"
+
+# Activate IGNITE for the first time on this session — RESET should fire
+# because the flag does NOT exist yet (fresh activation).
+call_hook "ig let's go" "$RESET_SID" >/dev/null
+
+# Counter file should be removed (or empty) after reset
+COUNT_AFTER_RESET=$([ -f "${STATE_DIR}/agent-count-${RESET_SID}" ] && cat "${STATE_DIR}/agent-count-${RESET_SID}" || echo "missing")
+assert_eq "missing" "$COUNT_AFTER_RESET" "fresh-activation reset: prior agent-count file is removed"
+
+LEDGER_AFTER_RESET=$([ -f "${STATE_DIR}/agents-spawned-${RESET_SID}" ] && echo "exists" || echo "missing")
+assert_eq "missing" "$LEDGER_AFTER_RESET" "fresh-activation reset: prior agents-spawned ledger is removed"
+
+# IGNITE flag must now be set
+[ -f "${STATE_DIR}/ignite-active-${RESET_SID}" ] && FLAG="set" || FLAG="missing"
+assert_eq "set" "$FLAG" "fresh-activation reset: IGNITE flag is set after reset"
+
+# Re-activation while flag is FRESH (within TTL) must NOT reset — counts
+# accumulated during the active phase belong to that phase. The standard
+# call_hook helper removes the flag pre-call, so we invoke the hook
+# directly here to preserve the flag set by the first activation above.
+echo "5" > "${STATE_DIR}/agent-count-${RESET_SID}"
+printf 'mercury\nmercury\nmercury\nmercury\nmercury\n' > "${STATE_DIR}/agents-spawned-${RESET_SID}"
+jq -nc --arg p "ig keep going" --arg s "$RESET_SID" \
+    '{prompt: $p, session_id: $s}' \
+    | bash "$HOOK" >/dev/null 2>&1
+PRESERVED_COUNT=$(cat "${STATE_DIR}/agent-count-${RESET_SID}" 2>/dev/null || echo "missing")
+assert_eq "5" "$PRESERVED_COUNT" "in-phase re-activation does NOT reset counter (flag still fresh)"
+
 done_testing

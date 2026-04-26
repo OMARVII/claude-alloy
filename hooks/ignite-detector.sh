@@ -94,8 +94,32 @@ if [ "$IGNITE_DETECTED" = "false" ]; then
     exit 0
 fi
 
-# Set IGNITE flag with timestamp
+# Set IGNITE flag with timestamp.
+#
+# Fresh-activation reset: if no flag exists OR the flag is older than the
+# stop-gate's TTL (default 2h via ALLOY_IGNITE_TTL), this is a NEW IGNITE
+# phase — clear the per-session counter and ledger so stale counts from
+# a prior IGNITE phase in the same session don't satisfy the new phase's
+# 6-agent floor. Without this, a user IGNITEs at T+0, fires 30 agents,
+# idles 3h (flag expires), re-IGNITEs at T+3h with 0 agents → gate
+# falsely passes because counter still reads 30.
 IGNITE_FLAG="${STATE_DIR}/ignite-active-${SESSION_ID}"
+IGNITE_TTL=${ALLOY_IGNITE_TTL:-7200}
+RESET_COUNTERS=false
+if [ ! -f "$IGNITE_FLAG" ]; then
+    RESET_COUNTERS=true
+else
+    NOW_EPOCH=$(date +%s 2>/dev/null || echo 0)
+    FLAG_EPOCH=$(stat -f %m "$IGNITE_FLAG" 2>/dev/null || stat -c %Y "$IGNITE_FLAG" 2>/dev/null || echo 0)
+    AGE=$(( NOW_EPOCH - FLAG_EPOCH ))
+    if [ "$AGE" -gt "$IGNITE_TTL" ]; then
+        RESET_COUNTERS=true
+    fi
+fi
+if [ "$RESET_COUNTERS" = "true" ]; then
+    rm -f "${STATE_DIR}/agent-count-${SESSION_ID}" \
+          "${STATE_DIR}/agents-spawned-${SESSION_ID}" 2>/dev/null || true
+fi
 date -u '+%Y-%m-%dT%H:%M:%SZ' > "$IGNITE_FLAG"
 
 # Output context injection for the LLM

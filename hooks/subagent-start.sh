@@ -58,31 +58,13 @@ jq -nc --arg ts "$TIMESTAMP" --arg ev "start" --argjson input "$INPUT" \
 jq -nc --arg ts "$TIMESTAMP" --arg ev "start" \
     '{timestamp: $ts, event: $ev, agent: {}}' >> "$LOG_FILE" 2>/dev/null
 
-# Track per-session agent count. Always increments — even when AGENT_TYPE
-# is empty — so the IGNITE stop-gate's "N/6 agents spawned" check stays
-# accurate on schema variants where agent_type isn't surfaced.
-COUNT_FILE="${STATE_DIR}/agent-count-${SESSION_ID}"
-COUNT=0
-if [ -f "$COUNT_FILE" ]; then
-    COUNT=$(cat "$COUNT_FILE" 2>/dev/null || echo "0")
-fi
-# Guard against a corrupted counter file (non-numeric content). $((COUNT+1))
-# under set -u would otherwise abort this line silently and leave the counter
-# frozen at the bad value forever.
-case "$COUNT" in
-    ''|*[!0-9]*) COUNT=0 ;;
-esac
-COUNT=$((COUNT + 1))
-echo "$COUNT" > "$COUNT_FILE"
-
-# Track per-session agent types (one per line). Falls back to "unknown" so
-# the agents-spawned ledger always has a row per spawn — keeps grep-based
-# audits honest when the upstream schema doesn't surface the agent name.
-AGENTS_FILE="${STATE_DIR}/agents-spawned-${SESSION_ID}"
-if [ -n "$AGENT_TYPE" ]; then
-    echo "$AGENT_TYPE" >> "$AGENTS_FILE"
-else
-    echo "unknown" >> "$AGENTS_FILE"
-fi
+# Per-session agent counter and ledger are now owned by hooks/agent-count.sh
+# (PostToolUse on Agent|Task in the parent session). This hook used to also
+# write to those files, but that caused double-counting when SubagentStart
+# DID fire in the parent session — both hooks would increment the same
+# parent-session counter for one logical agent dispatch. The IGNITE stop-gate
+# now reads from agent-count.sh's writes only. This hook retains its global
+# agent-log.jsonl append (above) for debugging/audit, but no longer touches
+# the load-bearing counter/ledger files.
 
 exit 0
