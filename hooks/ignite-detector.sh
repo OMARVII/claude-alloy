@@ -32,10 +32,62 @@ if [ -z "$PROMPT_TEXT" ]; then
     exit 0
 fi
 
-# Scan for word-bounded "ig" or "ignite" (case-insensitive)
+# Detect "ig" or "ignite" as USER INTENT, not as a referential mention.
+#
+# Pre-v1.6.7 behavior: naive `\big\b|\bignite\b` matched the keyword anywhere
+# — including inside quoted strings, code fences, and descriptive phrases like
+# "verify the IGNITE protocol works" or "regarding ignite mode". That tripped
+# the stop-gate on test prompts that merely DISCUSSED IGNITE without invoking
+# it (a real false-positive caught during v1.6.7 verification).
+#
+# New approach:
+#   1. Strip code fences (``` … ```), inline code (`…`), and quoted spans
+#      ("…", '…') from the prompt before matching. References inside those
+#      regions don't count as user intent.
+#   2. After stripping, if the keyword is preceded by a descriptive modifier
+#      (the/an/this/that/our/about/regarding/describes/describing/protocol/
+#      mode/test/testing/verify/verification), treat it as a reference, not
+#      an invocation.
 IGNITE_DETECTED=false
-if echo "$PROMPT_TEXT" | grep -qiE '\big\b|\bignite\b'; then
-    IGNITE_DETECTED=true
+
+# Stage 1 — strip code/quoted regions. perl handles multi-line code fences;
+# falls back to passthrough if perl is missing (rare on macOS/Linux).
+if command -v perl >/dev/null 2>&1; then
+    STRIPPED=$(printf '%s' "$PROMPT_TEXT" | perl -0777 -pe 's/```.*?```//gs' 2>/dev/null)
+else
+    STRIPPED="$PROMPT_TEXT"
+fi
+# Single-line code spans + quoted strings. Use sed with separate -e blocks
+# so single-quote stripping works (the literal single-quote in the pattern
+# would otherwise close the bash string).
+STRIPPED=$(printf '%s' "$STRIPPED" \
+    | sed -E 's/`[^`]*`//g' \
+    | sed -E 's/"[^"]*"//g')
+# Single-quote stripping is conditional: only collapse if the prompt has an
+# EVEN number of apostrophes. An unpaired apostrophe means at least one is a
+# conversational contraction ("don't", "let's"), not a quote delimiter — and
+# greedy `'[^']*'` would eat real text between the contraction and the next
+# stray apostrophe, sometimes suppressing a legitimate IGNITE keyword.
+QUOTE_COUNT=$(printf '%s' "$STRIPPED" | tr -cd "'" | wc -c | tr -d ' ')
+if [ $((QUOTE_COUNT % 2)) -eq 0 ] && [ "$QUOTE_COUNT" -gt 0 ]; then
+    STRIPPED=$(printf '%s' "$STRIPPED" | sed "s/'[^']*'//g")
+fi
+
+# Stage 2 — match candidate then re-check context.
+if printf '%s' "$STRIPPED" | grep -qiE '\b(ig|ignite)\b'; then
+    # If a descriptive modifier precedes the keyword anywhere, treat as
+    # reference. Word-boundary on each side keeps "this" from matching
+    # "thistle" etc.
+    if printf '%s' "$STRIPPED" | grep -qiE '\b(the|an|this|that|our|about|regarding|describes|describing|protocol|mode|test|testing|verify|verification) +(ig|ignite)\b'; then
+        IGNITE_DETECTED=false
+    else
+        IGNITE_DETECTED=true
+    fi
+fi
+
+if [ "${ALLOY_DEBUG:-0}" = "1" ]; then
+    printf '[alloy] ignite-detector raw=%q stripped=%q detected=%s\n' \
+        "$PROMPT_TEXT" "$STRIPPED" "$IGNITE_DETECTED" >&2
 fi
 
 if [ "$IGNITE_DETECTED" = "false" ]; then
