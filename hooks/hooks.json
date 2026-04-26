@@ -56,7 +56,7 @@
         ]
       },
       {
-        "matcher": "Grep|Glob|WebFetch|WebSearch|mcp__.*",
+        "matcher": "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*",
         "hooks": [
           {
             "type": "command",
