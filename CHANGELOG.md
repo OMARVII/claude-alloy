@@ -8,6 +8,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [1.6.8] — 2026-04-26
 
+> **Patch release on top of v1.6.7.** v1.6.7 contained the bulk of the optimization work (token-cost, hook hardening, install UX, IGNITE protocol, agent counter rewrite). v1.6.8 only fixes one rendering bug and four CI shellcheck warnings introduced during v1.6.7. **See the v1.6.7 entry below for the full feature list** — most users upgrading should think of this as "v1.6.7 with the statusline render fix."
+
 ### Fixed
 - **`hooks/statusline.sh` 5h rate-limit segment never rendered correctly.** v1.6.7 removed the 7d segment but left the surrounding `for pair in "5h:..."` loop, which iterated exactly once over a single double-quoted element. shellcheck SC2066 caught this in CI: a one-element double-quoted "loop" is a code smell that hid a real rendering bug — `RATE_PARTS` accumulated correctly but the loop structure suggested multi-segment support that no longer existed. Replaced with direct rendering. Behavior is identical when a 5h reset is present, but the code now matches its intent (single segment, not a list).
 - **CI shellcheck failures (4 warnings/info):** v1.6.7 introduced a few shellcheck noise items that the CI's strict-no-warnings mode treats as errors:
