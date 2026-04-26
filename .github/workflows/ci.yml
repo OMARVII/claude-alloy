@@ -61,7 +61,7 @@ jobs:
           [ "$AGENT_COUNT" -eq 14 ] || { echo "Expected 14 agents, got $AGENT_COUNT"; exit 1; }
           [ "$SKILL_COUNT" -eq 9 ] || { echo "Expected 9 skills, got $SKILL_COUNT"; exit 1; }
           [ "$COMMAND_COUNT" -eq 15 ] || { echo "Expected 15 commands, got $COMMAND_COUNT"; exit 1; }
-          [ "$HOOK_COUNT" -eq 21 ] || { echo "Expected 21 hooks, got $HOOK_COUNT"; exit 1; }
+          [ "$HOOK_COUNT" -eq 22 ] || { echo "Expected 22 hooks, got $HOOK_COUNT"; exit 1; }
 
           echo "Verifying _review-template.md shared include is present..."
           test -f /tmp/test-project/.claude/agents/_review-template.md || { echo "_review-template.md missing — install.sh regression"; exit 1; }
