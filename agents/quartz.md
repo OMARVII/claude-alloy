@@ -9,12 +9,6 @@ tools:
   - Bash
   - WebFetch
   - WebSearch
-disallowedTools:
-  - Write
-  - Edit
-  - Agent
-  - Skill
-  - TodoWrite
 maxTurns: 30
 effort: max
 memory: project

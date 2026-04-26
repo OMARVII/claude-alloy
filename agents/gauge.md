@@ -8,11 +8,6 @@ tools:
   - Grep
   - Bash
   - WebFetch
-disallowedTools:
-  - Write
-  - Edit
-  - Agent
-  - Skill
 maxTurns: 20
 effort: high
 memory: project

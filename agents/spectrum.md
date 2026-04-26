@@ -7,11 +7,6 @@ tools:
   - Glob
   - Grep
   - Bash
-disallowedTools:
-  - Write
-  - Edit
-  - Agent
-  - Skill
 maxTurns: 10
 effort: medium
 memory: project

@@ -9,11 +9,6 @@ tools:
   - Bash
   - WebFetch
   - WebSearch
-disallowedTools:
-  - Write
-  - Edit
-  - Agent
-  - Skill
 maxTurns: 20
 effort: medium
 memory: project

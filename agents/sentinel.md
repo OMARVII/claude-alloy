@@ -9,11 +9,6 @@ tools:
   - Bash
   - WebFetch
   - WebSearch
-disallowedTools:
-  - Write
-  - Edit
-  - Agent
-  - Skill
 maxTurns: 30
 effort: high
 color: red
