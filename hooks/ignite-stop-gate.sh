@@ -24,18 +24,34 @@ if [ "$STOP_HOOK_ACTIVE" = "true" ]; then
     exit 0
 fi
 
-# Detect IGNITE mode: check state file first, then transcript
-IGNITE_ACTIVE=false
+# Detect IGNITE mode — single source of truth: the flag file written by
+# hooks/ignite-detector.sh. The detector applies context-aware filtering
+# (skips quoted, descriptive, and test-context mentions) and is the ONLY
+# path that should activate IGNITE.
+#
+# Pre-v1.6.7 we also scanned the transcript for "IGNITE MODE ACTIVATED" or
+# "🔥 IGNITE" as a fallback, but that scan re-introduced the same false-
+# positive class the detector was just fixed for: any prompt that QUOTES
+# the IGNITE banner (test prompts, documentation, this changelog itself)
+# would trip the gate. Removed in favor of detector-only authority.
+#
+# IGNITE_TTL freshness: a flag set hours ago shouldn't keep demanding 6+
+# agents on unrelated stops afterwards. Statusline expires at 6h; the
+# stop-gate uses a tighter 2h window because protocol enforcement is
+# stricter than visual indication. Override via ALLOY_IGNITE_TTL=<seconds>.
+IGNITE_TTL=${ALLOY_IGNITE_TTL:-7200}
 
+IGNITE_ACTIVE=false
 IGNITE_FLAG="${STATE_DIR}/ignite-active-${SESSION_ID}"
 if [ -f "$IGNITE_FLAG" ]; then
-    IGNITE_ACTIVE=true
-fi
-
-if [ "$IGNITE_ACTIVE" = "false" ] && [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-    if grep -q "IGNITE MODE ACTIVATED" "$TRANSCRIPT_PATH" 2>/dev/null; then
+    NOW_EPOCH=$(date +%s 2>/dev/null || echo 0)
+    # macOS `stat -f %m`, GNU `stat -c %Y` — try both, fall back to 0.
+    FLAG_EPOCH=$(stat -f %m "$IGNITE_FLAG" 2>/dev/null || stat -c %Y "$IGNITE_FLAG" 2>/dev/null || echo 0)
+    AGE=$(( NOW_EPOCH - FLAG_EPOCH ))
+    if [ "$AGE" -ge 0 ] && [ "$AGE" -le "$IGNITE_TTL" ]; then
         IGNITE_ACTIVE=true
     fi
+    # Older than TTL → flag stale; treat session as not in IGNITE.
 fi
 
 # Not an IGNITE session — allow stop
@@ -67,8 +83,13 @@ else
 fi
 
 # Check 3: If code was edited, review agents must have been spawned
+# Match Claude Code transcript JSONL tool_use blocks specifically. Bare "Edit|Write"
+# matches free-text mentions in tool schemas, agent prompts, plan tables, and system
+# reminders — every research-only IGNITE turn would false-positive and force
+# sentinel/iridium/flint to spawn unnecessarily. The pattern below requires the
+# string to appear as a tool_use `name` field value.
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-    if tail -500 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE 'Edit|Write'; then
+    if tail -500 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE '"name"[[:space:]]*:[[:space:]]*"(Edit|Write|MultiEdit|NotebookEdit)"'; then
         MISSING_REVIEWERS=""
         if [ -f "$AGENTS_FILE" ]; then
             if ! grep -qi "sentinel" "$AGENTS_FILE" 2>/dev/null; then
