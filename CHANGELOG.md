@@ -6,6 +6,59 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.6.7] — 2026-04-25
+
+### Documentation
+- **README "MCP Tool Search opt-in" tip** under env-var section. Surfaces Anthropic's deferred-tool-loading feature (claimed over 85% MCP schema reduction) as a power-user opt-in via `export ENABLE_TOOL_SEARCH=true`. Explicit caveats: known auto-activation bugs ([#18397](https://github.com/anthropics/claude-code/issues/18397)), silent failure on Windows Desktop ([#41472](https://github.com/anthropics/claude-code/issues/41472)), only worth it for 10+ MCP server setups, requires Sonnet 4+/Opus 4+/Haiku 4.5+. **Not auto-set by install.sh** — the platform reliability issues make it unsafe to inject without user consent.
+
+### Fixed (verification-pass; pre-merge)
+- **`hooks/session-start.sh` and `hooks/context-pressure.sh` JSON validation error.** Both hooks emitted `hookSpecificOutput` without the required `hookEventName` field, causing Claude Code to fail validation: "Hook JSON output validation failed — hookSpecificOutput is missing required field 'hookEventName'". The error appeared at session start (session-start.sh) and silently dropped context-pressure warnings. Added `hookEventName: "SessionStart"` and `"PostToolUse"` respectively to align with the schema other hooks (ignite-detector, agent-reminder, skill-reminder) already use. Caught when user opened a fresh `claude` session and saw the error in the TUI footer.
+- **`hooks/subagent-start.sh` agent counter wired against current Claude Code event schema.** Previous extraction read `.agent_type` only — broken when payload wraps the identifier as `.subagent_type`, `.tool_input.subagent_type`, or `.tool_use.input.subagent_type`. Now tries all four in fallback chain. Counter always increments and the spawned-agents ledger always appends a row, keeping the IGNITE stop-gate's "N/6 spawned" check accurate across schema variants. `ALLOY_DEBUG=1` surfaces raw input for future schema regressions.
+- **`hooks/agent-reminder.sh` threshold lowered from 2 to 1, plus bash-as-search fallback.** Two coupled fixes:
+  - **Threshold**: with threshold=2 the reminder rarely fired in real sessions because users delegated before hitting two direct search calls. The hook is one-shot per session anyway, so waiting for a second search defeated the purpose. Now fires immediately on first search call.
+  - **Bash fallback**: when a Claude Code project's tool registry doesn't expose the native Grep tool, users fall back to `bash grep`/`rg`/`ag`/`ack`/`find`/`fd`/`git grep`/`git log -S`. The reminder now also fires on those (first-token disambiguation prevents `echo 'rg ...'`-style false positives, and `git status` correctly doesn't fire). Caught during user verification — Grep wasn't loadable in their test project, so the v1.6.6/early-v1.6.7 reminder never fired even though the user was clearly searching.
+- **`hooks/ignite-detector.sh` skips quoted, descriptive, and test-context mentions.** A prompt like "verify the IGNITE protocol works" tripped the detector even though the user never invoked it. Two-stage detection: (1) strip code fences, backtick spans, and double/single-quoted strings before matching; (2) skip matches preceded by descriptive modifier words (the/an/this/that/our/about/regarding/describes/describing/protocol/mode/test/testing/verify/verification). New `tests/ignite-detector.sh` with 10 cases covering positive invocations and every false-positive class caught in v1.6.7 verification.
+- **`hooks/ignite-stop-gate.sh` honors a 2h TTL on the IGNITE flag** AND **trusts the detector flag as single source of truth.** Two coupled fixes caught during user verification:
+  - **TTL**: a flag set early in a long session was keeping the gate fully armed hours later, demanding 6+ agents on every subsequent stop even when the IGNITE phase was long over. Now: if the flag's mtime is older than `ALLOY_IGNITE_TTL` seconds (default 7200 = 2h), the flag is treated as stale. Override via `ALLOY_IGNITE_TTL=<seconds>`.
+  - **Single source of truth**: the gate previously scanned the transcript for `IGNITE MODE ACTIVATED` or `🔥 IGNITE` as a fallback. That re-introduced the exact false-positive class the detector was just fixed for: a test prompt, documentation, or this very CHANGELOG that QUOTES the IGNITE banner would trip the gate even when the user never invoked it. Removed the transcript fallback. The detector flag is now the only path that activates the gate. New regression test in `tests/ignite-stop-gate.sh` locks this in (6/6 passing).
+
+### Added
+- **MCP Tool Search lazy-loading documentation.** Anthropic's deferred MCP tool loading reduces tool schema overhead per turn (Anthropic-stated over 85% in their docs). Documented in `commands/alloy.md` under MCP Servers; verifiable via Claude Code's built-in context view.
+- **CLAUDE.md compact instructions** — tells Claude what to preserve (modified files, todos, test results, open questions, branch state) and what to discard (intermediate reasoning, full file blobs, resolved sub-questions) when auto-compact fires.
+- **`hooks/pre-compact.sh` now backs up plan/todo state** to `~/.claude/.alloy-state/compact-backup-${SESSION_ID}-${ts}/` before context wipe. Forensic snapshot of plan/todo state immediately before context compaction. Inspect manually at `~/.claude/.alloy-state/compact-backup-*` if you need to reconstruct context post-compact. Automatic recovery (titanium loading the latest backup on session resume) is planned for v1.7.0. Stale backups (>7d) reaped by `session-end.sh` janitor.
+- **First-run env-var discovery tips** — `activate.sh` prints `EXA_API_KEY` / `ALLOY_AUTO_UPDATE` / `ALLOY_BROWSER` toggle hints once per machine (gated by `~/.claude/.alloy-tips-shown` marker). Surfaces hidden config without adding gates.
+
+### Changed
+- **`activate.sh` cache-aware Playwright auto-detect** — auto-installs only when `@playwright/mcp` is already in npm/npx cache (fast 5s probe). Cold-cache install requires explicit `ALLOY_BROWSER=1` opt-in (avoids surprise ~20MB downloads during activation; cold install is allotted up to 30s with a status message). Set `ALLOY_BROWSER=0` to hard-disable. Wins for Node users who've used Playwright before; safe for everyone else.
+- **Statusline `7d:P%` segment removed.** Week-away reset timestamps were useless as wall-clock percentages and cluttered the line. The 5-hour rate-limit segment with its `@HH:MM` reset clock stays — that one's actionable.
+- **`commands/ig.md` trimmed from 13 lines to a 5-line redirect stub** pointing at `/ignite`. ig is an alias, not an independent command — its body was duplicating ignite.md.
+- **`.mcp.json.example` updated** with optional Playwright entry (commented) for discoverability.
+
+### Performance
+- Documentation surfaces the upstream MCP Tool Search token win (Anthropic-stated over 85% MCP schema reduction WHEN active). claude-alloy itself shipped no MCP-related code — this is documentation only.
+
+---
+
+## [1.6.6] — 2026-04-25
+
+### Fixed
+- **`hooks/ignite-stop-gate.sh` Edit/Write false positive.** Bare-word `grep -E 'Edit|Write'` on the last 500 transcript lines matched ordinary mentions in tool schemas, agent prompts, plan tables, and system reminders — every research-only IGNITE turn falsely tripped Check 3 and forced sentinel/iridium/flint to spawn unnecessarily (~30K tokens wasted per false positive). Replaced with a JSONL-aware pattern that requires `Edit`/`Write`/`MultiEdit`/`NotebookEdit` to appear as a `tool_use` `name` field value. Adds `tests/ignite-stop-gate.sh` (4 cases). Also: IGNITE detection (line 36) now matches both legacy `IGNITE MODE ACTIVATED` and the new compressed `🔥 IGNITE` header.
+- **`hooks/agent-reminder.sh` repeat-fire bug.** Counter reset to 0 after firing, so the `[Agent Usage Reminder]` block was injected into context every two grep/glob/web tool calls. Added one-shot `${STATE_DIR}/agent-reminded-${SESSION_ID}` marker matching the `skill-reminder.sh` pattern — fires at most once per session.
+
+### Changed
+- **`agents/steel.md` verbalize-intent ritual compressed.** The paragraph-form opener (`"I detect [X] intent — [reason]. My approach: [routing]."`) is retired. Steel now emits a one-line header in the closing footer's style — `─── Intent: [TYPE] → [agent list] ───`, or `─── 🔥 IGNITE · Intent: [TYPE] → [agents] ───` for IGNITE turns — and only when delegating to 1+ subagents, in IGNITE mode, or when 3+ tool calls are planned. Trivial single-tool turns and plain Q&A skip the header entirely. Closing footer untouched.
+- **`CLAUDE.md` trimmed from ~210 to 91 lines.** It is now an INDEX of the agent roster, adaptive routing summary, skills, commands, and MCP servers. The detailed delegation table, full IGNITE protocol step-by-step, and core principles moved to `commands/alloy.md` (lazy-loaded on `/alloy`). Loaded-every-session content cut by ~60%.
+- **9 skill descriptions trimmed to ≤80 chars** (was avg ~220 chars). `ai-slop-remover`, `code-review`, `dev-browser`, `frontend-ui-ux`, `git-master`, `pipeline`, `review-work`, `tdd-workflow`, `verification-loop`. Skill descriptions are loaded into context every turn — this saves ~130 tokens per turn.
+
+### Added
+- **`disallowedTools: [Write, Edit, MultiEdit, NotebookEdit]`** frontmatter on 10 read-only agents: `mercury`, `graphene`, `sentinel`, `iridium`, `prism`, `gauge`, `cobalt`, `flint`, `quartz`, `spectrum`. Provides explicit write-tool restriction at frontmatter level (in addition to existing prompt-level instruction) for agents that previously had no `tools:` allowlist. Agents with a `tools:` allowlist already excluded write tools — `disallowedTools` is harmless redundancy on those, no schema-size impact. (Removed in v1.6.7 — see that release.)
+- **`tests/ignite-stop-gate.sh`** — 4 cases covering the false-positive fix above. False positive (bare prose mention exits 0), true positives for `Edit`/`Write`/`MultiEdit` tool_use blocks (each exits 2 / blocks).
+
+### Performance
+- Estimated **15-25% token reduction on normal sessions** and proportionally larger on IGNITE sessions, based on byte-count analysis of always-loaded context (CLAUDE.md, steel.md, skill descriptions). NOT measured via ccusage; v1.6.7+ includes a benchmark scenario in `tests/benchmarks/` for users to verify in their own environment.
+
+---
+
 ## [1.6.5] — 2026-04-24
 
 ### Fixed
