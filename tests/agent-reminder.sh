@@ -5,8 +5,7 @@
 # firing the reminder, so every two grep/glob/web tool calls re-injected the
 # [Agent Usage Reminder] block into context. v1.6.6 added a one-shot marker
 # (${STATE_DIR}/agent-reminded-${SESSION_ID}). These tests pin both:
-#   - Reminder fires on the FIRST search call (threshold lowered from 2 in
-#     v1.6.7's verification-pass fix-up — same-turn visibility for users)
+#   - Reminder fires only after sustained direct searching (default threshold 5)
 #   - Reminder never fires again in the same session (one-shot marker)
 #   - SESSION_ID sanitization (tr -cd 'a-zA-Z0-9_-') prevents the marker
 #     from being written outside STATE_DIR.
@@ -57,34 +56,72 @@ call_bash() {
         | bash "$HOOK" 2>/dev/null
 }
 
-# ---- one-shot: reminder fires on the 1st search call, then never again ----
+fifth_bash_output() {
+    _cmd=$1
+    _sid=$2
+    call_bash "$_cmd" "$_sid" >/dev/null
+    call_bash "$_cmd" "$_sid" >/dev/null
+    call_bash "$_cmd" "$_sid" >/dev/null
+    call_bash "$_cmd" "$_sid" >/dev/null
+    call_bash "$_cmd" "$_sid"
+}
+
+reminder_status() {
+    _out=$1
+    case "$_out" in
+        *'Agent Usage Reminder'*) printf 'yes' ;;
+        *) printf 'no' ;;
+    esac
+}
+
+# ---- one-shot: reminder fires on the 5th search call, then never again ----
 SESSION_ID="reminder-test-$$"
 
-# Call 1 — counter hits 1 (new threshold), reminder fires AND marker is written.
+# Calls 1-4 — direct searches are still local enough to avoid nudging.
 OUT1=$(call_hook "Grep" "$SESSION_ID")
-case "$OUT1" in
-    *'Agent Usage Reminder'*) FIRED1="yes" ;;
-    *) FIRED1="no" ;;
-esac
-assert_eq "yes" "$FIRED1" "first search call: reminder fires immediately at threshold 1"
+assert_eq "no" "$(reminder_status "$OUT1")" "first search call: reminder does NOT fire before threshold"
+
+OUT2=$(call_hook "Grep" "$SESSION_ID")
+assert_eq "no" "$(reminder_status "$OUT2")" "second search call: reminder does NOT fire before threshold"
+
+OUT3=$(call_hook "Grep" "$SESSION_ID")
+assert_eq "no" "$(reminder_status "$OUT3")" "third search call: reminder does NOT fire before threshold"
+
+OUT4=$(call_hook "Grep" "$SESSION_ID")
+assert_eq "no" "$(reminder_status "$OUT4")" "fourth search call: reminder does NOT fire before threshold"
+
+# Call 5 — counter reaches threshold, reminder fires AND marker is written.
+OUT5=$(call_hook "Grep" "$SESSION_ID")
+assert_eq "yes" "$(reminder_status "$OUT5")" "fifth search call: reminder fires at threshold 5"
 
 MARKER="${STATE_DIR}/agent-reminded-${SESSION_ID}"
 [ -f "$MARKER" ] && MARKER_OK="yes" || MARKER_OK="no"
-assert_eq "yes" "$MARKER_OK" "first search call: one-shot marker file is written"
+assert_eq "yes" "$MARKER_OK" "threshold search call: one-shot marker file is written"
 
-# Calls 2, 3, 4, 5 — marker exists, the early-exit guard at the top of the hook
+# Calls 6, 7, 8, 9 — marker exists, the early-exit guard at the top of the hook
 # returns before any output. stdout MUST be empty for all four.
-for _N in 2 3 4 5; do
+for _N in 6 7 8 9; do
     OUTN=$(call_hook "Grep" "$SESSION_ID")
     assert_eq "" "$OUTN" "post-marker call ${_N}: reminder does NOT re-fire"
 done
+
+# ---- env override: ALLOY_AGENT_REMINDER_SEARCH_THRESHOLD=2 fires at call 2 ----
+SESSION_ID_ENV="env-override-test-$$"
+OUT_E1=$(ALLOY_AGENT_REMINDER_SEARCH_THRESHOLD=2 call_hook "Grep" "$SESSION_ID_ENV")
+assert_eq "no" "$(reminder_status "$OUT_E1")" "env override: call 1 below override threshold does NOT fire"
+OUT_E2=$(ALLOY_AGENT_REMINDER_SEARCH_THRESHOLD=2 call_hook "Grep" "$SESSION_ID_ENV")
+assert_eq "yes" "$(reminder_status "$OUT_E2")" "env override: call 2 hits override threshold and fires"
 
 # ---- traversal: ../evil session_id never escapes STATE_DIR ----------------
 # The hook sanitizes via `tr -cd 'a-zA-Z0-9_-'`, so `../evil` collapses to
 # `evil`. Marker file lands at ${STATE_DIR}/agent-reminded-evil and nothing
 # is written above STATE_DIR.
 EVIL_SESSION="../evil"
-# Single call now triggers marker creation (threshold lowered to 1 in v1.6.7).
+# Fifth call triggers marker creation.
+call_hook "Grep" "$EVIL_SESSION" >/dev/null
+call_hook "Grep" "$EVIL_SESSION" >/dev/null
+call_hook "Grep" "$EVIL_SESSION" >/dev/null
+call_hook "Grep" "$EVIL_SESSION" >/dev/null
 call_hook "Grep" "$EVIL_SESSION" >/dev/null
 
 # After sanitization, marker must be at agent-reminded-evil (not -../evil).
@@ -104,75 +141,43 @@ assert_eq 0 "$ESCAPED" "traversal: no 'evil'-named files outside STATE_DIR"
 
 # Each case uses a fresh session ID so the one-shot marker doesn't suppress.
 
-# Positive: bash grep counts as search → reminder fires
+# Positive: bash grep counts as search → reminder fires after sustained search
 SID_BG="bash-grep-$$"
-OUT=$(call_bash "grep -rn 'pattern' src/" "$SID_BG")
-case "$OUT" in
-    *'Agent Usage Reminder'*) FIRED="yes" ;;
-    *) FIRED="no" ;;
-esac
-assert_eq "yes" "$FIRED" "bash-grep: reminder fires on first 'grep ...' call"
+OUT=$(fifth_bash_output "grep -rn 'pattern' src/" "$SID_BG")
+assert_eq "yes" "$(reminder_status "$OUT")" "bash-grep: reminder fires on fifth 'grep ...' call"
 
 # Positive: rg (ripgrep) counts as search
 SID_RG="bash-rg-$$"
-OUT=$(call_bash "rg 'TODO'" "$SID_RG")
-case "$OUT" in
-    *'Agent Usage Reminder'*) FIRED="yes" ;;
-    *) FIRED="no" ;;
-esac
-assert_eq "yes" "$FIRED" "bash-rg: reminder fires on 'rg ...'"
+OUT=$(fifth_bash_output "rg 'TODO'" "$SID_RG")
+assert_eq "yes" "$(reminder_status "$OUT")" "bash-rg: reminder fires on fifth 'rg ...'"
 
 # Positive: find counts as search (file-name lookup pattern)
 SID_FIND="bash-find-$$"
-OUT=$(call_bash "find . -name '*.py'" "$SID_FIND")
-case "$OUT" in
-    *'Agent Usage Reminder'*) FIRED="yes" ;;
-    *) FIRED="no" ;;
-esac
-assert_eq "yes" "$FIRED" "bash-find: reminder fires on 'find -name ...'"
+OUT=$(fifth_bash_output "find . -name '*.py'" "$SID_FIND")
+assert_eq "yes" "$(reminder_status "$OUT")" "bash-find: reminder fires on fifth 'find -name ...'"
 
 # Positive: git grep counts as search (second-token disambiguation)
 SID_GG="bash-gg-$$"
-OUT=$(call_bash "git grep 'pattern'" "$SID_GG")
-case "$OUT" in
-    *'Agent Usage Reminder'*) FIRED="yes" ;;
-    *) FIRED="no" ;;
-esac
-assert_eq "yes" "$FIRED" "bash-git-grep: reminder fires"
+OUT=$(fifth_bash_output "git grep 'pattern'" "$SID_GG")
+assert_eq "yes" "$(reminder_status "$OUT")" "bash-git-grep: reminder fires on fifth search"
 
 # Positive: git log -S/-G counts as search (history search)
 SID_GL="bash-gl-$$"
-OUT=$(call_bash "git log -S'foo'" "$SID_GL")
-case "$OUT" in
-    *'Agent Usage Reminder'*) FIRED="yes" ;;
-    *) FIRED="no" ;;
-esac
-assert_eq "yes" "$FIRED" "bash-git-log: reminder fires (history search)"
+OUT=$(fifth_bash_output "git log -S'foo'" "$SID_GL")
+assert_eq "yes" "$(reminder_status "$OUT")" "bash-git-log: reminder fires on fifth history search"
 
 # Negative: regular bash commands (cat, ls, echo, mv) MUST NOT fire
 SID_NEG="bash-neg-$$"
 OUT=$(call_bash "ls -la" "$SID_NEG")
-case "$OUT" in
-    *'Agent Usage Reminder'*) FIRED="yes" ;;
-    *) FIRED="no" ;;
-esac
-assert_eq "no" "$FIRED" "bash-non-search: 'ls -la' does NOT fire reminder"
+assert_eq "no" "$(reminder_status "$OUT")" "bash-non-search: 'ls -la' does NOT fire reminder"
 
 SID_NEG2="bash-neg2-$$"
 OUT=$(call_bash "git status" "$SID_NEG2")
-case "$OUT" in
-    *'Agent Usage Reminder'*) FIRED="yes" ;;
-    *) FIRED="no" ;;
-esac
-assert_eq "no" "$FIRED" "bash-non-search: 'git status' does NOT fire (not grep/log)"
+assert_eq "no" "$(reminder_status "$OUT")" "bash-non-search: 'git status' does NOT fire (not grep/log)"
 
 # Negative: echo with grep-looking content doesn't false-positive on first token
 SID_NEG3="bash-neg3-$$"
 OUT=$(call_bash "echo 'rg is a tool'" "$SID_NEG3")
-case "$OUT" in
-    *'Agent Usage Reminder'*) FIRED="yes" ;;
-    *) FIRED="no" ;;
-esac
-assert_eq "no" "$FIRED" "bash-non-search: 'echo' with 'rg' inside string does NOT fire (first-token only)"
+assert_eq "no" "$(reminder_status "$OUT")" "bash-non-search: 'echo' with 'rg' inside string does NOT fire (first-token only)"
 
 done_testing

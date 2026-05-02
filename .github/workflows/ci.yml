@@ -31,10 +31,9 @@ jobs:
       - name: Run hook unit tests
         run: |
           chmod +x tests/*.sh
-          bash tests/write-guard.sh
-          bash tests/statusline.sh
-          bash tests/branch-guard.sh
-          bash tests/thermal-runaway.sh
+          for test_script in tests/*.sh; do
+            bash "$test_script" || exit 1
+          done
 
       - name: Smoke test — project install
         run: |
