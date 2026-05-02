@@ -45,8 +45,12 @@ IGNITE_ACTIVE=false
 IGNITE_FLAG="${STATE_DIR}/ignite-active-${SESSION_ID}"
 if [ -f "$IGNITE_FLAG" ]; then
     NOW_EPOCH=$(date +%s 2>/dev/null || echo 0)
-    # macOS `stat -f %m`, GNU `stat -c %Y` — try both, fall back to 0.
-    FLAG_EPOCH=$(stat -f %m "$IGNITE_FLAG" 2>/dev/null || stat -c %Y "$IGNITE_FLAG" 2>/dev/null || echo 0)
+    # BSD `stat -f %m` on Linux exits 0 with garbage output (mount point) —
+    # always try GNU `stat -c %Y` first, then BSD as fallback.
+    FLAG_EPOCH=$(stat -c %Y "$IGNITE_FLAG" 2>/dev/null || stat -f %m "$IGNITE_FLAG" 2>/dev/null || echo 0)
+    case "$FLAG_EPOCH" in
+        ''|*[!0-9]*) FLAG_EPOCH=0 ;;
+    esac
     AGE=$(( NOW_EPOCH - FLAG_EPOCH ))
     if [ "$AGE" -ge 0 ] && [ "$AGE" -le "$IGNITE_TTL" ]; then
         IGNITE_ACTIVE=true
