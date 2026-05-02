@@ -347,11 +347,11 @@ if command -v claude &>/dev/null; then
     ensure_mcp() {
         local name="$1" url="$2"
         # claude mcp list outputs JSON; check if this server already has the right URL
-        if claude mcp list -s user 2>/dev/null | grep -q "\"${url}\""; then
+        if claude mcp list --scope user 2>/dev/null | grep -q "\"${url}\""; then
             return 0
         fi
-        claude mcp remove "$name" -s user &>/dev/null || true
-        claude mcp add "$name" --transport http -s user -- "$url" &>/dev/null || { warn "Failed to add $name MCP"; return 1; }
+        claude mcp remove "$name" --scope user &>/dev/null || true
+        claude mcp add "$name" --transport http --scope user -- "$url" &>/dev/null || { warn "Failed to add $name MCP"; return 1; }
     }
 
     # Websearch: always-on keyless; EXA_API_KEY upgrades to higher rate limits
@@ -396,7 +396,7 @@ if command -v claude &>/dev/null; then
 
         if [ "$PLAYWRIGHT_CACHED" = "true" ] && command -v timeout &>/dev/null; then
             # Cached → fast 5s confirm probe, version-pinned to install line.
-            if timeout 5 npx --yes @playwright/mcp@0.0.70 --version >/dev/null 2>&1; then
+            if timeout 5 npx --yes @playwright/mcp@0.0.73 --version >/dev/null 2>&1; then
                 PLAYWRIGHT_MODE="auto"
             fi
         elif [ "$PLAYWRIGHT_CACHED" = "false" ]; then
@@ -411,15 +411,15 @@ if command -v claude &>/dev/null; then
     fi
 
     if [ "$PLAYWRIGHT_MODE" != "skip" ]; then
-        if ! claude mcp list -s user 2>/dev/null | grep -q "playwright"; then
-            claude mcp remove playwright -s user &>/dev/null || true
+        if ! claude mcp list --scope user 2>/dev/null | grep -q "playwright"; then
+            claude mcp remove playwright --scope user &>/dev/null || true
             # Forced mode (ALLOY_BROWSER=1) → user accepted the cold-cache
             # download cost; warn once so it's not silent and they don't
             # think activation hung.
             if [ "$PLAYWRIGHT_MODE" = "forced" ]; then
                 info "Installing Playwright MCP (ALLOY_BROWSER=1; cold-cache download may take ~30s)..."
             fi
-            if claude mcp add playwright -s user -- npx @playwright/mcp@0.0.70 --browser=chrome &>/dev/null; then
+            if claude mcp add playwright --scope user -- npx @playwright/mcp@0.0.73 --browser=chrome --headless &>/dev/null; then
                 if [ "$PLAYWRIGHT_MODE" = "auto" ]; then
                     success "Playwright MCP installed (auto-detected from cache). Set ALLOY_BROWSER=0 to skip in future."
                 else
