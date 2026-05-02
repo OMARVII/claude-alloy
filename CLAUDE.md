@@ -109,7 +109,7 @@ MCP tool schemas are deferred via Anthropic's tool search (on by default in Clau
 1. **No AI slop** — code reads like a senior engineer wrote it, not an LLM.
 2. **Delegate, don't struggle** — use the right specialist agent for each task.
 3. **Verify everything** — diagnostics, tests, manual QA before declaring done.
-4. **Parallel by default** — fire mercury/graphene in background, work in foreground.
+4. **Precision parallelism** — fire agents when uncertainty, risk, or scale makes them valuable.
 5. **Complete the task** — never stop at 80%. Finish 100% of what was asked.
 
 ## Compact instructions

@@ -22,8 +22,8 @@ Repo: https://github.com/OMARVII/claude-alloy
 
 | Routing Path | Agent | When to invoke |
 |---|---|---|
-| **RESEARCH** | @"mercury (agent)" ×N | Any non-trivial codebase question. Fire 3-5 in parallel with narrow scopes. |
-| **RESEARCH** | @"graphene (agent)" ×N | External library, API, or docs question. Fire alongside mercury. |
+| **RESEARCH** | @"mercury (agent)" ×N | Codebase questions with multiple search angles, unfamiliar structure, or cross-layer impact. Fire narrow scopes in parallel. |
+| **RESEARCH** | @"graphene (agent)" ×N | External library, API, docs, or production security guidance that can change the decision. |
 | **INLINE CHECK** | @"prism (agent)" | AS research results arrive, before planning. Not a separate sequential step. |
 | **PLAN** | @"carbon (agent)" | When 3+ files will be modified. Skip for 1-2 file changes. |
 | **REVIEW** | @"gauge (agent)" | Only when carbon flags "uncertain about approach" or for significant PRs. |
@@ -38,7 +38,7 @@ Repo: https://github.com/OMARVII/claude-alloy
 
 ### Key routing rules
 
-- mercury/graphene ALWAYS fire in parallel (never sequential)
+- When mercury/graphene are both needed, fire them in parallel (never sequential)
 - prism runs WHILE research results stream in (not as a separate step after)
 - gauge is OPTIONAL — only invoked when carbon explicitly flags uncertainty
 - sentinel is AUTOMATIC on security-relevant code (auth, crypto, input handling)
@@ -54,7 +54,7 @@ IGNITE protocol: see CLAUDE.md "Keyword Triggers" section.
 1. **No AI slop** — Code should be indistinguishable from a senior engineer's
 2. **Delegate, don't struggle** — Use the right agent for each task type
 3. **Verify everything** — Run diagnostics, tests, and manual QA before declaring done
-4. **Parallel by default** — Fire multiple background agents simultaneously
+4. **Precision parallelism** — Fire agents when uncertainty, risk, or scale makes them valuable
 5. **Complete the task** — Never stop at 80%. Finish 100% of what was asked.
 
 ## MCP Tool Search
