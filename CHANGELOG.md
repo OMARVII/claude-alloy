@@ -6,6 +6,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [1.6.9] — 2026-05-02
+
+> **Precision-routing pivot + dev-browser hygiene.** This release reframes Alloy from "always parallelize" to "delegate when uncertainty, scale, or specialist risk warrants it." Routine work biases toward direct tools; IGNITE remains the explicit lever for full parallelism. Also bumps the optional Playwright MCP pin and adds the `--headless` flag for CI/server environments.
+
+### Added
+- **Env-var override for hook reminders.** `ALLOY_AGENT_REMINDER_SEARCH_THRESHOLD` (default `5`) and `ALLOY_SKILL_REMINDER_WORK_THRESHOLD` (default `12`) override the built-in thresholds for hooks/agent-reminder.sh and hooks/skill-reminder.sh respectively. Non-numeric values fall back to the default.
+- **`tests/skill-reminder.sh`** — new regression suite (17 assertions) for skill-reminder threshold behavior, env-var override, marker-file write, and delegation-suppression path. Picked up automatically by the new CI glob loop.
+- **README "Default vs IGNITE" contrast sentence** in How It Works section. Makes the precision posture explicit and teaches `ig` as the opt-in lever for full parallelism.
+
+### Changed
+- **Precision-parallelism routing pivot.** Steel and tungsten now delegate to specialist agents when uncertainty, specialist domain, scale, or verification warrant it — not on default. The Precision Delegation Gate enumerates explicit conditions for spawning agents. Review agents (sentinel/iridium/cobalt/flint) still fire automatically when their risk domain is touched. IGNITE protocol is unchanged: 6+ agents minimum, graphene required, review gate has no exceptions. Files: `agents/steel.md`, `agents/tungsten.md`, `CLAUDE.md`, `README.md`, `commands/alloy.md`.
+- **agent-reminder threshold raised 1 → 5.** A single direct search is rarely "broad research" — the new floor only nudges toward mercury/graphene after sustained direct searching, matching the right-size posture. Override via `ALLOY_AGENT_REMINDER_SEARCH_THRESHOLD`.
+- **skill-reminder threshold raised 8 → 12.** Same reasoning: routine moderate work shouldn't be nagged. Override via `ALLOY_SKILL_REMINDER_WORK_THRESHOLD`.
+- **`@playwright/mcp` pin bump 0.0.70 → 0.0.73.** Picks up the v0.0.73 fix for `--browser=chrome` channel propagation on the extension path. v0.0.72's `browser_run_code` → `browser_run_code_unsafe` rename is a no-op for Alloy (skills/dev-browser/SKILL.md teaches native Playwright API, not MCP tool surface).
+- **Playwright MCP install adds `--headless`.** Headed-by-default broke silently on CI runners, headless servers, and SSH dev sessions. `install.sh:542` and `activate.sh:422` now both pass `--browser=chrome --headless` to `npx @playwright/mcp@0.0.73`.
+- **`claude mcp` syntax standardized on long form `--scope user`** across `install.sh` and `activate.sh` (covers `add`, `list`, and `remove` invocations). Self-documenting in scripts; both forms remain CLI-supported.
+- **Plugin manifest hook count corrected 20 → 22** in `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`. Was stale since `agent-count.sh` and `context-pressure.sh` shipped without a manifest update.
+- **CI test runner switched to glob loop.** `.github/workflows/ci.yml:34–35` now iterates `for test_script in tests/*.sh; do bash "$test_script" || exit 1; done`, so new test files are picked up without editing the workflow.
+- **`tests/agent-reminder.sh` rewritten** for the new threshold (5 instead of 1). 22 assertions: threshold boundary at exactly call 5, env-var override path, post-marker suppression, traversal sanitization, bash-as-search detection.
+
+### Fixed
+- **Default-vs-IGNITE posture was implicit.** Users upgrading from prior alloy versions perceived new defaults as agent-shy without realizing `ig` was the contrast. README now teaches the lever explicitly.
+
+---
+
 ## [1.6.8] — 2026-04-26
 
 > **Patch release on top of v1.6.7.** v1.6.7 contained the bulk of the optimization work (token-cost, hook hardening, install UX, IGNITE protocol, agent counter rewrite). v1.6.8 only fixes one rendering bug and four CI shellcheck warnings introduced during v1.6.7. **See the v1.6.7 entry below for the full feature list** — most users upgrading should think of this as "v1.6.7 with the statusline render fix."
