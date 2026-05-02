@@ -29,6 +29,10 @@ if [ -f "$REMINDER_FILE" ]; then
 fi
 
 STATE_FILE="${STATE_DIR}/agent-reminder-${SESSION_ID}"
+SEARCH_REMINDER_THRESHOLD=${ALLOY_AGENT_REMINDER_SEARCH_THRESHOLD:-5}
+case "$SEARCH_REMINDER_THRESHOLD" in
+    ''|*[!0-9]*) SEARCH_REMINDER_THRESHOLD=5 ;;
+esac
 
 TOOL_LOWER=$(echo "$TOOL_NAME" | tr '[:upper:]' '[:lower:]')
 
@@ -105,17 +109,17 @@ esac
 COUNT=$((COUNT + 1))
 echo "$COUNT" > "$COUNTER_FILE"
 
-# Threshold lowered from 2 to 1: the reminder is one-shot per session anyway,
-# so making the user wait for a second search before any signal appears
-# defeated the purpose. Fires on first search → marker prevents re-fire.
-if [ "$COUNT" -ge 1 ]; then
+# Fire only after sustained direct searching. A single known-file or known-symbol
+# lookup is often the fastest and safest path; the reminder is for research that
+# has grown broad enough that mercury/graphene may add value.
+if [ "$COUNT" -ge "$SEARCH_REMINDER_THRESHOLD" ]; then
     # Mark reminded so the early-exit guard above prevents re-firing this session.
     echo "1" > "$REMINDER_FILE"
     if [ "${ALLOY_DEBUG:-0}" = "1" ]; then
         printf '[alloy] agent-reminder fired session=%s tool=%s\n' \
             "$SESSION_ID" "$TOOL_NAME" >&2
     fi
-    jq -n --arg msg '[Agent Usage Reminder] You'\''re calling search/fetch tools directly without leveraging specialized agents. RECOMMENDED: Use @"mercury (agent)" for codebase searches and @"graphene (agent)" for external docs/examples. They run in background and search more thoroughly than individual tool calls.' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":$msg}}'
+    jq -n --arg msg '[Agent Usage Reminder] Direct search has continued for several calls. If this research has multiple angles, unfamiliar code, or external-doc risk, consider @"mercury (agent)" for codebase search or @"graphene (agent)" for docs/examples. If the target is already clear, continue directly.' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":$msg}}'
 fi
 
 exit 0

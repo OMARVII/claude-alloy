@@ -19,6 +19,10 @@ fi
 STATE_DIR="${HOME}/.claude/.alloy-state"
 mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
 # Stale-file cleanup is centralized in hooks/session-end.sh.
+WORK_REMINDER_THRESHOLD=${ALLOY_SKILL_REMINDER_WORK_THRESHOLD:-12}
+case "$WORK_REMINDER_THRESHOLD" in
+    ''|*[!0-9]*) WORK_REMINDER_THRESHOLD=12 ;;
+esac
 
 TOOL_LOWER=$(echo "$TOOL_NAME" | tr '[:upper:]' '[:lower:]')
 
@@ -72,9 +76,9 @@ fi
 COUNT=$((COUNT + 1))
 echo "$COUNT" > "$COUNTER_FILE"
 
-if [ "$COUNT" -ge 8 ]; then
+if [ "$COUNT" -ge "$WORK_REMINDER_THRESHOLD" ]; then
     echo "1" > "$REMINDER_FILE"
-    jq -n --arg msg "[Skill Reminder] You've made ${COUNT} direct tool calls without delegating. Available skills: /git-master (commits, rebase, history), /frontend-ui-ux (UI design), /dev-browser (browser automation), /code-review (confidence-scored review). For complex work, delegate to @\"tungsten (agent)\" instead of doing it yourself." \
+    jq -n --arg msg "[Skill Reminder] Sustained direct work detected (${COUNT} tool calls). If the task has expanded, load the matching skill or delegate the specialist portion: /git-master (commits, rebase, history), /frontend-ui-ux (UI design), /dev-browser (browser automation), /code-review (confidence-scored review), or @\"tungsten (agent)\" for complex implementation. If the work is still local and clear, continue directly." \
         '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":$msg}}'
 fi
 
