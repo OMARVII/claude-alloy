@@ -28,6 +28,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 - **Default-vs-IGNITE posture was implicit.** Users upgrading from prior alloy versions perceived new defaults as agent-shy without realizing `ig` was the contrast. README now teaches the lever explicitly.
+- **Linux compat: GNU `stat -c %Y` ordered first in mtime checks.** Three hooks (`hooks/ignite-stop-gate.sh`, `hooks/ignite-detector.sh`, `hooks/statusline.sh`) were still using BSD-first `stat -f %m` ordering. On Linux GNU coreutils, `stat -f %m FILE` does not error — it interprets `-f` as `--file-system` and returns the mount point with exit 0. The `||` fallback to GNU `stat -c %Y` therefore never fired, `FLAG_EPOCH` became `/`, and `$(( NOW_EPOCH - / ))` aborted the hook with `set -u`. Mirrors the v1.6.4 fix already applied to `lint.sh`, `typecheck.sh`, and `auto-install.sh`. Adds a numeric-validation guard (`case "$X" in ''|*[!0-9]*) X=0 ;; esac`) for defense-in-depth. Verified: 157/157 macOS + 6/6 Linux container assertions pass.
 
 ---
 
