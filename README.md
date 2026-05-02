@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.6.8"><img src="https://img.shields.io/badge/version-1.6.8-green.svg" alt="Version 1.6.8"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.6.9"><img src="https://img.shields.io/badge/version-1.6.9-green.svg" alt="Version 1.6.9"></a>
 </p>
 
 <p align="center">
@@ -83,7 +83,7 @@ Back to vanilla Claude. Your original settings restored exactly.
 - **Deliberate model tiering.** Opus for orchestration and judgment. Sonnet for research and implementation. Haiku for grep. You pay for thinking, not searching.
 - **Multiple install modes.** Global toggle via `activate.sh` / `deactivate.sh`, per-project drop-in, plugin-style, or global command — pick what fits your workflow.
 - **Fully reversible.** `/unalloy` restores your previous Claude Code config exactly. No lock-in, no residue.
-- **Adaptive routing, not a linear pipeline.** Steel routes tasks by what they need (FAST, RESEARCH, PLAN, BUILD, SECURITY, etc.) rather than forcing every task through a fixed sequence.
+- **Adaptive routing, not a linear pipeline.** Steel routes tasks by what they need (FAST, RESEARCH, PLAN, BUILD, SECURITY, etc.) rather than forcing every task through a fixed sequence or spawning agents without a clear purpose.
 
 ---
 
@@ -165,9 +165,9 @@ bash setup-global.sh
 | **comment-checker** | After Write/Edit | Warns about AI slop comments |
 | **typecheck** | After .ts/.tsx edits | Runs `tsc --noEmit`, reports errors |
 | **auto-install** | After package.json/requirements.txt/pyproject.toml | Installs dependencies (lifecycle scripts disabled for safety) |
-| **agent-reminder** | After 2 direct searches | Nudges toward mercury/graphene agents |
+| **agent-reminder** | After 5 direct searches | Suggests mercury/graphene when research has become broad |
 | **lint** | After Write/Edit | Runs ESLint/Biome/Prettier, reports errors |
-| **skill-reminder** | After 8 direct tool calls | Nudges toward delegation |
+| **skill-reminder** | After 12 direct tool calls | Suggests relevant skills or agents if the task has expanded |
 | **todo-enforcer** | Before stopping | Reminds about incomplete todos (blocks once, then allows) |
 | **loop-stop** | Before stopping | Keeps working if `/loop` is active |
 | **session-notify** | On stop | Desktop notification when session ends |
@@ -220,7 +220,9 @@ User → steel ──├─ RESEARCH: mercury ×N + graphene ×N (parallel)
                 └─ CONSULT: quartz (on-demand, never in pipeline)
 ```
 
-**What makes this different:** prism runs inline (not as a separate step), gauge is optional (not a required gate), and after every build a review gate auto-fires up to four reviewers — sentinel (security), iridium (performance), cobalt (dependencies), flint (tests) — based on what changed. quartz is never in a pipeline (only when stuck). No fixed sequence — steel adapts per task.
+**What makes this different:** prism runs inline (not as a separate step), gauge is optional (not a required gate), and after every build a review gate fires the matching reviewers — sentinel (security), iridium (performance), cobalt (dependencies), flint (tests) — based on what changed. quartz is never in a pipeline (only when stuck). No fixed sequence and no agent spawn without a reason — steel adapts per task.
+
+Default mode is precision-routed — agents fire when uncertainty, risk, or scale makes them valuable. `ig` is the explicit opt-in for full parallelism.
 
 Type **`ig`** (or `/ignite`) for maximum effort: 6+ agents fired in parallel, todos tracked obsessively, manual QA before every completion claim. Two letters. Full team engaged.
 
@@ -482,7 +484,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.6.8**.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.6.9**.
 
 ---
 

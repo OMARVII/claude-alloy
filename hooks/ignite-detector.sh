@@ -113,7 +113,11 @@ if [ ! -f "$IGNITE_FLAG" ]; then
     RESET_COUNTERS=true
 else
     NOW_EPOCH=$(date +%s 2>/dev/null || echo 0)
-    FLAG_EPOCH=$(stat -f %m "$IGNITE_FLAG" 2>/dev/null || stat -c %Y "$IGNITE_FLAG" 2>/dev/null || echo 0)
+    # BSD `stat -f %m` on Linux exits 0 with garbage output — always try GNU first.
+    FLAG_EPOCH=$(stat -c %Y "$IGNITE_FLAG" 2>/dev/null || stat -f %m "$IGNITE_FLAG" 2>/dev/null || echo 0)
+    case "$FLAG_EPOCH" in
+        ''|*[!0-9]*) FLAG_EPOCH=0 ;;
+    esac
     AGE=$(( NOW_EPOCH - FLAG_EPOCH ))
     if [ "$AGE" -gt "$IGNITE_TTL" ]; then
         RESET_COUNTERS=true

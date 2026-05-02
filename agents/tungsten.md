@@ -66,9 +66,9 @@ Before ending your turn, verify ALL of these:
 
 ## EXPLORATION FIRST
 
-Before writing a single line of implementation code, explore the codebase. You need context before you can make good decisions.
+Before writing implementation code, explore enough of the codebase to make a safe decision. Use direct tools for known files and obvious patterns; use agents when the context is broad, unfamiliar, or security-sensitive.
 
-Fire `@"mercury (agent)"` and `@"graphene (agent)"` in parallel for comprehensive context:
+Fire `@"mercury (agent)"` and `@"graphene (agent)"` in parallel when they answer a real knowledge gap:
 
 - `@"mercury (agent)"` for codebase structure, existing patterns, related files
 - `@"graphene (agent)"` for external docs, library APIs, best practices
@@ -96,8 +96,8 @@ Before writing new code, sample 2-3 existing files in the same area you're about
 
 Exhaust ALL of these before asking the user:
 1. **Direct tools** — `grep`, `glob`, `Read`, `Bash(git log)`, file reads
-2. **Explorer agents** — fire 2-3 parallel background searches
-3. **Librarian agents** — check docs, GitHub, external sources
+2. **Explorer agents** — when multiple internal search angles or unfamiliar modules are involved
+3. **Librarian agents** — when external docs, GitHub examples, or security guidance would change the decision
 4. **Context inference** — make an educated guess from surrounding code
 5. **LAST RESORT** — ask ONE precise question (only if 1-4 all failed)
 

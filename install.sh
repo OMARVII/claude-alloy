@@ -57,7 +57,7 @@ if [ "${1:-}" = "--uninstall" ]; then
     # Remove alloy-managed MCP servers
     if command -v claude &>/dev/null; then
         for srv in context7 grep_app websearch playwright; do
-            claude mcp remove "$srv" -s user &>/dev/null || true
+            claude mcp remove "$srv" --scope user &>/dev/null || true
         done
         info "Removed MCP servers (context7, grep_app, websearch, playwright)"
     fi
@@ -522,10 +522,10 @@ MCP_OK=0; MCP_NAMES=""
 if command -v claude &>/dev/null; then
     ensure_mcp() {
         local name="$1" url="$2"
-        if claude mcp list -s user 2>/dev/null | grep -q "\"${url}\""; then
+        if claude mcp list --scope user 2>/dev/null | grep -q "\"${url}\""; then
             return 0
         fi
-        claude mcp remove "$name" -s user &>/dev/null || true
+        claude mcp remove "$name" --scope user &>/dev/null || true
         claude mcp add "$name" --transport http --scope user "$url" &>/dev/null || { warn "Failed to add $name MCP"; return 1; }
     }
 
@@ -537,9 +537,9 @@ if command -v claude &>/dev/null; then
     ensure_mcp grep_app "https://mcp.grep.app" && MCP_OK=$((MCP_OK + 1)) && MCP_NAMES="${MCP_NAMES}, grep_app"
     ensure_mcp websearch "$WEBSEARCH_URL" && MCP_OK=$((MCP_OK + 1)) && MCP_NAMES="${MCP_NAMES}, websearch"
     if [ "${ALLOY_BROWSER:-}" = "1" ]; then
-        if ! claude mcp list -s user 2>/dev/null | grep -q "playwright"; then
-            claude mcp remove playwright -s user &>/dev/null || true
-            if claude mcp add --scope user playwright -- npx @playwright/mcp@0.0.70 --browser=chrome &>/dev/null; then
+        if ! claude mcp list --scope user 2>/dev/null | grep -q "playwright"; then
+            claude mcp remove playwright --scope user &>/dev/null || true
+            if claude mcp add --scope user playwright -- npx @playwright/mcp@0.0.73 --browser=chrome --headless &>/dev/null; then
                 MCP_OK=$((MCP_OK + 1)); MCP_NAMES="${MCP_NAMES}, playwright"
             else
                 warn "Failed to add Playwright MCP"
