@@ -72,6 +72,9 @@ COUNT_FILE="${STATE_DIR}/agent-count-${SESSION_ID}"
 if [ -f "$COUNT_FILE" ]; then
     AGENT_COUNT=$(cat "$COUNT_FILE" 2>/dev/null || echo "0")
 fi
+case "$AGENT_COUNT" in
+    ''|*[!0-9]*) AGENT_COUNT=0 ;;
+esac
 if [ "$AGENT_COUNT" -lt 6 ]; then
     VIOLATIONS="${VIOLATIONS}Only ${AGENT_COUNT}/6 required agents spawned. "
 fi
@@ -87,13 +90,47 @@ else
 fi
 
 # Check 3: If code was edited, review agents must have been spawned
-# Match Claude Code transcript JSONL tool_use blocks specifically. Bare "Edit|Write"
-# matches free-text mentions in tool schemas, agent prompts, plan tables, and system
-# reminders — every research-only IGNITE turn would false-positive and force
-# sentinel/iridium/flint to spawn unnecessarily. The pattern below requires the
-# string to appear as a tool_use `name` field value.
+# Match Claude Code transcript JSONL tool_use blocks specifically. Internal
+# writes to Alloy's state dir are bookkeeping, not implementation edits.
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
-    if tail -500 "$TRANSCRIPT_PATH" 2>/dev/null | grep -qE '"name"[[:space:]]*:[[:space:]]*"(Edit|Write|MultiEdit|NotebookEdit)"'; then
+    CODE_EDITED=false
+    EDIT_MARKER="${STATE_DIR}/code-edited-${SESSION_ID}"
+    if [ -s "$EDIT_MARKER" ]; then
+        CODE_EDITED=true
+    else
+        EDIT_RECORDS=$(tail -500 "$TRANSCRIPT_PATH" 2>/dev/null | jq -r '
+            .. | objects
+            | select(.type? == "tool_use")
+            | select(.name? == "Edit" or .name? == "Write" or .name? == "MultiEdit" or .name? == "NotebookEdit")
+            | [.name, (.input.file_path // .input.path // "")]
+            | @tsv
+        ' 2>/dev/null)
+        if [ -n "$EDIT_RECORDS" ]; then
+            while IFS=$'\t' read -r _TOOL_NAME FILE_PATH; do
+                IS_STATE_BOOKKEEPING=false
+                case "$FILE_PATH" in
+                    "$STATE_DIR"/*)
+                        STATE_FILE=${FILE_PATH#"$STATE_DIR"/}
+                        case "$STATE_FILE" in
+                            */*|.*|*..*) ;;
+                            agent-count-*|agents-spawned-*|ignite-active-*|ignite-blocked-*)
+                                if [ ! -L "$FILE_PATH" ]; then
+                                    IS_STATE_BOOKKEEPING=true
+                                fi
+                                ;;
+                        esac
+                        ;;
+                esac
+                if [ "$IS_STATE_BOOKKEEPING" != "true" ]; then
+                    CODE_EDITED=true
+                fi
+                if [ "$CODE_EDITED" = "true" ]; then
+                    break
+                fi
+            done <<< "$EDIT_RECORDS"
+        fi
+    fi
+    if [ "$CODE_EDITED" = "true" ]; then
         MISSING_REVIEWERS=""
         if [ -f "$AGENTS_FILE" ]; then
             if ! grep -qi "sentinel" "$AGENTS_FILE" 2>/dev/null; then

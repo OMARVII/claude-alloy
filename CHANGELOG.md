@@ -6,6 +6,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [Unreleased]
+
+### Added
+- **`hooks/edit-ledger.sh`** — records real implementation edits in `~/.claude/.alloy-state/code-edited-${SESSION_ID}` so IGNITE review enforcement no longer depends primarily on transcript-tail scanning. State bookkeeping writes for Alloy's own `agent-count-*`, `agents-spawned-*`, `ignite-active-*`, and `ignite-blocked-*` files are ignored.
+- **Generated-settings regression tests** — `tests/settings-generation.sh` installs into a temp project and asserts `PostToolUse` matcher parity with `hooks/hooks.json`, including `Agent|Task`, `edit-ledger.sh`, `context-pressure.sh`, and the Bash-aware agent reminder matcher.
+- **Edit-ledger regression tests** — `tests/edit-ledger.sh` covers real edits, `.alloy-state` bookkeeping skips, traversal-looking state paths, and `NotebookEdit`.
+
+### Fixed
+- **Installer/settings drift around hook wiring.** Project/global install templates now include `edit-ledger.sh`, `agent-count.sh`, `context-pressure.sh`, and the `Bash` agent-reminder matcher consistently with `hooks/hooks.json`.
+- **`doctor.sh` hook inventory.** Doctor now checks `agent-count.sh` and `edit-ledger.sh`, reports 23 hooks, and warns on unknown agent frontmatter model values before runtime.
+- **Stale `/alloy-init` and README counts.** Global command docs and README now reflect 14 agents, 9 skills, 15 commands, and 23 hooks.
+
+### Changed
+- **`/ignite` command wording** now uses the compressed `─── 🔥 IGNITE · Intent: [TYPE] → [agents] ───` header and explicitly avoids the legacy duplicate `IGNITE MODE ACTIVATED!` banner.
+
+---
+
 ## [1.6.9] — 2026-05-02
 
 > **Precision-routing pivot + dev-browser hygiene.** This release reframes Alloy from "always parallelize" to "delegate when uncertainty, scale, or specialist risk warrants it." Routine work biases toward direct tools; IGNITE remains the explicit lever for full parallelism. Also bumps the optional Playwright MCP pin and adds the `--headless` flag for CI/server environments.

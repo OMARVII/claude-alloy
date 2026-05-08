@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/ignite-mode.png" alt="claude-alloy in IGNITE mode — steel verbalizes intent, fires 7 specialists in parallel, and the HUD statusline tracks context / cost / quota live" width="900">
+  <img src="docs/ignite-mode.png" alt="claude-alloy in IGNITE mode — steel verbalizes intent, fires specialists in parallel, and the HUD statusline tracks context / cost / quota live" width="900">
 </p>
 
 <p align="center">
@@ -40,7 +40,7 @@ Steel holds the structure. Tungsten doesn't melt under pressure. Mercury moves f
 alloy
 ```
 
-That's it. 14 agents, 21 hooks, 9 skills, 15 commands + HUD statusline. Globally active. Open [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in any directory and go.
+That's it. 14 agents, 23 hooks, 9 skills, 15 commands + HUD statusline. Globally active. Open [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in any directory and go.
 
 <p align="center">
   <strong>If this saves you time, give it a ⭐ — that's how I know to keep building.</strong>
@@ -121,7 +121,7 @@ Then inside Claude, type **`ig`** (or `/ignite`) for maximum effort mode — all
 
 ### Plugin (Claude Code marketplace)
 
-> **Status:** Coming soon — pending Claude Code marketplace availability. For now, use the global toggle or per-project install.
+> **Status:** Plugin metadata is included, but global toggle or per-project install remains recommended for the full hook/settings experience. Claude Code plugin-scoped agents have stricter limits than files installed into `~/.claude` or a project `.claude/` directory.
 
 ```bash
 # Local plugin testing (clone first)
@@ -149,7 +149,7 @@ bash setup-global.sh
 ├── agents/               14 agents (steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint)
 ├── skills/               9 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, pipeline)
 ├── commands/             15 commands (/ignite, /ig, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status, /wiki-update, /notify-setup, /learn, /assess)
-├── alloy-hooks/          21 hooks (all automatic, listed below) + statusline HUD
+├── alloy-hooks/          23 hooks (all automatic, listed below) + statusline HUD
 ├── wiki/                 project wiki (architecture, conventions, decisions)
 ├── agent-memory/         14 memory files (generated at install — agents learn across sessions)
 ├── settings.json         hook config + env vars
@@ -163,9 +163,11 @@ bash setup-global.sh
 | **write-guard** | Before Write | Blocks overwriting existing files — use Edit instead |
 | **branch-guard** | Before Write/Edit | Blocks edits on main/master; allows docs (warn), `ALLOY_BRANCH_GUARD=off\|warn`, or `.claude/branch-guard.off` marker |
 | **comment-checker** | After Write/Edit | Warns about AI slop comments |
+| **edit-ledger** | After Write/Edit/MultiEdit/NotebookEdit | Records implementation edits for IGNITE review enforcement |
 | **typecheck** | After .ts/.tsx edits | Runs `tsc --noEmit`, reports errors |
 | **auto-install** | After package.json/requirements.txt/pyproject.toml | Installs dependencies (lifecycle scripts disabled for safety) |
 | **agent-reminder** | After 5 direct searches | Suggests mercury/graphene when research has become broad |
+| **agent-count** | After Agent/Task dispatch | Records spawned agents for IGNITE enforcement |
 | **lint** | After Write/Edit | Runs ESLint/Biome/Prettier, reports errors |
 | **skill-reminder** | After 12 direct tool calls | Suggests relevant skills or agents if the task has expanded |
 | **todo-enforcer** | Before stopping | Reminds about incomplete todos (blocks once, then allows) |
@@ -233,7 +235,7 @@ Type **`ig`** (or `/ignite`) for maximum effort: 6+ agents fired in parallel, to
 | Method | Command | Who it's for |
 |---|---|---|
 | **Global toggle** | `alloy` / `unalloy` | Most users — instant, reversible |
-| **Plugin** | `claude plugin add claude-alloy` | Marketplace users (coming soon) |
+| **Plugin** | `claude plugin add claude-alloy` | Marketplace users (metadata included; full hook install still recommended) |
 | **Per-project** | `bash install.sh --project .` | Teams — committed to version control |
 | **Global command** | `bash setup-global.sh` then `/alloy-init` | One command per project |
 
