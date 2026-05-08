@@ -2,9 +2,9 @@
 description: "Activate maximum-effort mode. All agents engaged. Does not stop until done."
 ---
 
-IGNITE MODE ACTIVATED.
+Open with the compressed header `─── 🔥 IGNITE · Intent: [TYPE] → [agents] ───`.
 
-You are now in maximum-effort mode. Say "IGNITE MODE ACTIVATED!" as your first response.
+This command activates maximum-effort mode. Do not also print a separate "IGNITE MODE ACTIVATED!" banner.
 
 ## Activation
 

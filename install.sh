@@ -20,7 +20,7 @@ AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum senti
 SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop pipeline"
 COMMANDS="ignite ig loop init-deep refactor start-work handoff halt alloy unalloy status wiki-update notify-setup learn assess"
 # shellcheck disable=SC2034  # HOOKS is referenced by --project mode below ($HOOKS in for-loop)
-HOOKS="comment-checker.sh agent-count.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh ignite-stop-gate.sh ignite-detector.sh context-pressure.sh statusline.sh"
+HOOKS="comment-checker.sh edit-ledger.sh agent-count.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh ignite-stop-gate.sh ignite-detector.sh context-pressure.sh statusline.sh"
 
 if [ "${1:-}" = "--uninstall" ]; then
     info "Uninstalling claude-alloy..."
@@ -225,9 +225,12 @@ if [ "${1:-}" = "--project" ]; then
       {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/branch-guard.sh", "timeout": 5}]}
     ],
     "PostToolUse": [
+      {"matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/edit-ledger.sh", "timeout": 3}]},
       {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/comment-checker.sh", "timeout": 10}, {"type": "command", "command": "${HOOK_PREFIX}/typecheck.sh", "timeout": 60}, {"type": "command", "command": "${HOOK_PREFIX}/lint.sh", "timeout": 30}, {"type": "command", "command": "${HOOK_PREFIX}/auto-install.sh", "timeout": 60}]},
-      {"matcher": "Grep|Glob|WebFetch|WebSearch|mcp__.*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-reminder.sh", "timeout": 5}]},
-      {"matcher": "Edit|Write|Bash|Read|Grep|Glob", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/skill-reminder.sh", "timeout": 5}]}
+      {"matcher": "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-reminder.sh", "timeout": 5}]},
+      {"matcher": "Edit|Write|Bash|Read|Grep|Glob", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/skill-reminder.sh", "timeout": 5}]},
+      {"matcher": "Agent|Task", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-count.sh", "timeout": 3}]},
+      {"matcher": ".*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/context-pressure.sh", "timeout": 3, "async": true}]}
     ],
     "Stop": [{"hooks": [
       {"type": "command", "command": "${HOOK_PREFIX}/ignite-stop-gate.sh", "timeout": 5},
@@ -456,9 +459,11 @@ cat > "$ALLOY_TMP" << SETTINGS_EOF
       {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/branch-guard.sh", "timeout": 5}]}
     ],
     "PostToolUse": [
+      {"matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/edit-ledger.sh", "timeout": 3}]},
       {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/comment-checker.sh", "timeout": 10}, {"type": "command", "command": "${HOOK_PREFIX}/typecheck.sh", "timeout": 60}, {"type": "command", "command": "${HOOK_PREFIX}/lint.sh", "timeout": 30}, {"type": "command", "command": "${HOOK_PREFIX}/auto-install.sh", "timeout": 60}]},
-      {"matcher": "Grep|Glob|WebFetch|WebSearch|mcp__.*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-reminder.sh", "timeout": 5}]},
+      {"matcher": "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-reminder.sh", "timeout": 5}]},
       {"matcher": "Edit|Write|Bash|Read|Grep|Glob", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/skill-reminder.sh", "timeout": 5}]},
+      {"matcher": "Agent|Task", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-count.sh", "timeout": 3}]},
       {"matcher": ".*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/context-pressure.sh", "timeout": 3, "async": true}]}
     ],
     "Stop": [{"hooks": [

@@ -32,6 +32,10 @@ fi
 # real tool_use transcript → exit 2.
 # ---------------------------------------------------------------------------
 
+ORIG_HOME=${HOME:-}
+TEST_HOME=$(mktemp -d /tmp/alloy-ignite-stop-gate-home.XXXXXX)
+export HOME="$TEST_HOME"
+
 SESSION_ID="ignite-gate-test-$$"
 STATE_DIR="${HOME}/.claude/.alloy-state"
 mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
@@ -54,11 +58,14 @@ BLOCK_KEY=$(echo "${SESSION_ID}-ignite" | cksum | cut -d' ' -f1)
 BLOCK_FILE="${STATE_DIR}/ignite-blocked-${BLOCK_KEY}"
 
 cleanup() {
-    rm -f "${STATE_DIR}/ignite-active-${SESSION_ID}" \
-          "${STATE_DIR}/agent-count-${SESSION_ID}" \
-          "${STATE_DIR}/agents-spawned-${SESSION_ID}" \
-          "$BLOCK_FILE" 2>/dev/null
+    if [ -n "$ORIG_HOME" ]; then
+        export HOME="$ORIG_HOME"
+    else
+        unset HOME
+    fi
+    rm -rf "$TEST_HOME" 2>/dev/null
     [ -n "${TRANSCRIPT_FILE:-}" ] && rm -f "$TRANSCRIPT_FILE" 2>/dev/null
+    [ -n "${NO_FLAG_TRANSCRIPT:-}" ] && rm -f "$NO_FLAG_TRANSCRIPT" 2>/dev/null
     return 0
 }
 trap cleanup EXIT
@@ -72,10 +79,22 @@ run_gate() {
     printf '%s' "$?"
 }
 
+TRANSCRIPT_FILE=$(mktemp /tmp/alloy-ignite-gate-test.XXXXXX)
+
+# ---- corrupted count files fail closed -------------------------------------
+cat > "$TRANSCRIPT_FILE" <<'JSONL'
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"no edit tool use"}]}}
+JSONL
+
+printf 'not-a-number\n' > "${STATE_DIR}/agent-count-${SESSION_ID}"
+rm -f "$BLOCK_FILE" 2>/dev/null
+assert_exit 2 "$(run_gate "$TRANSCRIPT_FILE")" \
+    "corrupt agent-count file is treated as 0 and blocks"
+printf '6\n' > "${STATE_DIR}/agent-count-${SESSION_ID}"
+
 # ---- false-positive case: bare "Edit" / "Write" in prose ------------------
 # This is exactly what the old grep matched: the words appear in conversational
 # text, tool descriptions, and table headers — but NO actual tool_use block.
-TRANSCRIPT_FILE=$(mktemp /tmp/alloy-ignite-gate-test.XXXXXX)
 cat > "$TRANSCRIPT_FILE" <<'JSONL'
 {"type":"user","message":{"role":"user","content":"Should I use Edit or Write here?"}}
 {"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"You can Edit existing files or Write new ones. The Edit tool is preferred."}]}}
@@ -116,6 +135,55 @@ JSONL
 rm -f "${STATE_DIR}/ignite-blocked-${BLOCK_KEY}" 2>/dev/null
 assert_exit 2 "$(run_gate "$TRANSCRIPT_FILE")" \
     "true-positive: tool_use name=MultiEdit triggers Check 3"
+
+# ---- true-positive case: NotebookEdit block -------------------------------
+cat > "$TRANSCRIPT_FILE" <<'JSONL'
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","name":"NotebookEdit","input":{"file_path":"/tmp/notebook.ipynb"}}]}}
+JSONL
+
+rm -f "${STATE_DIR}/ignite-blocked-${BLOCK_KEY}" 2>/dev/null
+assert_exit 2 "$(run_gate "$TRANSCRIPT_FILE")" \
+    "true-positive: tool_use name=NotebookEdit triggers Check 3"
+
+# ---- state bookkeeping writes are not implementation edits -----------------
+cat > "$TRANSCRIPT_FILE" <<JSONL
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","name":"Write","input":{"file_path":"${STATE_DIR}/agent-count-${SESSION_ID}","content":"6"}}]}}
+JSONL
+
+rm -f "${STATE_DIR}/ignite-blocked-${BLOCK_KEY}" 2>/dev/null
+assert_exit 0 "$(run_gate "$TRANSCRIPT_FILE")" \
+    ".alloy-state bookkeeping Write does NOT require reviewers"
+
+# ---- traversal-looking state paths are still implementation edits ----------
+cat > "$TRANSCRIPT_FILE" <<JSONL
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","name":"Write","input":{"file_path":"${STATE_DIR}/../project-file","content":"x"}}]}}
+JSONL
+
+rm -f "${STATE_DIR}/ignite-blocked-${BLOCK_KEY}" 2>/dev/null
+assert_exit 2 "$(run_gate "$TRANSCRIPT_FILE")" \
+    "state-dir traversal path still triggers reviewer gate"
+
+# ---- explicit edit marker triggers reviewer gate without transcript edit ----
+printf '2026-01-01T00:00:00Z\tWrite\t/tmp/changed\n' > "${STATE_DIR}/code-edited-${SESSION_ID}"
+cat > "$TRANSCRIPT_FILE" <<'JSONL'
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"no edit tool use in recent tail"}]}}
+JSONL
+
+rm -f "${STATE_DIR}/ignite-blocked-${BLOCK_KEY}" 2>/dev/null
+assert_exit 2 "$(run_gate "$TRANSCRIPT_FILE")" \
+    "code-edited marker triggers reviewer gate without transcript scan hit"
+rm -f "${STATE_DIR}/code-edited-${SESSION_ID}" 2>/dev/null
+
+# ---- stop_hook_active guard prevents recursive blocking --------------------
+cat > "$TRANSCRIPT_FILE" <<'JSONL'
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","name":"Write","input":{"file_path":"/tmp/x","content":"x"}}]}}
+JSONL
+
+STOP_ACTIVE_RESULT=$(printf '{"session_id":"%s","transcript_path":"%s","stop_hook_active":true}' \
+    "$SESSION_ID" "$TRANSCRIPT_FILE" \
+    | bash "$HOOK" >/dev/null 2>&1; printf '%s' "$?")
+assert_exit 0 "$STOP_ACTIVE_RESULT" \
+    "stop_hook_active=true bypasses stop-gate recursion"
 
 # ---- TTL: stale IGNITE flag (>2h old) is treated as expired ---------------
 # Set the flag's mtime to 3 hours ago. With ALLOY_IGNITE_TTL=7200 (2h default),

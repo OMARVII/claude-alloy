@@ -243,6 +243,10 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
     ],
     "PostToolUse": [
       {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [{"type":"command","command":($hd + "/edit-ledger.sh"),"timeout":3,"statusMessage":"Recording edit state..."}]
+      },
+      {
         "matcher": "Write|Edit",
         "hooks": [
           {"type":"command","command":($hd + "/comment-checker.sh"),"timeout":10,"statusMessage":"Checking code quality..."},
@@ -252,12 +256,16 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
         ]
       },
       {
-        "matcher": "Grep|Glob|WebFetch|WebSearch|mcp__.*",
+        "matcher": "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*",
         "hooks": [{"type":"command","command":($hd + "/agent-reminder.sh"),"timeout":5,"statusMessage":"Checking delegation patterns..."}]
       },
       {
         "matcher": "Edit|Write|Bash|Read|Grep|Glob",
         "hooks": [{"type":"command","command":($hd + "/skill-reminder.sh"),"timeout":5,"statusMessage":"Checking skill usage..."}]
+      },
+      {
+        "matcher": "Agent|Task",
+        "hooks": [{"type":"command","command":($hd + "/agent-count.sh"),"timeout":3,"statusMessage":"Counting agent dispatch..."}]
       },
       {
         "matcher": ".*",

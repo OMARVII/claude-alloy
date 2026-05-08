@@ -42,7 +42,7 @@ fail_check() {
 AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium iridium cobalt flint"
 SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop pipeline"
 COMMANDS="ignite ig loop init-deep refactor start-work handoff halt alloy unalloy status wiki-update notify-setup learn assess"
-HOOKS="comment-checker.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh ignite-stop-gate.sh ignite-detector.sh statusline.sh context-pressure.sh"
+HOOKS="comment-checker.sh edit-ledger.sh agent-count.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh ignite-stop-gate.sh ignite-detector.sh statusline.sh context-pressure.sh"
 
 echo ""
 echo -e "${BLUE}alloy doctor${NC} — checking installation health"
@@ -114,7 +114,31 @@ for hook in $HOOKS; do
     fi
 done
 if [ "$HOOK_MISSING" -eq 0 ]; then
-    pass "All 21 hooks present"
+    pass "All 23 hooks present"
+fi
+
+# 7b. check_agent_models — validate frontmatter model values before runtime
+MODEL_WARNINGS=0
+for agent in $AGENTS; do
+    AGENT_FILE="${CLAUDE_DIR}/agents/${agent}.md"
+    if [ ! -f "$AGENT_FILE" ] && [ ! -L "$AGENT_FILE" ]; then
+        continue
+    fi
+    MODEL=$(grep -m1 '^model:' "$AGENT_FILE" 2>/dev/null | cut -d: -f2- | tr -d ' "' || echo "")
+    case "$MODEL" in
+        opus|sonnet|haiku|claude-*) ;;
+        "")
+            warn_check "Agent ${agent}.md has no model field"
+            MODEL_WARNINGS=$((MODEL_WARNINGS + 1))
+            ;;
+        *)
+            warn_check "Agent ${agent}.md uses unknown model '${MODEL}'"
+            MODEL_WARNINGS=$((MODEL_WARNINGS + 1))
+            ;;
+    esac
+done
+if [ "$MODEL_WARNINGS" -eq 0 ]; then
+    pass "Agent model fields use supported aliases or pinned IDs"
 fi
 
 # 8. check_symlinks — find broken symlinks

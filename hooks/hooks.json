@@ -1,5 +1,5 @@
 {
-  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, typecheck, lint, auto-install, agent-count, agent-reminder, skill-reminder, ignite-stop-gate, todo-enforcer, loop-stop, session-notify, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end, ignite-detector, context-pressure",
+  "description": "claude-alloy hook suite: write-guard, branch-guard, comment-checker, edit-ledger, typecheck, lint, auto-install, agent-count, agent-reminder, skill-reminder, ignite-stop-gate, todo-enforcer, loop-stop, session-notify, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end, ignite-detector, context-pressure, statusline",
   "hooks": {
     "PreToolUse": [
       {
@@ -26,6 +26,17 @@
       }
     ],
     "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/edit-ledger.sh",
+            "timeout": 3,
+            "statusMessage": "Recording edit state..."
+          }
+        ]
+      },
       {
         "matcher": "Write|Edit",
         "hooks": [
