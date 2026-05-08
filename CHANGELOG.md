@@ -9,6 +9,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+---
+
+## [1.6.10] — 2026-05-08
+
+> **Hardened IGNITE enforcement + edit-ledger instrumentation.** Real-time edit tracking and generated-settings parity tests replace transcript-tail IGNITE validation.
+
+### Added
 - **`hooks/edit-ledger.sh`** — records real implementation edits in `~/.claude/.alloy-state/code-edited-${SESSION_ID}` so IGNITE review enforcement no longer depends primarily on transcript-tail scanning. State bookkeeping writes for Alloy's own `agent-count-*`, `agents-spawned-*`, `ignite-active-*`, and `ignite-blocked-*` files are ignored.
 - **Generated-settings regression tests** — `tests/settings-generation.sh` installs into a temp project and asserts `PostToolUse` matcher parity with `hooks/hooks.json`, including `Agent|Task`, `edit-ledger.sh`, `context-pressure.sh`, and the Bash-aware agent reminder matcher.
 - **Edit-ledger regression tests** — `tests/edit-ledger.sh` covers real edits, `.alloy-state` bookkeeping skips, traversal-looking state paths, and `NotebookEdit`.
