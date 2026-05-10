@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -u
 
+# v1.6.11 P2: skip on low-effort turns to save cycles. Lint is informational —
+# never block the agent's "low" effort tier with a 30s npx invocation.
+# Drain stdin first: Claude Code blocks at the kernel-pipe write while the
+# producer waits for the hook to read its JSON payload. Bare `exit 0` leaves
+# the producer blocked for ~timeout seconds before the harness reaps it.
+# Mirrors agent-reminder.sh / skill-reminder.sh.
+if [ "${CLAUDE_EFFORT:-medium}" = "low" ]; then cat > /dev/null; exit 0; fi
+
 # Opt-in only: runs project-local npx binaries — see SECURITY.md
 [ "${ALLOY_AUTO_LINT:-}" = "1" ] || exit 0
 

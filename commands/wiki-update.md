@@ -4,11 +4,11 @@ description: "Update the project wiki with learnings from the current session. S
 
 # Wiki Update
 
-Update `.claude/wiki/` files based on what you learned in this session.
+Update `wiki/` files based on what you learned in this session.
 
 ## Steps
 
-1. Read all files in `.claude/wiki/`
+1. Read all files in `wiki/`
 2. Review recent changes: `git diff --stat HEAD~5..HEAD 2>/dev/null` and `git log --oneline -10 2>/dev/null`
 3. Scan key project files: package.json, tsconfig.json, main entry points
 4. Update each wiki file:

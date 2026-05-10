@@ -8,8 +8,8 @@ tools:
   - Grep
   - Bash
 maxTurns: 15
-memory: project
 effort: low
+memory: project
 background: true
 color: yellow
 ---

@@ -15,6 +15,7 @@ claude-alloy reference manual. The roster, adaptive-routing summary, skills/comm
 - `/ignite` or `/ig` — max-effort mode
 - `/loop <task>` — autonomous self-continuation
 - `/git-master` — atomic commits, rebase, history search
+- `/hyperplan` — 5-persona adversarial planning, hands off to carbon
 
 Repo: https://github.com/OMARVII/claude-alloy
 

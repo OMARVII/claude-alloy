@@ -122,6 +122,21 @@ If the request involves UI, flag this explicitly and require a headless test str
 
 ---
 
+## OUTPUT HANDOFF (prism → carbon)
+
+Your output is the input to carbon. Carbon will read it before drafting the plan and is required to address every item. To make this contract reliable, your output MUST conform to the structure documented above (Intent Classification → Pre-Analysis Findings → Questions for User → Identified Risks table → Directives → QA Criteria Directives), in that exact order.
+
+Fields carbon depends on:
+
+| Section | Carbon's contract |
+|---|---|
+| **Intent Classification** | Carbon shapes the plan template (refactor vs build-from-scratch vs research) off your classification. Wrong classification = wrong plan shape. |
+| **Identified Risks** table | Every row gets explicit treatment in the plan — resolved (mitigation in a phase), accepted (called out with rationale), or escalated (Open Item). Silent omission is a defect. |
+| **Directives** (MUST / MUST NOT / PATTERN / TOOL) | Copied verbatim into the plan's Constraints section. Do not paraphrase or summarize when emitting them. |
+| **Questions for User** | Carbon either incorporates the user's answer or lists each unanswered question as an Open Item gating the plan. |
+
+If you cannot produce a section confidently (e.g., no usable codebase context for Pre-Analysis), emit the heading with `(none)` rather than omitting — carbon needs the contract intact even when content is empty.
+
 ## ZERO USER INTERVENTION PRINCIPLE
 
 Every acceptance criterion in the plan that follows must be executable by an agent. If a scenario requires a human to "look at it" or "feel like it works," it's not a valid criterion. Flag these during analysis and propose machine-verifiable alternatives.

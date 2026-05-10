@@ -11,8 +11,10 @@ command -v jq &>/dev/null || exit 0
 
 STOP_REASON=$(echo "$INPUT" | jq -r '.stop_reason // ""' 2>/dev/null) || STOP_REASON=""
 
+# shellcheck source=./_state-dir.sh
+. "$(dirname "$0")/_state-dir.sh"
 STATE_DIR="${HOME}/.claude/.alloy-state"
-mkdir -p "$STATE_DIR"
+alloy_ensure_state_dir "$STATE_DIR" || exit 0
 COUNTER_FILE="${STATE_DIR}/rate-limit-count"
 
 # Only handle rate_limit — all other stop reasons pass through

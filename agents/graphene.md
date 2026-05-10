@@ -9,8 +9,8 @@ tools:
   - WebSearch
 maxTurns: 20
 effort: medium
-background: true
 memory: project
+background: true
 color: green
 ---
 
