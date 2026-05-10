@@ -5,13 +5,21 @@
 
 set -u
 
+# v1.6.11 hardening: skip on low-effort turns. Context-pressure is advisory
+# (warns at ~70%/85% tool-call estimates) and adds a syscall on every
+# PostToolUse — wasted on haiku micro-tasks. Drain stdin before exit so
+# Claude Code's pipe-write doesn't block waiting for a reader.
+if [ "${CLAUDE_EFFORT:-medium}" = "low" ]; then cat > /dev/null; exit 0; fi
+
 # shellcheck disable=SC2034
 INPUT=$(cat)
 
 command -v jq &>/dev/null || exit 0
 
+# shellcheck source=hooks/_state-dir.sh
+. "$(dirname "$0")/_state-dir.sh"
 STATE_DIR="${HOME}/.claude/.alloy-state"
-mkdir -p "$STATE_DIR"
+alloy_ensure_state_dir "$STATE_DIR" || exit 0
 
 # BUG-2 fix: derive SESSION_ID from stdin .session_id so the counter file
 # path matches what hooks/statusline.sh reads. The previous env-var source

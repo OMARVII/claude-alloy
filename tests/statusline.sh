@@ -60,7 +60,7 @@ assert_eq 1 "$(contains "$OUT" '$0.01')" "half-penny cost (0.005) rounds up to \
 
 # ---- Test 3: VERSION resolves from CLAUDE_PLUGIN_ROOT/VERSION --------------
 OUT=$(make_json 0 | CLAUDE_PLUGIN_ROOT="$REPO_ROOT" bash "$HOOK" | strip_ansi)
-assert_eq 1 "$(contains "$OUT" '1.6.10')" "version reads from CLAUDE_PLUGIN_ROOT/VERSION"
+assert_eq 1 "$(contains "$OUT" '1.6.11')" "version reads from CLAUDE_PLUGIN_ROOT/VERSION"
 
 # ---- Test 4: VERSION fallback to <script-dir>/../VERSION (CLAUDE_PLUGIN_ROOT unset) ----
 # Unset CLAUDE_PLUGIN_ROOT so the hook must fall through the self-locating chain.
@@ -69,7 +69,7 @@ assert_eq 1 "$(contains "$OUT" '1.6.10')" "version reads from CLAUDE_PLUGIN_ROOT
 # checkouts, so candidate #3 is the one exercised here.
 unset CLAUDE_PLUGIN_ROOT
 OUT=$(make_json 0 | env -u CLAUDE_PLUGIN_ROOT bash "$HOOK" | strip_ansi)
-assert_eq 1 "$(contains "$OUT" '1.6.10')" "SCRIPT_DIR/../VERSION fallback when CLAUDE_PLUGIN_ROOT unset"
+assert_eq 1 "$(contains "$OUT" '1.6.11')" "SCRIPT_DIR/../VERSION fallback when CLAUDE_PLUGIN_ROOT unset"
 
 # ---- Test 5: VERSION fallback to ~/.claude/.alloy-version (last-resort) ----
 # Isolate candidate #4 by copying the hook alone into a temp dir where neither

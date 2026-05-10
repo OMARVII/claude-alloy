@@ -9,8 +9,10 @@ INPUT=$(cat)
 
 command -v jq &>/dev/null || exit 0
 
+# shellcheck source=hooks/_state-dir.sh
+. "$(dirname "$0")/_state-dir.sh"
 STATE_DIR="${HOME}/.claude/.alloy-state"
-mkdir -p "$STATE_DIR"
+alloy_ensure_state_dir "$STATE_DIR" || exit 0
 
 LOG_FILE="${STATE_DIR}/agent-log.jsonl"
 TIMESTAMP=$(date -u '+%Y-%m-%dT%H:%M:%SZ')

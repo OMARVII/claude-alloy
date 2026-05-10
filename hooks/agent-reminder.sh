@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -u
 
+# v1.6.11 P2: skip on low-effort turns. Reminder hooks are nudge-based; they
+# add no value to haiku micro-tasks where the agent already has a tight scope.
+if [ "${CLAUDE_EFFORT:-medium}" = "low" ]; then
+    cat > /dev/null
+    exit 0
+fi
+
 INPUT=$(cat)
 
 # Require jq for JSON parsing
@@ -14,8 +21,10 @@ if [ -z "$TOOL_NAME" ]; then
     exit 0
 fi
 
+# shellcheck source=hooks/_state-dir.sh
+. "$(dirname "$0")/_state-dir.sh"
 STATE_DIR="${HOME}/.claude/.alloy-state"
-mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
+alloy_ensure_state_dir "$STATE_DIR" || exit 0
 # Stale-file cleanup is centralized in hooks/session-end.sh (runs once per session).
 
 # One-shot per session: once the reminder has fired, never fire again.

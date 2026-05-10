@@ -9,8 +9,10 @@ INPUT=$(cat)
 
 command -v jq &>/dev/null || exit 0
 
+# shellcheck source=hooks/_state-dir.sh
+. "$(dirname "$0")/_state-dir.sh"
 STATE_DIR="${HOME}/.claude/.alloy-state"
-mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
+alloy_ensure_state_dir "$STATE_DIR" || exit 0
 # Stale-file cleanup is centralized in hooks/session-end.sh.
 
 # Extract fields from input

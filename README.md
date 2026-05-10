@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.6.10"><img src="https://img.shields.io/badge/version-1.6.10-green.svg" alt="Version 1.6.10"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.6.11"><img src="https://img.shields.io/badge/version-1.6.11-green.svg" alt="Version 1.6.11"></a>
 </p>
 
 <p align="center">
@@ -40,7 +40,7 @@ Steel holds the structure. Tungsten doesn't melt under pressure. Mercury moves f
 alloy
 ```
 
-That's it. 14 agents, 23 hooks, 9 skills, 15 commands + HUD statusline. Globally active. Open [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in any directory and go.
+That's it. 14 agents, 23 hooks, 10 skills, 15 commands + HUD statusline. Globally active. Open [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in any directory and go.
 
 <p align="center">
   <strong>If this saves you time, give it a ⭐ — that's how I know to keep building.</strong>
@@ -147,7 +147,7 @@ bash setup-global.sh
 ```
 .claude/
 ├── agents/               14 agents (steel, tungsten, quartz, mercury, graphene, carbon, prism, gauge, spectrum, sentinel, titanium, iridium, cobalt, flint)
-├── skills/               9 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, pipeline)
+├── skills/               10 skills (git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, pipeline, hyperplan)
 ├── commands/             15 commands (/ignite, /ig, /loop, /halt, /alloy, /unalloy, /handoff, /refactor, /init-deep, /start-work, /status, /wiki-update, /notify-setup, /learn, /assess)
 ├── alloy-hooks/          23 hooks (all automatic, listed below) + statusline HUD
 ├── wiki/                 project wiki (architecture, conventions, decisions)
@@ -486,15 +486,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.6.10**.
-
----
-
-## Inspiration
-
-Built on Claude Code. Inspired by the agent orchestration patterns pioneered by [oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent).
-
-The alloy concept: individual agents are metals — each with specific properties. Together, they're stronger than any single element. The same principle applies to AI agents.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.6.11**.
 
 ---
 

@@ -58,6 +58,7 @@ Detailed routing rules and per-path triggers: `/alloy`.
 | `/tdd-workflow` | Test-driven development: red-green-refactor cycle enforcement |
 | `/verification-loop` | Full verify cycle: build → typecheck → lint → test → E2E |
 | `/pipeline` | Batch processing with Claude Code headless mode (fan-out across files) |
+| `/hyperplan` | 5-persona adversarial planning (3 rounds of cross-critique) → hands off to carbon |
 
 ## Commands Available
 

@@ -1,6 +1,6 @@
 # Review Agent Template
 
-Shared conventions for read-only review agents (sentinel, iridium, cobalt, flint).
+Shared conventions for read-only review agents (sentinel, iridium, cobalt, flint, gauge).
 Each review agent follows these conventions, plus its own domain-specific checklist and output shape.
 
 ## Scope Boundary
@@ -27,7 +27,27 @@ Exact domain-specific definitions of each level live in the individual agent fil
 
 ## Output Format (shared)
 
-For each finding, report:
+### Response wrapper (review-level)
+
+Every review response — sentinel, iridium, cobalt, flint, gauge — wraps its findings in the same three top-level sections so steel and tungsten can consume them uniformly:
+
+```
+[Findings]    Each individual finding using the per-finding format below.
+              "(no findings)" is a legitimate value — clean reviews are useful.
+
+[Blockers]    Anything that prevents the calling agent from completing the
+              task. Single bullets, sharpest first. "(none)" if clean.
+
+[Next Steps]  Concrete actions the caller should take, ordered. For each
+              CRITICAL/HIGH finding above, list the fix as a step. For clean
+              reviews, this is "(none — proceed)".
+```
+
+Use these exact bracketed labels. Do not rename, reorder, or omit them — downstream parsers and gates depend on them.
+
+### Per-finding format
+
+Inside `[Findings]`, each finding is reported as:
 
 ```
 ### [SEVERITY] Finding Title

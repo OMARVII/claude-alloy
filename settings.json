@@ -1,3 +1,40 @@
 {
-  "agent": "steel"
+  "agent": "steel",
+
+  "_comment_worktree": "P6 (v1.6.11): parallel tungsten worktrees branch from origin/<default> rather than local HEAD, so concurrent runs do not contaminate each other or inherit dirty local state.",
+  "worktree": {
+    "baseRef": "fresh"
+  },
+
+  "_comment_autoMode": "P7 (v1.6.11): settings-layer hard-deny rules are visible without tracing hook scripts. $defaults inherits Claude Code built-ins; the explicit patterns mirror the destructive-action guards already in hooks/branch-guard.sh and write-guard.sh. Expanded in v1.6.11 hardening pass to cover the autonomous-mode threat surface (pipe-to-shell, sudo, credential reads, block devices, history rewrites, unguarded SQL deletes, recursive chmod, system files).",
+  "autoMode": {
+    "hard_deny": [
+      "$defaults",
+      "Never run git push --force or git push -f",
+      "Never run rm -rf",
+      "Never run DROP TABLE or DROP DATABASE",
+      "Never modify ~/.ssh/ or ~/.aws/ or ~/.netrc",
+      "Never run curl ... | sh, curl ... | bash, wget ... | sh, or any pipe-to-shell pattern from the network",
+      "Never run sudo or doas — escalation must be explicit user action outside the agent",
+      "Never read ~/.gnupg/, ~/.docker/config.json, ~/.kube/config, ~/.npmrc, ~/.pypirc, ~/.config/gh/, browser cookie stores, or password-manager databases",
+      "Never run dd of=/dev/, mkfs, shred, or any direct block-device write",
+      "Never run git filter-branch, git filter-repo, git update-ref -d, git reflog expire, or git push --mirror on shared branches",
+      "Never run TRUNCATE TABLE or DELETE without a WHERE clause",
+      "Never run chmod -R 777 or chown to a different user",
+      "Never modify /etc/hosts, /etc/resolv.conf, /etc/sudoers, or crontab"
+    ]
+  },
+
+  "_comment_mcpServers": "P1 (v1.6.11): alwaysLoad pins critical MCP schemas so deferred Tool Search does not strip them from forked subagents on first turn. MCPs are typically declared in ~/.mcp.json or .mcp.json at project root; this block documents alwaysLoad keys for users who configure MCPs through settings.json. Requires Claude Code v2.1.121+. See docs/mcp-config.md.",
+  "mcpServers": {
+    "context7": {
+      "alwaysLoad": true
+    },
+    "grep_app": {
+      "alwaysLoad": true
+    },
+    "websearch": {
+      "alwaysLoad": true
+    }
+  }
 }

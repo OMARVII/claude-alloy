@@ -17,7 +17,7 @@ warn() { echo -e "${YELLOW}[ALLOY]${NC} $1"; }
 error() { echo -e "${RED}[ALLOY]${NC} $1"; }
 
 AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium iridium cobalt flint"
-SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop pipeline"
+SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop pipeline hyperplan"
 COMMANDS="ignite ig loop init-deep refactor start-work handoff halt alloy unalloy status wiki-update notify-setup learn assess"
 # shellcheck disable=SC2034  # HOOKS is referenced by --project mode below ($HOOKS in for-loop)
 HOOKS="comment-checker.sh edit-ledger.sh agent-count.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh ignite-stop-gate.sh ignite-detector.sh context-pressure.sh statusline.sh"
@@ -219,6 +219,9 @@ if [ "${1:-}" = "--project" ]; then
 {
   "agent": "steel",
   "env": {"BASH_DEFAULT_TIMEOUT_MS": "420000", "BASH_MAX_TIMEOUT_MS": "420000", "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1"},
+  "worktree": {"baseRef": "fresh"},
+  "autoMode": {"hard_deny": ["\$defaults", "Never run git push --force or git push -f", "Never run rm -rf", "Never run DROP TABLE or DROP DATABASE", "Never modify ~/.ssh/ or ~/.aws/ or ~/.netrc", "Never run curl ... | sh, curl ... | bash, wget ... | sh, or any pipe-to-shell pattern from the network", "Never run sudo or doas — escalation must be explicit user action outside the agent", "Never read ~/.gnupg/, ~/.docker/config.json, ~/.kube/config, ~/.npmrc, ~/.pypirc, ~/.config/gh/, browser cookie stores, or password-manager databases", "Never run dd of=/dev/, mkfs, shred, or any direct block-device write", "Never run git filter-branch, git filter-repo, git update-ref -d, git reflog expire, or git push --mirror on shared branches", "Never run TRUNCATE TABLE or DELETE without a WHERE clause", "Never run chmod -R 777 or chown to a different user", "Never modify /etc/hosts, /etc/resolv.conf, /etc/sudoers, or crontab"]},
+  "mcpServers": {"context7": {"alwaysLoad": true}, "grep_app": {"alwaysLoad": true}, "websearch": {"alwaysLoad": true}},
   "hooks": {
     "PreToolUse": [
       {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "timeout": 5}]},
@@ -453,6 +456,9 @@ cat > "$ALLOY_TMP" << SETTINGS_EOF
   "agent": "steel",
   "env": {"BASH_DEFAULT_TIMEOUT_MS": "420000", "BASH_MAX_TIMEOUT_MS": "420000", "CLAUDE_CODE_DISABLE_GIT_INSTRUCTIONS": "1"},
   "statusLine": {"type": "command", "command": "${HOOK_PREFIX}/statusline.sh"},
+  "worktree": {"baseRef": "fresh"},
+  "autoMode": {"hard_deny": ["\$defaults", "Never run git push --force or git push -f", "Never run rm -rf", "Never run DROP TABLE or DROP DATABASE", "Never modify ~/.ssh/ or ~/.aws/ or ~/.netrc", "Never run curl ... | sh, curl ... | bash, wget ... | sh, or any pipe-to-shell pattern from the network", "Never run sudo or doas — escalation must be explicit user action outside the agent", "Never read ~/.gnupg/, ~/.docker/config.json, ~/.kube/config, ~/.npmrc, ~/.pypirc, ~/.config/gh/, browser cookie stores, or password-manager databases", "Never run dd of=/dev/, mkfs, shred, or any direct block-device write", "Never run git filter-branch, git filter-repo, git update-ref -d, git reflog expire, or git push --mirror on shared branches", "Never run TRUNCATE TABLE or DELETE without a WHERE clause", "Never run chmod -R 777 or chown to a different user", "Never modify /etc/hosts, /etc/resolv.conf, /etc/sudoers, or crontab"]},
+  "mcpServers": {"context7": {"alwaysLoad": true}, "grep_app": {"alwaysLoad": true}, "websearch": {"alwaysLoad": true}},
   "hooks": {
     "PreToolUse": [
       {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "timeout": 5}]},
@@ -534,13 +540,27 @@ if command -v claude &>/dev/null; then
         claude mcp add "$name" --transport http --scope user "$url" &>/dev/null || { warn "Failed to add $name MCP"; return 1; }
     }
 
-    WEBSEARCH_URL="https://mcp.exa.ai/mcp"
-    if [ -n "${EXA_API_KEY:-}" ]; then
-        WEBSEARCH_URL="https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}"
-    fi
+    # Websearch (Exa): always-on keyless; EXA_API_KEY upgrades to higher rate
+    # limits via Authorization header (NOT query string — the URL ends up in
+    # shell history, process listings, proxy logs, and Claude Code transcripts;
+    # exa keys are bearer credentials and must travel in headers, CWE-598).
     ensure_mcp context7 "https://mcp.context7.com/mcp" && MCP_OK=$((MCP_OK + 1)) && MCP_NAMES="context7"
     ensure_mcp grep_app "https://mcp.grep.app" && MCP_OK=$((MCP_OK + 1)) && MCP_NAMES="${MCP_NAMES}, grep_app"
-    ensure_mcp websearch "$WEBSEARCH_URL" && MCP_OK=$((MCP_OK + 1)) && MCP_NAMES="${MCP_NAMES}, websearch"
+    WEBSEARCH_URL="https://mcp.exa.ai/mcp"
+    if [ -n "${EXA_API_KEY:-}" ]; then
+        if claude mcp list --scope user 2>/dev/null | grep -q "\"${WEBSEARCH_URL}\""; then
+            MCP_OK=$((MCP_OK + 1)); MCP_NAMES="${MCP_NAMES}, websearch"
+        else
+            claude mcp remove websearch --scope user &>/dev/null || true
+            if claude mcp add websearch --transport http --header "Authorization: Bearer ${EXA_API_KEY}" --scope user "$WEBSEARCH_URL" &>/dev/null; then
+                MCP_OK=$((MCP_OK + 1)); MCP_NAMES="${MCP_NAMES}, websearch"
+            else
+                warn "Failed to add websearch MCP"
+            fi
+        fi
+    else
+        ensure_mcp websearch "$WEBSEARCH_URL" && MCP_OK=$((MCP_OK + 1)) && MCP_NAMES="${MCP_NAMES}, websearch"
+    fi
     if [ "${ALLOY_BROWSER:-}" = "1" ]; then
         if ! claude mcp list --scope user 2>/dev/null | grep -q "playwright"; then
             claude mcp remove playwright --scope user &>/dev/null || true

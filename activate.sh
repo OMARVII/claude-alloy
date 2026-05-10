@@ -230,6 +230,29 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
     "type": "command",
     "command": ($hd + "/statusline.sh")
   },
+  "worktree": {"baseRef": "fresh"},
+  "autoMode": {
+    "hard_deny": [
+      "$defaults",
+      "Never run git push --force or git push -f",
+      "Never run rm -rf",
+      "Never run DROP TABLE or DROP DATABASE",
+      "Never modify ~/.ssh/ or ~/.aws/ or ~/.netrc",
+      "Never run curl ... | sh, curl ... | bash, wget ... | sh, or any pipe-to-shell pattern from the network",
+      "Never run sudo or doas — escalation must be explicit user action outside the agent",
+      "Never read ~/.gnupg/, ~/.docker/config.json, ~/.kube/config, ~/.npmrc, ~/.pypirc, ~/.config/gh/, browser cookie stores, or password-manager databases",
+      "Never run dd of=/dev/, mkfs, shred, or any direct block-device write",
+      "Never run git filter-branch, git filter-repo, git update-ref -d, git reflog expire, or git push --mirror on shared branches",
+      "Never run TRUNCATE TABLE or DELETE without a WHERE clause",
+      "Never run chmod -R 777 or chown to a different user",
+      "Never modify /etc/hosts, /etc/resolv.conf, /etc/sudoers, or crontab"
+    ]
+  },
+  "mcpServers": {
+    "context7": {"alwaysLoad": true},
+    "grep_app": {"alwaysLoad": true},
+    "websearch": {"alwaysLoad": true}
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -362,14 +385,23 @@ if command -v claude &>/dev/null; then
         claude mcp add "$name" --transport http --scope user -- "$url" &>/dev/null || { warn "Failed to add $name MCP"; return 1; }
     }
 
-    # Websearch: always-on keyless; EXA_API_KEY upgrades to higher rate limits
-    WEBSEARCH_URL="https://mcp.exa.ai/mcp"
-    if [ -n "${EXA_API_KEY:-}" ]; then
-        WEBSEARCH_URL="https://mcp.exa.ai/mcp?exaApiKey=${EXA_API_KEY}"
-    fi
+    # Websearch (Exa): always-on keyless; EXA_API_KEY upgrades to higher rate
+    # limits via Authorization header (NOT query string — the URL ends up in
+    # shell history, process listings, proxy logs, and Claude Code transcripts;
+    # exa keys are bearer credentials and must travel in headers, CWE-598).
     ensure_mcp context7 "https://mcp.context7.com/mcp"
     ensure_mcp grep_app "https://mcp.grep.app"
-    ensure_mcp websearch "$WEBSEARCH_URL"
+    WEBSEARCH_URL="https://mcp.exa.ai/mcp"
+    if [ -n "${EXA_API_KEY:-}" ]; then
+        if claude mcp list --scope user 2>/dev/null | grep -q "\"${WEBSEARCH_URL}\""; then
+            : # already present with the right URL
+        else
+            claude mcp remove websearch --scope user &>/dev/null || true
+            claude mcp add websearch --transport http --header "Authorization: Bearer ${EXA_API_KEY}" --scope user "$WEBSEARCH_URL" &>/dev/null || warn "Failed to add websearch MCP"
+        fi
+    else
+        ensure_mcp websearch "$WEBSEARCH_URL"
+    fi
     success "MCP servers ready (context7, grep_app, websearch)"
     if [ -n "${EXA_API_KEY:-}" ]; then
         success "Websearch upgraded with EXA API key (higher rate limits)"

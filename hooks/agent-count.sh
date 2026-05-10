@@ -44,8 +44,10 @@ AGENT_TYPE=$(echo "$INPUT" | jq -r '
     // empty
 ' 2>/dev/null || echo "")
 
+# shellcheck source=hooks/_state-dir.sh
+. "$(dirname "$0")/_state-dir.sh"
 STATE_DIR="${HOME}/.claude/.alloy-state"
-mkdir -p "$STATE_DIR" && chmod 700 "$STATE_DIR"
+alloy_ensure_state_dir "$STATE_DIR" || exit 0
 
 # Append-only ledger is the canonical source of truth for both the count
 # AND the per-agent record. POSIX guarantees that single-buffer writes
