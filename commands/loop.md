@@ -41,3 +41,9 @@ Do NOT output this promise unless the work is genuinely complete. False promises
 3. If still stuck, ask the user for guidance
 
 Begin working now. Do not ask for confirmation.
+
+### /loop vs /goal
+
+Claude Code ships a native `/goal <condition>` built-in that keeps the model working across turns until the condition is met, with the platform tracking elapsed time, turns, and tokens against the goal. `/loop` is alloy's hook-enforced re-entry mechanism: `hooks/loop-stop.sh` checks for an active loop state file on Stop and refuses to exit until the loop is cleared via `/halt`, which lets it support scheduled re-entry, interval pacing (e.g. `/loop 5m /foo`), and alloy's circuit breakers around tungsten failures. The two cover different needs and can be combined.
+
+Use `/goal` for "keep working until X is true" autonomous runs where Claude Code's native condition-tracking is sufficient and no alloy circuit-breaker behavior is needed. Use `/loop` when the run needs scheduled re-entry, interval pacing, or alloy's tungsten/quartz failure routing. Reference: <https://code.claude.com/docs/en/commands> `/goal` row.
