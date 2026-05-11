@@ -27,23 +27,35 @@ TIMESTAMP=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 # currently used in a filesystem path here, but pre-sanitizing it ensures
 # any future per-agent file path (per-agent ledger, transcript pointer)
 # inherits a safe shape without a separate audit pass.
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
-SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
-AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // ""' 2>/dev/null || echo "")
-AGENT_ID=$(echo "$AGENT_ID" | tr -cd 'a-zA-Z0-9_-')
-AGENT_TYPE=$(echo "$INPUT" | jq -r '
-    .agent_type
-    // .subagent_type
-    // .tool_input.subagent_type
-    // .tool_use.input.subagent_type
-    // empty
-' 2>/dev/null || echo "")
+#
+# Single jq pass — earlier revisions forked jq three separate times to read
+# session_id, agent_type, and last_assistant_message; on a hot path that
+# fires for every SubagentStop, three forks adds ~6-15ms per stop event.
+# Emit one line per field, newline-delimited (NOT tab-separated), because
+# IFS=$'\t' read collapses empty fields and last_assistant_message is the
+# most likely field to be empty.
+JQ_OUT=$(echo "$INPUT" | jq -r '
+    [
+      (.session_id // "default"),
+      (.agent_id // ""),
+      (.agent_type // .subagent_type // .tool_input.subagent_type // .tool_use.input.subagent_type // ""),
+      (.last_assistant_message // "" | gsub("\n"; "\\n"))
+    ] | .[]
+' 2>/dev/null) || JQ_OUT=""
+SESSION_ID=$(printf '%s\n' "$JQ_OUT" | sed -n '1p')
+AGENT_ID=$(printf '%s\n' "$JQ_OUT" | sed -n '2p')
+AGENT_TYPE=$(printf '%s\n' "$JQ_OUT" | sed -n '3p')
+LAST_MSG=$(printf '%s\n' "$JQ_OUT" | sed -n '4p')
+# Empty fallbacks if the jq call failed entirely.
+[ -n "$SESSION_ID" ] || SESSION_ID="default"
+SESSION_ID=$(printf '%s' "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
+AGENT_ID=$(printf '%s' "$AGENT_ID" | tr -cd 'a-zA-Z0-9_-')
+
 AGENT_TYPE_LOWER=$(echo "${AGENT_TYPE:-}" | tr '[:upper:]' '[:lower:]')
 if [ "$AGENT_TYPE_LOWER" = "tungsten" ] && [ -n "$SESSION_ID" ]; then
     rm -f "${STATE_DIR}/tungsten-active-${SESSION_ID}" 2>/dev/null || true
 fi
 
-LAST_MSG=$(echo "$INPUT" | jq -r '.last_assistant_message // ""' 2>/dev/null) || LAST_MSG=""
 MSG_LEN=${#LAST_MSG}
 
 WARN=false
