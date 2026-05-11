@@ -248,6 +248,12 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
       "Never modify /etc/hosts, /etc/resolv.conf, /etc/sudoers, or crontab"
     ]
   },
+  "skillOverrides": {
+    "ignite": "user-invocable-only",
+    "ig": "user-invocable-only",
+    "loop": "user-invocable-only",
+    "halt": "user-invocable-only"
+  },
   "mcpServers": {
     "context7": {"alwaysLoad": true},
     "grep_app": {"alwaysLoad": true},
@@ -333,6 +339,10 @@ if [ -f "$BACKUP_FILE" ]; then
     jq -s '
       .[0] as $orig | .[1] as $alloy |
       ($orig * {agent: $alloy.agent}) |
+      .worktree = ($orig.worktree // $alloy.worktree) |
+      .autoMode = ($orig.autoMode // $alloy.autoMode) |
+      .skillOverrides = (($alloy.skillOverrides // {}) * ($orig.skillOverrides // {})) |
+      .mcpServers = (($alloy.mcpServers // {}) * ($orig.mcpServers // {})) |
       .env = (($orig.env // {}) * $alloy.env) |
       .hooks.PreToolUse = ($alloy.hooks.PreToolUse) + ([($orig.hooks.PreToolUse // [])[]] | map(select((.hooks // [{}])[0].command // "" | test("alloy-hooks") | not))) |
       .hooks.PostToolUse = ($alloy.hooks.PostToolUse) + ([($orig.hooks.PostToolUse // [])[]] | map(select((.hooks // [{}])[0].command // "" | test("alloy-hooks") | not))) |

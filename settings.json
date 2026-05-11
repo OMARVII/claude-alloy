@@ -25,6 +25,14 @@
     ]
   },
 
+  "_comment_skillOverrides": "Gates IGNITE-mode skills to user-invocable-only so Claude does not auto-invoke them from inferred intent. /ignite, /ig, /loop, and /halt are behavioral modes the user opts into deliberately — auto-invoking them from a loose intent match would change the entire run posture. Other skills (git-master, code-review, frontend-ui-ux, etc.) remain auto-discoverable. Requires Claude Code v2.1.129+.",
+  "skillOverrides": {
+    "ignite": "user-invocable-only",
+    "ig": "user-invocable-only",
+    "loop": "user-invocable-only",
+    "halt": "user-invocable-only"
+  },
+
   "_comment_mcpServers": "P1 (v1.6.11): alwaysLoad pins critical MCP schemas so deferred Tool Search does not strip them from forked subagents on first turn. MCPs are typically declared in ~/.mcp.json or .mcp.json at project root; this block documents alwaysLoad keys for users who configure MCPs through settings.json. Requires Claude Code v2.1.121+. See docs/mcp-config.md.",
   "mcpServers": {
     "context7": {
