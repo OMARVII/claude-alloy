@@ -111,11 +111,17 @@ assert_eq 1 "$_reason_ok" "block decision includes IGNITE+tungsten reason"
 BLOCK_SESSION="pcblk-stale"
 : > "${STATE_DIR}/ignite-active-${BLOCK_SESSION}"
 : > "${STATE_DIR}/tungsten-active-${BLOCK_SESSION}"
-# Backdate the tungsten marker by 1 hour.
+# Backdate the tungsten marker by 1 hour. BSD touch (macOS) supports
+# -t YYYYMMDDhhmm but rejects -d "@epoch"; GNU touch (Linux) supports both.
+# Extract STAMP first so the chain reads top-to-bottom: BSD path tries
+# first, only the explicit `||` falls through to GNU's `-d "@epoch"` form
+# when the BSD touch fails. Earlier inline form nested the same logic in
+# one expression and made the cross-platform fallback hard to read; the
+# behavior is otherwise unchanged.
 ONE_HOUR_AGO=$(( $(date +%s) - 3600 ))
-touch -t "$(date -r "$ONE_HOUR_AGO" '+%Y%m%d%H%M' 2>/dev/null || date -d "@$ONE_HOUR_AGO" '+%Y%m%d%H%M' 2>/dev/null)" \
-    "${STATE_DIR}/tungsten-active-${BLOCK_SESSION}" 2>/dev/null || \
-touch -d "@$ONE_HOUR_AGO" "${STATE_DIR}/tungsten-active-${BLOCK_SESSION}" 2>/dev/null
+STAMP=$(date -r "$ONE_HOUR_AGO" '+%Y%m%d%H%M' 2>/dev/null || date -d "@$ONE_HOUR_AGO" '+%Y%m%d%H%M' 2>/dev/null)
+touch -t "$STAMP" "${STATE_DIR}/tungsten-active-${BLOCK_SESSION}" 2>/dev/null \
+    || touch -d "@$ONE_HOUR_AGO" "${STATE_DIR}/tungsten-active-${BLOCK_SESSION}" 2>/dev/null
 STALE_INPUT=$(printf '{"session_id":"%s","transcript_path":"/dev/null"}' "$BLOCK_SESSION")
 OUT_STALE=$(echo "$STALE_INPUT" | bash "$HOOK" 2>/dev/null)
 if echo "$OUT_STALE" | grep -q '"decision"'; then _has_decision=1; else _has_decision=0; fi
