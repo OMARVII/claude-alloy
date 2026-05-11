@@ -45,7 +45,9 @@ Steel routes tasks based on what they need — not through a fixed sequence:
 
 Detailed routing rules and per-path triggers: `/alloy`.
 
-## Skills Available
+## Skills (10)
+
+Each skill lives under `skills/<name>/SKILL.md` and is auto-discovered by Claude Code from frontmatter triggers. The model invokes a skill when its description matches the user's intent; some are also user-invocable via `/<name>`.
 
 | Skill | Trigger |
 |---|---|
@@ -60,7 +62,9 @@ Detailed routing rules and per-path triggers: `/alloy`.
 | `/pipeline` | Batch processing with Claude Code headless mode (fan-out across files) |
 | `/hyperplan` | 5-persona adversarial planning (3 rounds of cross-critique) → hands off to carbon |
 
-## Commands Available
+## Commands (15)
+
+Each command lives under `commands/<name>.md` and is **user-invocable only** — typed as `/<name>` in the prompt. Commands are not auto-discovered; the model does not infer them from intent.
 
 | Command | What it does |
 |---|---|
