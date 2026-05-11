@@ -104,10 +104,16 @@ assert_eq 1 "$_marker_present" "subagent-stop: tungsten marker preserved when ag
 
 # ---- SubagentStop: session_id sanitization (CWE-22 guard) ------------------
 # The hook strips path-traversal bytes from session_id before using it in a
-# filesystem path. A payload like "../evil" must not delete a marker outside
-# the state dir.
+# filesystem path. Two halves of the same contract:
+#   (a) negative: a marker outside the state dir must remain untouched
+#   (b) positive: the sanitized id "../evil" → "evil" must be what the rm
+#       actually targets, so a pre-planted tungsten-active-evil under the
+#       state dir IS removed. Without (b) the test could pass for the wrong
+#       reason — rm of a non-existent path is a no-op.
 EVIL_MARKER="${TMP_HOME}/evil-marker"
 : > "$EVIL_MARKER"
+EVIL_SANITIZED="${STATE_DIR}/tungsten-active-evil"
+: > "$EVIL_SANITIZED"
 INPUT=$(jq -nc \
     --arg sid "../evil" \
     --arg aid "agent-evil" \
@@ -120,5 +126,54 @@ else
     _evil_present=0
 fi
 assert_eq 1 "$_evil_present" "subagent-stop: traversal session_id cannot delete marker outside state dir"
+if [ -f "$EVIL_SANITIZED" ]; then
+    _sanitized_present=1
+else
+    _sanitized_present=0
+fi
+assert_eq 0 "$_sanitized_present" "subagent-stop: sanitized id (../evil → evil) is what rm actually targets"
+
+# ---- SubagentStop: embedded-slash sanitization -----------------------------
+# A session_id with embedded slashes (a/b/c) must collapse to "abc" so the
+# rm never sees a path separator. Mirror the positive/negative split: marker
+# under the state dir at the sanitized name is removed; a sibling at the
+# unsanitized shape never existed (and would be a traversal smell anyway).
+ABC_TARGET="${STATE_DIR}/tungsten-active-abc"
+: > "$ABC_TARGET"
+INPUT=$(jq -nc \
+    --arg sid "a/b/c" \
+    --arg aid "agent-abc" \
+    --arg atype "tungsten" \
+    '{session_id: $sid, agent_id: $aid, agent_type: $atype}')
+echo "$INPUT" | bash "$STOP_HOOK" >/dev/null 2>&1
+if [ -f "$ABC_TARGET" ]; then
+    _abc_present=1
+else
+    _abc_present=0
+fi
+assert_eq 0 "$_abc_present" "subagent-stop: embedded-slash id (a/b/c → abc) targets the sanitized name"
+
+# ---- SubagentStop: agent_id sanitization mirrors session_id ---------------
+# Per refactor(hooks): subagent hooks pre-emptively sanitize agent_id with
+# the same allowlist as session_id (CWE-22 defense-in-depth). agent_id is
+# not load-bearing for any filesystem path today, but verifying the field
+# is read and stripped pins the precedent so a regression flips this test.
+SESSION_ID="sastop-aid"
+: > "${STATE_DIR}/tungsten-active-${SESSION_ID}"
+INPUT=$(jq -nc \
+    --arg sid "$SESSION_ID" \
+    --arg aid "../escape" \
+    --arg atype "tungsten" \
+    '{session_id: $sid, agent_id: $aid, agent_type: $atype, hook_event_name: "SubagentStop"}')
+EXIT_CODE=$(echo "$INPUT" | bash "$STOP_HOOK" >/dev/null 2>&1; printf '%s' "$?")
+assert_exit 0 "$EXIT_CODE" "subagent-stop: traversal agent_id payload exits 0 (sanitized, not used in path)"
+# The session_id-keyed marker should still clear since agent_type==tungsten
+# and session_id is safe.
+if [ -f "${STATE_DIR}/tungsten-active-${SESSION_ID}" ]; then
+    _aid_marker=1
+else
+    _aid_marker=0
+fi
+assert_eq 0 "$_aid_marker" "subagent-stop: traversal agent_id does not break the session_id-keyed marker clear"
 
 done_testing
