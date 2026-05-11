@@ -6,7 +6,7 @@
 set -u
 
 # Consume hook input from stdin (required by hook protocol)
-cat > /dev/null
+INPUT=$(cat 2>/dev/null || true)
 
 # Centralized stale-file cleanup (moved out of hot-path hooks in v1.6.1).
 # State dir convention: ~/.claude/.alloy-state
@@ -21,6 +21,19 @@ if [ -d "$STATE_DIR" ]; then
     # janitor above empties dirs but doesn't remove them. -depth so children
     # are reached first; -mindepth 1 so we never touch STATE_DIR itself.
     find "$STATE_DIR" -mindepth 1 -depth -type d -name 'compact-backup-*' -mtime +7 -exec rm -rf {} + 2>/dev/null
+
+    # Per-session marker cleanup. The Stop-gate reads code-edited-${SESSION_ID}
+    # as a positive signal that implementation edits occurred; if that marker
+    # is not removed at session end, the NEXT session that reuses the same id
+    # (or any future read against the same marker) would mistakenly conclude
+    # edits already happened. Bind the cleanup to the session that's ending.
+    if command -v jq >/dev/null 2>&1; then
+        SESSION_ID=$(printf '%s' "$INPUT" | jq -r '.session_id // empty' 2>/dev/null || true)
+        SESSION_ID=$(printf '%s' "${SESSION_ID:-}" | tr -cd 'a-zA-Z0-9_-')
+        if [ -n "$SESSION_ID" ]; then
+            rm -f "${STATE_DIR}/code-edited-${SESSION_ID}" 2>/dev/null || true
+        fi
+    fi
 fi
 
 command -v jq &>/dev/null || exit 0

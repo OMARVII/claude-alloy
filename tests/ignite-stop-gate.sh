@@ -163,6 +163,28 @@ rm -f "${STATE_DIR}/ignite-blocked-${BLOCK_KEY}" 2>/dev/null
 assert_exit 2 "$(run_gate "$TRANSCRIPT_FILE")" \
     "state-dir traversal path still triggers reviewer gate"
 
+# ---- nested subagent tool_use inside Agent tool_result is NOT a parent edit -
+# Pre-fix bug: the gate's jq used `.. | objects | select(.type=="tool_use")`,
+# a deep-walk that recursed INTO Agent tool_result.content blocks. Subagent
+# transcripts get echoed back into the parent transcript inside those results.
+# If a subagent (even a read-only audit agent) emitted any Edit/Write tool_use,
+# the deep-walk surfaced it and counted it as a parent-session implementation
+# edit — falsely demanding sentinel/iridium/flint review on a read-only turn.
+#
+# Fix: restrict to `.message.content[]` of assistant turns. Parent-session only.
+# Lock that in here: a transcript whose ONLY Edit blocks live INSIDE a
+# tool_result.content[] array must NOT trip Check 3.
+cat > "$TRANSCRIPT_FILE" <<'JSONL'
+{"type":"user","message":{"role":"user","content":"Run a read-only audit subagent"}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","name":"Task","input":{"subagent_type":"sentinel","prompt":"audit"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"x","content":[{"type":"tool_use","name":"Edit","input":{"file_path":"/sub/agent/edit.ts","old_string":"a","new_string":"b"}},{"type":"tool_use","name":"Write","input":{"file_path":"/sub/agent/new.ts","content":"hi"}}]}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Audit complete — no parent-session edits."}]}}
+JSONL
+
+rm -f "$BLOCK_FILE" 2>/dev/null
+assert_exit 0 "$(run_gate "$TRANSCRIPT_FILE")" \
+    "nested subagent tool_use inside tool_result does NOT count as parent edit"
+
 # ---- explicit edit marker triggers reviewer gate without transcript edit ----
 printf '2026-01-01T00:00:00Z\tWrite\t/tmp/changed\n' > "${STATE_DIR}/code-edited-${SESSION_ID}"
 cat > "$TRANSCRIPT_FILE" <<'JSONL'
