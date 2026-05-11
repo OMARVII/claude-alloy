@@ -31,7 +31,16 @@ if [ -f .gitignore ]; then
 fi
 ```
 
-4. **Report** what was removed.
+4. **Optional — clear Claude Code's per-project state.** The harness teardown above removes the alloy files from the project; Claude Code itself also caches per-project state (transcripts, task lists, debug logs, file-edit history, prompt history, the project's entry in `~/.claude.json`) outside the project directory. Offer the user a final purge step:
+
+```bash
+claude project purge "$PWD" --dry-run    # preview what would be deleted
+claude project purge "$PWD"              # delete (will prompt for confirmation; add -y to skip)
+```
+
+This is optional and reversible only in the trivial sense (sessions can be restarted from scratch). Recommended for a fully clean slate when leaving a repo permanently; skip it when the user just wants to swap harnesses on the same repo and intends to keep their Claude Code session history. See [Clear local data](https://code.claude.com/docs/en/claude-directory#clear-local-data) for the full purge scope.
+
+5. **Report** what was removed.
 
 ## Important
 
