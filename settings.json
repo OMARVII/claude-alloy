@@ -1,9 +1,10 @@
 {
   "agent": "steel",
 
-  "_comment_worktree": "P6 (v1.6.11): parallel tungsten worktrees branch from origin/<default> rather than local HEAD, so concurrent runs do not contaminate each other or inherit dirty local state.",
+  "_comment_worktree": "P6 (v1.6.11): parallel tungsten worktrees branch from origin/<default> rather than local HEAD, so concurrent runs do not contaminate each other or inherit dirty local state. v1.7.0 adds symlinkDirectories so node_modules/.venv/.cache are symlinked into each worktree instead of copied — pairs with baseRef:fresh to keep parallel worktree spin-up cheap. Per https://code.claude.com/docs/en/settings worktree.symlinkDirectories key.",
   "worktree": {
-    "baseRef": "fresh"
+    "baseRef": "fresh",
+    "symlinkDirectories": ["node_modules", ".venv", ".cache"]
   },
 
   "_comment_autoMode": "P7 (v1.6.11): settings-layer hard-deny rules are visible without tracing hook scripts. $defaults inherits Claude Code built-ins; the explicit patterns mirror the destructive-action guards already in hooks/branch-guard.sh and write-guard.sh. Expanded in v1.6.11 hardening pass to cover the autonomous-mode threat surface (pipe-to-shell, sudo, credential reads, block devices, history rewrites, unguarded SQL deletes, recursive chmod, system files).",
