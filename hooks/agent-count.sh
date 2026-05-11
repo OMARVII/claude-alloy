@@ -23,6 +23,13 @@ TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || echo "")
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
 SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
 
+# agent_id is read and sanitized identically to session_id as CWE-22 defense-
+# in-depth. It is not currently used in a filesystem path on this hook, but
+# pre-sanitizing it sets the precedent so a future per-agent file (per-agent
+# ledger, dispatch trace) cannot be exploited as a traversal vector.
+AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // .tool_input.agent_id // ""' 2>/dev/null || echo "")
+AGENT_ID=$(echo "$AGENT_ID" | tr -cd 'a-zA-Z0-9_-')
+
 # Only count Agent/Task dispatches; the matcher should already restrict this
 # but defense-in-depth in case the hook is invoked for a wider matcher.
 TOOL_LOWER=$(echo "$TOOL_NAME" | tr '[:upper:]' '[:lower:]')

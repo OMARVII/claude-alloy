@@ -22,8 +22,15 @@ TIMESTAMP=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 # matching tungsten-active marker so pre-compact.sh stops blocking
 # compaction once tungsten finishes. session_id is sanitized to the
 # [A-Za-z0-9_-] allowlist before any filesystem use (CWE-22 guard).
+#
+# agent_id receives the same sanitization as defense-in-depth: it is not
+# currently used in a filesystem path here, but pre-sanitizing it ensures
+# any future per-agent file path (per-agent ledger, transcript pointer)
+# inherits a safe shape without a separate audit pass.
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
 SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
+AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // ""' 2>/dev/null || echo "")
+AGENT_ID=$(echo "$AGENT_ID" | tr -cd 'a-zA-Z0-9_-')
 AGENT_TYPE=$(echo "$INPUT" | jq -r '
     .agent_type
     // .subagent_type

@@ -28,11 +28,18 @@ alloy_ensure_state_dir "$STATE_DIR" || exit 0
 
 TIMESTAMP=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
-# Extract session_id and agent_type from input. Try the documented field
-# first, then known fallbacks (subagent_type at top level, then nested under
-# tool_input/tool_use for Agent-tool-style payloads).
+# Extract session_id, agent_id, and agent_type from input. Try the documented
+# field first, then known fallbacks (subagent_type at top level, then nested
+# under tool_input/tool_use for Agent-tool-style payloads).
+#
+# agent_id is sanitized to the [A-Za-z0-9_-] allowlist alongside session_id as
+# CWE-22 defense-in-depth: it is not currently used in a filesystem path here,
+# but any future use (per-agent state files, audit dirs) inherits a safe shape
+# by default rather than relying on the next maintainer to add the guard.
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
 SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
+AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // ""' 2>/dev/null || echo "")
+AGENT_ID=$(echo "$AGENT_ID" | tr -cd 'a-zA-Z0-9_-')
 AGENT_TYPE=$(echo "$INPUT" | jq -r '
     .agent_type
     // .subagent_type
