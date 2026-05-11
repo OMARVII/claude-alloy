@@ -43,6 +43,21 @@ assert_exit 0 "$has_agent_count" "generated settings include Agent|Task agent-co
 has_edit_ledger=$(jq -e '.hooks.PostToolUse[] | select(.matcher == "Edit|Write|MultiEdit|NotebookEdit") | .hooks[] | select(.command | endswith("/edit-ledger.sh"))' "$SETTINGS" >/dev/null 2>&1; printf '%s' "$?")
 assert_exit 0 "$has_edit_ledger" "generated settings include edit-ledger hook"
 
+# IGNITE-mode skills must be gated to user-invocable-only — auto-invoking them
+# from inferred intent would flip the run posture without a deliberate opt-in.
+project_ignite_override=$(jq -r '.skillOverrides.ignite // "missing"' "$SETTINGS")
+assert_eq "user-invocable-only" "$project_ignite_override" \
+    "project install writes skillOverrides.ignite = user-invocable-only"
+project_ig_override=$(jq -r '.skillOverrides.ig // "missing"' "$SETTINGS")
+assert_eq "user-invocable-only" "$project_ig_override" \
+    "project install writes skillOverrides.ig = user-invocable-only"
+project_loop_override=$(jq -r '.skillOverrides.loop // "missing"' "$SETTINGS")
+assert_eq "user-invocable-only" "$project_loop_override" \
+    "project install writes skillOverrides.loop = user-invocable-only"
+project_halt_override=$(jq -r '.skillOverrides.halt // "missing"' "$SETTINGS")
+assert_eq "user-invocable-only" "$project_halt_override" \
+    "project install writes skillOverrides.halt = user-invocable-only"
+
 agent_reminder_matcher=$(jq -r '.hooks.PostToolUse[] | select((.hooks[]?.command // "") | endswith("/agent-reminder.sh")) | .matcher' "$SETTINGS")
 assert_eq "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*" "$agent_reminder_matcher" \
     "generated settings include Bash in agent-reminder matcher"
@@ -120,5 +135,9 @@ assert_eq "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*" "$global_agent_reminder_ma
 
 preserved_env=$(jq -r '.env.USER_SETTING' "$GLOBAL_SETTINGS")
 assert_eq "preserved" "$preserved_env" "global activation merge preserves user env"
+
+global_ignite_override=$(jq -r '.skillOverrides.ignite // "missing"' "$GLOBAL_SETTINGS")
+assert_eq "user-invocable-only" "$global_ignite_override" \
+    "global activation writes skillOverrides.ignite = user-invocable-only"
 
 done_testing
