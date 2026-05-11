@@ -89,10 +89,14 @@ echo "$COUNT" > "$COUNT_FILE"
 # fires reliably on every Agent/Task dispatch (more reliable than SubagentStart
 # in long-running parent sessions), making it the natural write site. The
 # matching cleanup lives in subagent-stop.sh keyed to agent_type==tungsten.
+#
+# No follow-up `chmod 600`: STATE_DIR is created via `alloy_ensure_state_dir`
+# with mode 0700, so a marker created inside it is already process-private
+# (the directory mode controls accessibility, not the file mode). Dropping
+# the chmod removes one fork per Agent/Task dispatch on a hot path.
 AGENT_TYPE_LOWER=$(echo "${AGENT_TYPE:-}" | tr '[:upper:]' '[:lower:]')
 if [ "$AGENT_TYPE_LOWER" = "tungsten" ]; then
     : > "${STATE_DIR}/tungsten-active-${SESSION_ID}" 2>/dev/null || true
-    chmod 600 "${STATE_DIR}/tungsten-active-${SESSION_ID}" 2>/dev/null || true
 fi
 
 if [ "${ALLOY_DEBUG:-0}" = "1" ]; then
