@@ -418,6 +418,9 @@ Two hooks can execute project-local code and are therefore disabled unless you e
 | `ALLOY_AUTO_INSTALL=1` | `hooks/auto-install.sh` | Runs `npm install --ignore-scripts` / `pip install --no-deps --only-binary=:all:` after manifest edits. Off by default — dependency names written into `package.json` / `requirements.txt` by the agent could be typosquats. Editable pip installs (`pip install -e .`) are never run automatically even when this is set. |
 | `ALLOY_AUTO_UPDATE=0` | `self-update.sh` | Set to `0` to disable the weekly self-update check (default: enabled, checks at most once per 7 days; only pulls if `origin` remote is exactly `OMARVII/claude-alloy`). |
 | `ALLOY_BROWSER=1` | `/dev-browser` skill | Enables Playwright MCP browser automation. Requires `@playwright/mcp` to be installed. |
+| `ALLOY_IGNITE_TTL=7200` | `hooks/ignite-stop-gate.sh`, `hooks/pre-compact.sh` | Seconds of freshness for the `ignite-active-${SESSION_ID}` marker. Default 7200 (2h). The stop-gate and pre-compact hooks treat the marker as expired once the mtime is older than this and stop enforcing IGNITE-specific behavior. Bump for very long runs; lower for short, scripted IGNITE bursts. |
+| `ALLOY_TUNGSTEN_TTL=1800` | `hooks/pre-compact.sh` | Seconds of freshness for the `tungsten-active-${SESSION_ID}` marker that pre-compact reads. Default 1800 (30m) — matches the typical tungsten work window. Tungsten dispatches longer than this fall through to advisory mode (compaction allowed). Raise if a tungsten run typically exceeds 30m on your hardware. |
+| `ALLOY_DEBUG=1` | All hooks emitting `[alloy]` traces | Set to `1` to emit per-hook stderr diagnostics — useful for diagnosing missed subagent counts, stale tungsten markers, or stop-gate false positives. Off by default to keep production output clean. |
 
 ### Optional: MCP Tool Search opt-in (power-user tip)
 
@@ -439,6 +442,17 @@ export ENABLE_TOOL_SEARCH=true
 - Requires Sonnet 4+, Opus 4+, or Haiku 4.5+.
 
 claude-alloy ships only 3 always-on MCP servers (context7, grep_app, websearch), so most users won't need this. Power users adding Linear/Notion/Slack/HubSpot/etc. on top will see the biggest benefit.
+
+### Inspecting the installed plugin
+
+Once claude-alloy is installed as a plugin, two CLI commands surface what the harness registered:
+
+```bash
+claude plugin list       # show installed plugins, versions, source marketplace, enable status
+claude plugin validate   # verify plugin.json, skill/agent/command frontmatter, hooks/hooks.json
+```
+
+`claude plugin list` is the fastest way to confirm claude-alloy is loaded and at the expected version. `claude plugin validate` is the right command to run after editing a local copy — it catches manifest typos before they bite at runtime. The `/plugin` slash-command opens an interactive equivalent with a tab for runtime errors. See [Plugins reference](https://code.claude.com/docs/en/plugins-reference) for the full subcommand list.
 
 ---
 
