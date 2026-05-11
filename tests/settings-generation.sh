@@ -58,6 +58,17 @@ project_halt_override=$(jq -r '.skillOverrides.halt // "missing"' "$SETTINGS")
 assert_eq "user-invocable-only" "$project_halt_override" \
     "project install writes skillOverrides.halt = user-invocable-only"
 
+# worktree.symlinkDirectories must include "node_modules" so parallel
+# tungsten worktrees skip the multi-GB node_modules copy and inherit it via
+# symlink instead — pairs with baseRef:fresh to keep spin-up cheap.
+project_worktree_symlinks=$(jq -r '.worktree.symlinkDirectories // [] | index("node_modules") // "missing"' "$SETTINGS")
+case "$project_worktree_symlinks" in
+    ''|missing) _has_symlinks=0 ;;
+    *) _has_symlinks=1 ;;
+esac
+assert_eq 1 "$_has_symlinks" \
+    "project install writes worktree.symlinkDirectories with node_modules"
+
 agent_reminder_matcher=$(jq -r '.hooks.PostToolUse[] | select((.hooks[]?.command // "") | endswith("/agent-reminder.sh")) | .matcher' "$SETTINGS")
 assert_eq "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*" "$agent_reminder_matcher" \
     "generated settings include Bash in agent-reminder matcher"

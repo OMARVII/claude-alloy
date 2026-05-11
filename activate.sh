@@ -230,7 +230,7 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
     "type": "command",
     "command": ($hd + "/statusline.sh")
   },
-  "worktree": {"baseRef": "fresh"},
+  "worktree": {"baseRef": "fresh", "symlinkDirectories": ["node_modules", ".venv", ".cache"]},
   "autoMode": {
     "hard_deny": [
       "$defaults",
