@@ -228,8 +228,15 @@ assert_exit 0 "$_rc_to" "lint: timeout path still exits 0 (PostToolUse always 0)
 # MAX_SEC=20 for lint; allow [18, 40] — broad upper bound for loaded CI runners.
 [ "$_ELAPSED_L" -ge 18 ] && [ "$_ELAPSED_L" -le 40 ] && _in_bounds=1 || _in_bounds=0
 assert_eq 1 "$_in_bounds" "lint: timeout elapsed in [18,40]s (measured ${_ELAPSED_L}s)"
-# Wait 4s — longer than the supervisor's SIGTERM->sleep 2->SIGKILL.
-sleep 4
+# Wait 6s — longer than the supervisor's SIGTERM -> sleep 2 -> SIGKILL plus
+# a 2s reap margin. Previously 4s; on loaded macOS runners the parent shim
+# and its grandchild sleep would occasionally still surface in `pgrep -f`
+# 4s after SIGKILL because the kernel had not yet flushed their cmdline
+# entries from /proc-style scans. Observed pattern: 46/47 once, then 47/47
+# without a code change (steel session memory 2026-05-08). Bumping the
+# reap window to 6s closes the race without slowing the green path
+# meaningfully (~6s total added across the three timeout blocks).
+sleep 6
 _PARENT_STRAG_L=$(pgrep -f "$PARENT_MARKER_L" 2>/dev/null || true)
 _GRAND_STRAG_L=$(pgrep -f "$GRAND_MARKER_L" 2>/dev/null || true)
 assert_eq "" "$_PARENT_STRAG_L" "lint: timeout: parent marker killed"
