@@ -77,6 +77,17 @@ case "$COUNT" in
 esac
 echo "$COUNT" > "$COUNT_FILE"
 
+# Tungsten-active marker: the PreCompact hook blocks compaction during IGNITE
+# while tungsten is mid-run, so it needs a freshness signal. agent-count.sh
+# fires reliably on every Agent/Task dispatch (more reliable than SubagentStart
+# in long-running parent sessions), making it the natural write site. The
+# matching cleanup lives in subagent-stop.sh keyed to agent_type==tungsten.
+AGENT_TYPE_LOWER=$(echo "${AGENT_TYPE:-}" | tr '[:upper:]' '[:lower:]')
+if [ "$AGENT_TYPE_LOWER" = "tungsten" ]; then
+    : > "${STATE_DIR}/tungsten-active-${SESSION_ID}" 2>/dev/null || true
+    chmod 600 "${STATE_DIR}/tungsten-active-${SESSION_ID}" 2>/dev/null || true
+fi
+
 if [ "${ALLOY_DEBUG:-0}" = "1" ]; then
     printf '[alloy] agent-count fired session=%s tool=%s type=%s count=%s\n' \
         "$SESSION_ID" "$TOOL_NAME" "${AGENT_TYPE:-unknown}" "$COUNT" >&2

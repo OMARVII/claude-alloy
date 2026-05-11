@@ -17,6 +17,24 @@ alloy_ensure_state_dir "$STATE_DIR" || exit 0
 LOG_FILE="${STATE_DIR}/agent-log.jsonl"
 TIMESTAMP=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
+# Per-platform schema (code.claude.com/docs/en/hooks): SubagentStop input
+# carries agent_id + agent_type. Read agent_type to clear the matching
+# tungsten-active marker so pre-compact.sh stops blocking compaction once
+# tungsten finishes.
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
+SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
+AGENT_TYPE=$(echo "$INPUT" | jq -r '
+    .agent_type
+    // .subagent_type
+    // .tool_input.subagent_type
+    // .tool_use.input.subagent_type
+    // empty
+' 2>/dev/null || echo "")
+AGENT_TYPE_LOWER=$(echo "${AGENT_TYPE:-}" | tr '[:upper:]' '[:lower:]')
+if [ "$AGENT_TYPE_LOWER" = "tungsten" ] && [ -n "$SESSION_ID" ]; then
+    rm -f "${STATE_DIR}/tungsten-active-${SESSION_ID}" 2>/dev/null || true
+fi
+
 LAST_MSG=$(echo "$INPUT" | jq -r '.last_assistant_message // ""' 2>/dev/null) || LAST_MSG=""
 MSG_LEN=${#LAST_MSG}
 
