@@ -2,13 +2,15 @@
 # Subagent Start Hook — Logs agent spawn events and tracks per-session state.
 # Runs as SubagentStart hook (per code.claude.com/docs/en/hooks).
 #
-# Schema (current Claude Code):
-#   session_id, transcript_path, cwd, hook_event_name, agent_type
+# Schema (current Claude Code, per https://code.claude.com/docs/en/hooks):
+#   session_id, agent_id, agent_type, transcript_path, cwd, hook_event_name
 #
 # Older/alternate payloads sometimes wrap the agent identifier differently
 # (`subagent_type`, or `tool_input.subagent_type` for Agent-tool dispatches).
-# We read `.agent_type` first, then fall back to those forms so the counter
-# never silently fails when Anthropic ships a schema variant.
+# We read `.agent_type` first, then fall back to those forms so the global
+# log never silently loses an agent type when Anthropic ships a schema
+# variant. The per-session counter is owned by hooks/agent-count.sh (see
+# note at bottom of this file).
 #
 # Exit 0 = always allow (SubagentStart has no decision control upstream).
 

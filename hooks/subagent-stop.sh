@@ -17,10 +17,11 @@ alloy_ensure_state_dir "$STATE_DIR" || exit 0
 LOG_FILE="${STATE_DIR}/agent-log.jsonl"
 TIMESTAMP=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
-# Per-platform schema (code.claude.com/docs/en/hooks): SubagentStop input
-# carries agent_id + agent_type. Read agent_type to clear the matching
-# tungsten-active marker so pre-compact.sh stops blocking compaction once
-# tungsten finishes.
+# SubagentStop schema (https://code.claude.com/docs/en/hooks): input carries
+# agent_id + agent_type at the top level. Read agent_type to clear the
+# matching tungsten-active marker so pre-compact.sh stops blocking
+# compaction once tungsten finishes. session_id is sanitized to the
+# [A-Za-z0-9_-] allowlist before any filesystem use (CWE-22 guard).
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
 SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
 AGENT_TYPE=$(echo "$INPUT" | jq -r '
