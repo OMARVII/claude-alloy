@@ -79,4 +79,46 @@ fi
 # hook protocol output (this hook emits none, so we don't pollute it).
 echo "[pre-compact] Forensic snapshot saved at ${BACKUP_DIR}" >&2
 
+# --- Block compaction while IGNITE+tungsten run is mid-flight -----------------
+# Auto-compaction in the middle of a tungsten run truncates the agent's working
+# context — the planner state, file paths it has touched, and the live todo set
+# get summarized away even though the agent is still actively reasoning about
+# them. Outside IGNITE that's an acceptable trade-off (the user can /resume).
+# Inside IGNITE the user has explicitly opted into a high-context regime; mid-
+# task compaction is far more damaging than the small delay of postponing it.
+#
+# Detection requires BOTH:
+#   1. IGNITE flag fresh (TTL 2h, matching ignite-stop-gate.sh default)
+#   2. tungsten-active marker fresh (TTL 30min — tungsten runs are bounded; a
+#      stale marker indicates a missed subagent-stop, not an active run)
+# Override either TTL via ALLOY_IGNITE_TTL / ALLOY_TUNGSTEN_TTL.
+IGNITE_TTL=${ALLOY_IGNITE_TTL:-7200}
+TUNGSTEN_TTL=${ALLOY_TUNGSTEN_TTL:-1800}
+
+is_fresh() {
+    # $1 = file path, $2 = ttl seconds. Echoes "true" / "false".
+    _f=$1; _ttl=$2
+    [ -f "$_f" ] || { printf 'false'; return; }
+    _now=$(date +%s 2>/dev/null || echo 0)
+    _mt=$(stat -c %Y "$_f" 2>/dev/null || stat -f %m "$_f" 2>/dev/null || echo 0)
+    case "$_mt" in ''|*[!0-9]*) _mt=0 ;; esac
+    _age=$(( _now - _mt ))
+    if [ "$_age" -ge 0 ] && [ "$_age" -le "$_ttl" ]; then
+        printf 'true'
+    else
+        printf 'false'
+    fi
+}
+
+# SESSION_ID is sanitized above (CWE-22 guard); only proceed if it's a real id.
+if [ "$SESSION_ID" != "unknown" ]; then
+    IGNITE_FRESH=$(is_fresh "${STATE_DIR}/ignite-active-${SESSION_ID}" "$IGNITE_TTL")
+    TUNGSTEN_FRESH=$(is_fresh "${STATE_DIR}/tungsten-active-${SESSION_ID}" "$TUNGSTEN_TTL")
+    if [ "$IGNITE_FRESH" = "true" ] && [ "$TUNGSTEN_FRESH" = "true" ]; then
+        jq -nc --arg reason "PreCompact deferred: IGNITE+tungsten mid-run. Compaction would truncate the active agent's working context." \
+            '{decision: "block", reason: $reason}'
+        exit 0
+    fi
+fi
+
 exit 0

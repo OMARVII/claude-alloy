@@ -70,4 +70,55 @@ assert_eq 1 "$UNKNOWN_MATCHES" "traversal: backup dir falls back to 'unknown' pr
 ESCAPED=$(find "${HOME}/.claude" -maxdepth 3 -name "*evil*" 2>/dev/null | wc -l | tr -d ' ')
 assert_eq 0 "$ESCAPED" "traversal: no path component named 'evil' anywhere under HOME/.claude"
 
+# ---- PreCompact block-decision during IGNITE + tungsten run ----------------
+# When IGNITE is active AND a tungsten subagent is mid-run, the hook must emit
+# {"decision":"block"} on stdout so Claude Code defers compaction. Outside
+# either of those conditions the hook stays advisory (no decision output).
+rm -rf "$STATE_DIR"/compact-backup-* 2>/dev/null
+
+# (a) no IGNITE → no block
+BLOCK_SESSION="pcblk-noignite"
+NO_BLOCK_INPUT=$(printf '{"session_id":"%s","transcript_path":"/dev/null"}' "$BLOCK_SESSION")
+OUT_NOIG=$(echo "$NO_BLOCK_INPUT" | bash "$HOOK" 2>/dev/null)
+# Hook must not emit a decision:block when IGNITE is not active.
+if echo "$OUT_NOIG" | grep -q '"decision"'; then _has_decision=1; else _has_decision=0; fi
+assert_eq 0 "$_has_decision" "no IGNITE: pre-compact emits no decision block"
+
+# (b) IGNITE active + no tungsten marker → no block
+BLOCK_SESSION="pcblk-noTungsten"
+: > "${STATE_DIR}/ignite-active-${BLOCK_SESSION}"
+NO_TUNG_INPUT=$(printf '{"session_id":"%s","transcript_path":"/dev/null"}' "$BLOCK_SESSION")
+OUT_NOTUNG=$(echo "$NO_TUNG_INPUT" | bash "$HOOK" 2>/dev/null)
+if echo "$OUT_NOTUNG" | grep -q '"decision"'; then _has_decision=1; else _has_decision=0; fi
+assert_eq 0 "$_has_decision" "IGNITE + no tungsten: pre-compact emits no decision block"
+
+# (c) IGNITE active + tungsten marker fresh → emits decision:block
+BLOCK_SESSION="pcblk-active"
+: > "${STATE_DIR}/ignite-active-${BLOCK_SESSION}"
+: > "${STATE_DIR}/tungsten-active-${BLOCK_SESSION}"
+BLOCK_INPUT=$(printf '{"session_id":"%s","transcript_path":"/dev/null"}' "$BLOCK_SESSION")
+OUT_BLOCK=$(echo "$BLOCK_INPUT" | bash "$HOOK" 2>/dev/null)
+BLOCK_DECISION=$(echo "$OUT_BLOCK" | jq -r '.decision // ""' 2>/dev/null)
+assert_eq "block" "$BLOCK_DECISION" "IGNITE + active tungsten: pre-compact emits decision:block"
+BLOCK_REASON=$(echo "$OUT_BLOCK" | jq -r '.reason // ""' 2>/dev/null)
+case "$BLOCK_REASON" in
+    *IGNITE*tungsten*) _reason_ok=1 ;;
+    *) _reason_ok=0 ;;
+esac
+assert_eq 1 "$_reason_ok" "block decision includes IGNITE+tungsten reason"
+
+# (d) tungsten marker stale (>30min by default) → no block
+BLOCK_SESSION="pcblk-stale"
+: > "${STATE_DIR}/ignite-active-${BLOCK_SESSION}"
+: > "${STATE_DIR}/tungsten-active-${BLOCK_SESSION}"
+# Backdate the tungsten marker by 1 hour.
+ONE_HOUR_AGO=$(( $(date +%s) - 3600 ))
+touch -t "$(date -r "$ONE_HOUR_AGO" '+%Y%m%d%H%M' 2>/dev/null || date -d "@$ONE_HOUR_AGO" '+%Y%m%d%H%M' 2>/dev/null)" \
+    "${STATE_DIR}/tungsten-active-${BLOCK_SESSION}" 2>/dev/null || \
+touch -d "@$ONE_HOUR_AGO" "${STATE_DIR}/tungsten-active-${BLOCK_SESSION}" 2>/dev/null
+STALE_INPUT=$(printf '{"session_id":"%s","transcript_path":"/dev/null"}' "$BLOCK_SESSION")
+OUT_STALE=$(echo "$STALE_INPUT" | bash "$HOOK" 2>/dev/null)
+if echo "$OUT_STALE" | grep -q '"decision"'; then _has_decision=1; else _has_decision=0; fi
+assert_eq 0 "$_has_decision" "stale tungsten marker (>30min) does NOT block"
+
 done_testing
