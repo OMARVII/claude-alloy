@@ -100,8 +100,15 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
     if [ -s "$EDIT_MARKER" ]; then
         CODE_EDITED=true
     else
+        # Only scan top-level parent-session tool_use blocks. The `..` deep-walk
+        # used previously would dive into Agent tool result blocks and surface
+        # nested subagent tool_use entries — those happened in a sandboxed
+        # subagent context, not the parent session, so they must not count.
+        # Restrict to assistant turns and only their direct .message.content
+        # tool_use blocks (no recursive walk into tool_result.content).
         EDIT_RECORDS=$(tail -500 "$TRANSCRIPT_PATH" 2>/dev/null | jq -r '
-            .. | objects
+            select(.type? == "assistant")
+            | (.message.content // [])[]?
             | select(.type? == "tool_use")
             | select(.name? == "Edit" or .name? == "Write" or .name? == "MultiEdit" or .name? == "NotebookEdit")
             | [.name, (.input.file_path // .input.path // "")]
