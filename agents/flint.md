@@ -2,6 +2,7 @@
 name: flint
 description: "Test engineer. Reviews test suites for coverage gaps, flaky patterns, poor isolation, missing test types, weak assertions, and maintainability problems. Read-only. Invoke after implementation to assess test quality, or before merging test-heavy PRs."
 model: sonnet
+isolation: worktree
 tools:
   - Read
   - Glob

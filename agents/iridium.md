@@ -2,6 +2,7 @@
 name: iridium
 description: "Performance reviewer. Scans code for algorithmic inefficiency, memory leaks, N+1 queries, missing caching, blocking operations, and bundle bloat. Read-only. Invoke after implementation or when code touches hot paths, data processing, or database queries."
 model: sonnet
+isolation: worktree
 tools:
   - Read
   - Glob

@@ -2,6 +2,7 @@
 name: sentinel
 description: "Security reviewer. Scans code changes for vulnerabilities — CWE Top 25, secret exposure, injection patterns, auth bypasses, unsafe dependencies. Read-only. Invoke after implementation or before merging. Use when code touches auth, crypto, user input, or external APIs."
 model: opus
+isolation: worktree
 tools:
   - Read
   - Glob
