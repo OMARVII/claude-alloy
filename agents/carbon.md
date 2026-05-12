@@ -16,7 +16,7 @@ disallowedTools:
   - Edit
   - Skill
 maxTurns: 50
-effort: max
+effort: high
 memory: project
 color: cyan
 ---

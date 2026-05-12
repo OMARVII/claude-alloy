@@ -11,7 +11,7 @@ tools:
   - WebFetch
   - WebSearch
 maxTurns: 20
-effort: high
+effort: medium
 memory: project
 background: true
 color: indigo
