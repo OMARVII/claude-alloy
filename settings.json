@@ -34,16 +34,5 @@
     "halt": "user-invocable-only"
   },
 
-  "_comment_mcpServers": "P1 (v1.6.11): alwaysLoad pins critical MCP schemas so deferred Tool Search does not strip them from forked subagents on first turn. MCPs are typically declared in ~/.mcp.json or .mcp.json at project root; this block documents alwaysLoad keys for users who configure MCPs through settings.json. Requires Claude Code v2.1.121+. See docs/mcp-config.md.",
-  "mcpServers": {
-    "context7": {
-      "alwaysLoad": true
-    },
-    "grep_app": {
-      "alwaysLoad": true
-    },
-    "websearch": {
-      "alwaysLoad": true
-    }
-  }
+  "_comment_mcpServers": "P1 (v1.6.11, corrected v1.7.0): MCP servers cannot be declared in settings.json — Claude Code silently ignores any mcpServers block placed here (only allowedMcpServers, deniedMcpServers, and enable/disable lists are honored). Configure servers + alwaysLoad in .mcp.json (project scope) or ~/.claude.json (user scope). See docs/mcp-config.md for the canonical pattern. Reference: anthropics/claude-code#24477. Requires Claude Code v2.1.121+ for alwaysLoad support."
 }

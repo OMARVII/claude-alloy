@@ -22,7 +22,9 @@ Other MCPs (e.g., playwright for `/dev-browser`, custom team MCPs) typically do 
 
 ## How to configure
 
-### Option A — Project `.mcp.json` (recommended for teams)
+> **Important:** `mcpServers` declared in `settings.json` is silently ignored by Claude Code. The schema only recognizes `allowedMcpServers`, `deniedMcpServers`, `enabledMcpjsonServers`, and friends — not server definitions themselves. Put `mcpServers` in `.mcp.json` (project) or `~/.claude.json` (user) instead. Reference: anthropics/claude-code#24477.
+
+### Project scope — `.mcp.json` (recommended for teams)
 
 `.mcp.json` at the project root is the canonical place for MCP server declarations. `alwaysLoad` lives alongside the existing `command`/`args`/`env` block:
 
@@ -51,19 +53,9 @@ Other MCPs (e.g., playwright for `/dev-browser`, custom team MCPs) typically do 
 }
 ```
 
-### Option B — `settings.json` (per-user override)
+### User scope — `~/.claude.json`
 
-claude-alloy's `settings.json` documents the keys for each pinned MCP under a top-level `mcpServers` block. This is purely declarative — Claude Code merges these flags onto the actual server definition resolved from `.mcp.json` or the user-scope MCP registry:
-
-```json
-{
-  "mcpServers": {
-    "context7": { "alwaysLoad": true },
-    "grep_app": { "alwaysLoad": true },
-    "websearch": { "alwaysLoad": true }
-  }
-}
-```
+For per-user overrides that should apply across every project, edit the `mcpServers` block in `~/.claude.json`. The shape matches `.mcp.json` exactly. Avoid hand-editing if possible — `claude mcp add` writes here for you and preserves the rest of the file.
 
 ## How to verify it took effect
 
