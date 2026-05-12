@@ -238,8 +238,19 @@ Type **`ig`** (or `/ignite`) for maximum effort: 6+ agents fired in parallel, to
 | **Plugin** | `claude plugin add claude-alloy` | Marketplace users (metadata included; full hook install still recommended) |
 | **Per-project** | `bash install.sh --project .` | Teams — committed to version control |
 | **Global command** | `bash setup-global.sh` then `/alloy-init` | One command per project |
+| **Ephemeral** | `claude --plugin-url <release-zip-url>` | Try a release for one session — nothing written to disk |
 
 `alloy` merges with your existing Claude settings. Your custom permissions, model preferences, and plugins are preserved. `unalloy` restores them exactly.
+
+### Try it ephemerally (no install)
+
+Run `claude` with the `--plugin-url` flag to load claude-alloy for a single session without writing anything to disk:
+
+```bash
+claude --plugin-url https://github.com/OMARVII/claude-alloy/releases/download/v1.7.0/claude-alloy.zip
+```
+
+The plugin is unpacked, used for the session, and discarded on exit. Useful for testing a release candidate or trying alloy on a one-off task without committing to a full install. The `--plugin-url` flag is documented at https://code.claude.com/docs/en/cli-reference.
 
 ### Uninstall
 
