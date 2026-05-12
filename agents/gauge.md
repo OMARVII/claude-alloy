@@ -2,6 +2,7 @@
 name: gauge
 description: "Practical plan and code reviewer. Verifies executability and catches BLOCKING issues only. Approval bias — when in doubt, approve. Not a perfectionist. Use to validate plans or review significant code changes."
 model: sonnet
+isolation: worktree
 tools:
   - Read
   - Glob

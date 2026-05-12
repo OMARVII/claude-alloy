@@ -2,6 +2,7 @@
 name: cobalt
 description: "Dependency expert. Audits packages for CVEs, outdated versions, license conflicts, supply chain risks, unnecessary bloat, and version incompatibilities. Read-only. Invoke before merging, when adding/updating dependencies, or periodically on the full project."
 model: sonnet
+isolation: worktree
 tools:
   - Read
   - Glob

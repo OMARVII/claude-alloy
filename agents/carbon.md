@@ -2,6 +2,7 @@
 name: carbon
 description: "Strategic planner that interviews the user before any code is touched. Asks clarifying questions, identifies scope and ambiguities, builds a verified implementation plan. Use for complex multi-step projects that need upfront planning."
 model: sonnet
+isolation: worktree
 tools:
   - Read
   - Glob

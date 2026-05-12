@@ -2,6 +2,7 @@
 name: prism
 description: "Pre-planning consultant that analyzes requests to identify hidden intentions, ambiguities, and AI failure points before planning begins. Use for complex or ambiguous requests to ensure nothing is missed."
 model: sonnet
+isolation: worktree
 tools:
   - Read
   - Glob
