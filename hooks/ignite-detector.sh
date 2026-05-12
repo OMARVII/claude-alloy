@@ -141,12 +141,17 @@ ADDITIONAL_CONTEXT='[IGNITE PROTOCOL] Maximum-effort mode detected. Requirements
 # and the marker doubles as a debugging signal).
 TITLE_MARKER="${STATE_DIR}/ignite-titled-${SESSION_ID}"
 if [ ! -f "$TITLE_MARKER" ]; then
-    # Build a 40-char title from the prompt: collapse whitespace, drop control
-    # chars, then take the first 40 characters. tr handles bytes safely; the
-    # cut on bytes is acceptable here because session titles are short hints,
-    # not data — a multibyte split would at worst render one glyph oddly.
+    # Build a 40-char title from the prompt: drop ALL C0 control bytes
+    # (0x00-0x1F covers NUL through US, including TAB/LF/CR), collapse runs
+    # of spaces, then take the first 40 characters. The previous form only
+    # replaced \n\r\t with spaces and let bytes like 0x01-0x08, 0x0B, 0x0C,
+    # 0x0E-0x1F pass through, which jq then escapes as \uXXXX in the JSON
+    # output — not exploitable but ugly in the sidebar. Title field has no
+    # need for preserved whitespace structure, so deleting (not replacing)
+    # is fine here. cut on bytes is acceptable: session titles are short
+    # hints, and a multibyte split would at worst render one glyph oddly.
     TITLE_BODY=$(printf '%s' "$PROMPT_TEXT" \
-        | tr '\n\r\t' '   ' \
+        | tr -d '\000-\037' \
         | tr -s ' ' \
         | cut -c1-40)
     SESSION_TITLE="🔥 IGNITE — ${TITLE_BODY}"
