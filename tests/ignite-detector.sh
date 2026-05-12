@@ -188,4 +188,21 @@ else
 fi
 assert_eq 0 "$NOIG_HAS_TITLE" "sessionTitle: NOT emitted on non-IGNITE prompts"
 
+# ---- sessionTitle strips ALL C0 control bytes ------------------------------
+# Previously the title pass replaced only \n\r\t with spaces, letting bytes
+# like 0x01-0x08, 0x0B, 0x0C, 0x0E-0x1F pass through where jq escapes them as
+# \uXXXX in the JSON output. Not exploitable but ugly in the sidebar. The
+# tr -d '\000-\037' filter deletes ALL C0 control bytes; assert the emitted
+# title contains no byte in that range.
+CTL_SID="ctl-test-$$"
+rm -f "${STATE_DIR}/ignite-titled-${CTL_SID}" "${STATE_DIR}/ignite-active-${CTL_SID}" 2>/dev/null
+CTL_PROMPT=$(printf 'ignite \001\002\003 dangerous test')
+CTL_OUT=$(jq -nc --arg p "$CTL_PROMPT" --arg s "$CTL_SID" \
+    '{prompt: $p, session_id: $s}' \
+    | bash "$HOOK" 2>/dev/null)
+CTL_TITLE=$(printf '%s' "$CTL_OUT" | jq -r '.hookSpecificOutput.sessionTitle // empty' 2>/dev/null)
+# Count any bytes in the 0x01-0x1F control range that survived sanitization.
+HAS_CTL=$(printf '%s' "$CTL_TITLE" | LC_ALL=C tr -cd '\001-\037' | wc -c | tr -d ' ')
+assert_eq 0 "$HAS_CTL" "sessionTitle: strips C0 control bytes from the prompt"
+
 done_testing
