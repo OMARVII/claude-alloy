@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
-# IGNITE Detector — Detects "ig"/"ignite" in user prompt and sets flag
+# IGNITE Detector — Detects max-effort or "ig"/"ignite" intent and sets flag
 # Runs as UserPromptSubmit hook
 # Exit 0 = always allow
+#
+# Activation triggers (either is sufficient):
+#   1. The literal "ig" or "ignite" keyword as user intent (not a quoted /
+#      code-fenced / descriptive reference) in the prompt body.
+#   2. Session effort level == "max" — sourced from $CLAUDE_EFFORT env or the
+#      `.effort.level` JSON field (Claude Code v2.1.133+). Max-effort sessions
+#      inherit IGNITE protocol enforcement automatically.
 
 set -u
 
@@ -51,6 +58,23 @@ fi
 #      mode/test/testing/verify/verification), treat it as a reference, not
 #      an invocation.
 IGNITE_DETECTED=false
+
+# Effort-tier auto-IGNITE: Claude Code v2.1.133+ exposes the session effort
+# level to hooks via the $CLAUDE_EFFORT env var and (for tool-use events) the
+# `effort.level` field in JSON stdin. UserPromptSubmit isn't formally listed as
+# carrying the JSON field, so prefer the env var and fall back to JSON for
+# defensive compatibility. When the user opts into the top tier (--effort max),
+# inherit IGNITE protocol enforcement automatically — max-effort sessions are
+# by definition the ones that warrant 6+ background agents and mandatory
+# review-agent fan-out after code changes. Reference:
+# https://code.claude.com/docs/en/hooks (common hook input fields, `effort`).
+EFFORT_LEVEL="${CLAUDE_EFFORT:-}"
+if [ -z "$EFFORT_LEVEL" ]; then
+    EFFORT_LEVEL=$(echo "$INPUT" | jq -r '.effort.level // empty' 2>/dev/null || echo "")
+fi
+if [ "$EFFORT_LEVEL" = "max" ]; then
+    IGNITE_DETECTED=true
+fi
 
 # Stage 1 — strip code/quoted regions. perl handles multi-line code fences;
 # falls back to passthrough if perl is missing (rare on macOS/Linux).
