@@ -14,6 +14,7 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 START_HOOK="${REPO_ROOT}/hooks/subagent-start.sh"
 STOP_HOOK="${REPO_ROOT}/hooks/subagent-stop.sh"
+COUNT_HOOK="${REPO_ROOT}/hooks/agent-count.sh"
 
 if ! command -v jq >/dev/null 2>&1; then
     printf 'SKIP: jq not installed — subagent hooks require jq for input parse\n'
@@ -59,7 +60,25 @@ INPUT=$(jq -nc \
     '{session_id: $sid, subagent_type: $atype}')
 echo "$INPUT" | bash "$START_HOOK" >/dev/null 2>&1
 LOG_LAST=$(tail -1 "${STATE_DIR}/agent-log.jsonl" 2>/dev/null | jq -r '.agent.subagent_type // empty' 2>/dev/null)
-assert_eq "graphene" "$LOG_LAST" "subagent-start: legacy subagent_type fallback captured"
+assert_eq "graphene" "$LOG_LAST" "subagent-start: legacy subagent_type fallback captured in global log"
+
+# ---- agent-count.sh: legacy subagent_type resolves to operative type -------
+# subagent-start.sh's global log assertion above proves the raw payload was
+# echoed to agent-log.jsonl, NOT that the hook resolved the operative agent
+# type for the load-bearing ledger. The IGNITE stop-gate's "N agents spawned"
+# read pulls from `agents-spawned-${SESSION_ID}` (written by agent-count.sh
+# on every PostToolUse Agent|Task) — that is the file that must resolve the
+# legacy fallback. Send the same legacy payload shape (subagent_type at top
+# level, NOT under tool_input) through agent-count.sh and assert the ledger
+# records the operative type, not "unknown".
+SESSION_ID="agentcount-legacy"
+LEGACY_INPUT=$(jq -nc \
+    --arg sid "$SESSION_ID" \
+    --arg atype "graphene" \
+    '{tool_name: "Agent", session_id: $sid, subagent_type: $atype}')
+echo "$LEGACY_INPUT" | bash "$COUNT_HOOK" >/dev/null 2>&1
+SPAWNED=$(tail -1 "${STATE_DIR}/agents-spawned-${SESSION_ID}" 2>/dev/null)
+assert_eq "graphene" "$SPAWNED" "agent-count: legacy subagent_type fallback resolves to operative type in ledger"
 
 # ---- SubagentStop: documented schema reads agent_type ----------------------
 # subagent-stop.sh must consume agent_type from the documented top-level
