@@ -189,7 +189,7 @@ bash setup-global.sh
 | Command | What it does |
 |---|---|
 | **`/ignite`** (or just **`ig`**) | Maximum effort mode. 6+ agents fire in parallel, todos tracked obsessively, manual QA before completion. The signature move. |
-| `/loop` | Autonomous loop — agent works until task is 100% complete |
+| `/loop` | Autonomous loop — agent works until task is 100% complete (see [commands/loop.md](commands/loop.md) for `/loop` vs Claude Code's native `/goal`) |
 | `/halt` | Stop the loop |
 | `/alloy` | Show all agents, skills, commands, hooks |
 | `/unalloy` | Remove claude-alloy from current project |
