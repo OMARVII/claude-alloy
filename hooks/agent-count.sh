@@ -19,16 +19,37 @@ INPUT=$(cat)
 
 command -v jq &>/dev/null || exit 0
 
-TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || echo "")
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
-SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
-
-# agent_id is read and sanitized identically to session_id as CWE-22 defense-
-# in-depth. It is not currently used in a filesystem path on this hook, but
-# pre-sanitizing it sets the precedent so a future per-agent file (per-agent
-# ledger, dispatch trace) cannot be exploited as a traversal vector.
-AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // .tool_input.agent_id // ""' 2>/dev/null || echo "")
-AGENT_ID=$(echo "$AGENT_ID" | tr -cd 'a-zA-Z0-9_-')
+# Single jq pass — earlier revisions forked jq four separate times to read
+# tool_name, session_id, agent_id, and agent_type. Each fork is ~2-5ms on
+# macOS; this hook fires PostToolUse on every Agent/Task dispatch, so the
+# total adds up across an IGNITE run. Emit one line per field, newline-
+# delimited (NOT tab-separated — IFS=$'\t' read collapses empty trailing
+# fields and agent_type is the most likely to be empty). The agent_type
+# fallback chain (tool_input.subagent_type → tool_input.agent_type →
+# tool_input.type → tool_use.input.subagent_type → subagent_type) is
+# preserved verbatim inside the merged filter so Agent-tool dispatches
+# wrapping the input under a tool_use envelope still resolve.
+#
+# agent_id is read and sanitized identically to session_id as CWE-22
+# defense-in-depth. It is not currently used in a filesystem path on this
+# hook, but pre-sanitizing it sets the precedent so a future per-agent
+# file (per-agent ledger, dispatch trace) cannot be exploited as a
+# traversal vector.
+JQ_OUT=$(echo "$INPUT" | jq -r '
+    [
+      (.tool_name // ""),
+      (.session_id // "default"),
+      (.agent_id // .tool_input.agent_id // ""),
+      (.tool_input.subagent_type // .tool_input.agent_type // .tool_input.type // .tool_use.input.subagent_type // .subagent_type // "")
+    ] | .[]
+' 2>/dev/null) || JQ_OUT=""
+TOOL_NAME=$(printf '%s\n' "$JQ_OUT" | sed -n '1p')
+SESSION_ID=$(printf '%s\n' "$JQ_OUT" | sed -n '2p')
+AGENT_ID=$(printf '%s\n' "$JQ_OUT" | sed -n '3p')
+AGENT_TYPE=$(printf '%s\n' "$JQ_OUT" | sed -n '4p')
+[ -n "$SESSION_ID" ] || SESSION_ID="default"
+SESSION_ID=$(printf '%s' "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
+AGENT_ID=$(printf '%s' "$AGENT_ID" | tr -cd 'a-zA-Z0-9_-')
 
 # Only count Agent/Task dispatches; the matcher should already restrict this
 # but defense-in-depth in case the hook is invoked for a wider matcher.
@@ -37,19 +58,6 @@ case "$TOOL_LOWER" in
     agent|task) ;;
     *) exit 0 ;;
 esac
-
-# Extract the subagent_type the parent asked for. Multiple fallbacks because
-# the field path varies across Claude Code versions and tool variants. The
-# tool_use.input nesting handles Agent-tool dispatches that wrap the input
-# under a tool_use envelope (matches the pattern subagent-start.sh handles).
-AGENT_TYPE=$(echo "$INPUT" | jq -r '
-    .tool_input.subagent_type
-    // .tool_input.agent_type
-    // .tool_input.type
-    // .tool_use.input.subagent_type
-    // .subagent_type
-    // empty
-' 2>/dev/null || echo "")
 
 # shellcheck source=hooks/_state-dir.sh
 . "$(dirname "$0")/_state-dir.sh"
