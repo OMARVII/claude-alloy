@@ -157,4 +157,35 @@ jq -nc --arg p "ig keep going" --arg s "$RESET_SID" \
 PRESERVED_COUNT=$(cat "${STATE_DIR}/agent-count-${RESET_SID}" 2>/dev/null || echo "missing")
 assert_eq "5" "$PRESERVED_COUNT" "in-phase re-activation does NOT reset counter (flag still fresh)"
 
+# ---- sessionTitle on first IGNITE activation -------------------------------
+# Per https://code.claude.com/docs/en/hooks, UserPromptSubmit hooks can set
+# hookSpecificOutput.sessionTitle. The detector emits the title ONLY on the
+# first IGNITE activation per session (gated by a per-session marker file) so
+# follow-up IGNITE prompts in the same session don't keep retitling.
+
+TITLE_SID="title-test-$$"
+rm -f "${STATE_DIR}/ignite-titled-${TITLE_SID}" "${STATE_DIR}/ignite-active-${TITLE_SID}" 2>/dev/null
+
+FIRST_OUT=$(jq -nc --arg p "ig kick off the v1.7.0 release" --arg s "$TITLE_SID" \
+    '{prompt: $p, session_id: $s}' \
+    | bash "$HOOK" 2>/dev/null)
+HAS_TITLE=$(printf '%s' "$FIRST_OUT" | jq -r '.hookSpecificOutput.sessionTitle // empty' 2>/dev/null)
+if [ -n "$HAS_TITLE" ]; then PASS=1; else PASS=0; fi
+assert_eq 1 "$PASS" "sessionTitle: emitted on first IGNITE activation in a session"
+
+# Non-IGNITE prompt: must NOT emit sessionTitle. The detector exits 0 early
+# on non-IGNITE input and writes nothing to stdout, so the captured output is
+# empty. We assert on the absence of any "sessionTitle" substring rather than
+# trying to jq-parse empty input.
+NOIG_SID="noig-test-$$"
+NOIG_OUT=$(jq -nc --arg p "please summarize the changelog" --arg s "$NOIG_SID" \
+    '{prompt: $p, session_id: $s}' \
+    | bash "$HOOK" 2>/dev/null)
+if printf '%s' "$NOIG_OUT" | grep -q 'sessionTitle'; then
+    NOIG_HAS_TITLE=1
+else
+    NOIG_HAS_TITLE=0
+fi
+assert_eq 0 "$NOIG_HAS_TITLE" "sessionTitle: NOT emitted on non-IGNITE prompts"
+
 done_testing

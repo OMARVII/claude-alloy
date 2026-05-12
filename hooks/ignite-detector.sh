@@ -131,8 +131,34 @@ if [ "$RESET_COUNTERS" = "true" ]; then
 fi
 date -u '+%Y-%m-%dT%H:%M:%SZ' > "$IGNITE_FLAG"
 
-# Output context injection for the LLM
-jq -nc --arg ctx '[IGNITE PROTOCOL] Maximum-effort mode detected. Requirements: (1) 6+ background agents including graphene, (2) tungsten for all implementation, (3) sentinel/iridium/flint after code changes, (4) detailed todos via TaskWrite, (5) manual QA before completion.' \
-    '{hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $ctx}}'
+ADDITIONAL_CONTEXT='[IGNITE PROTOCOL] Maximum-effort mode detected. Requirements: (1) 6+ background agents including graphene, (2) tungsten for all implementation, (3) sentinel/iridium/flint after code changes, (4) detailed todos via TaskWrite, (5) manual QA before completion.'
+
+# Per https://code.claude.com/docs/en/hooks, UserPromptSubmit hooks may set
+# `hookSpecificOutput.sessionTitle` to rename the session in the Claude Code
+# sidebar. We set the title only on the FIRST IGNITE activation per session —
+# a per-session marker prevents repeated re-titling on every follow-up IGNITE
+# prompt (Claude Code does dedupe, but emitting it once keeps the JSON lean
+# and the marker doubles as a debugging signal).
+TITLE_MARKER="${STATE_DIR}/ignite-titled-${SESSION_ID}"
+if [ ! -f "$TITLE_MARKER" ]; then
+    # Build a 40-char title from the prompt: collapse whitespace, drop control
+    # chars, then take the first 40 characters. tr handles bytes safely; the
+    # cut on bytes is acceptable here because session titles are short hints,
+    # not data — a multibyte split would at worst render one glyph oddly.
+    TITLE_BODY=$(printf '%s' "$PROMPT_TEXT" \
+        | tr '\n\r\t' '   ' \
+        | tr -s ' ' \
+        | cut -c1-40)
+    SESSION_TITLE="🔥 IGNITE — ${TITLE_BODY}"
+    : > "$TITLE_MARKER"
+    jq -nc \
+        --arg ctx "$ADDITIONAL_CONTEXT" \
+        --arg title "$SESSION_TITLE" \
+        '{hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $ctx, sessionTitle: $title}}'
+else
+    jq -nc \
+        --arg ctx "$ADDITIONAL_CONTEXT" \
+        '{hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $ctx}}'
+fi
 
 exit 0
