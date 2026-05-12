@@ -263,74 +263,74 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
     "PreToolUse": [
       {
         "matcher": "Write",
-        "hooks": [{"type":"command","command":($hd + "/write-guard.sh"),"timeout":5,"statusMessage":"Checking file safety..."}]
+        "hooks": [{"type":"command","command":($hd + "/write-guard.sh"),"args":[],"timeout":5,"statusMessage":"Checking file safety..."}]
       },
       {
         "matcher": "Write|Edit",
-        "hooks": [{"type":"command","command":($hd + "/branch-guard.sh"),"timeout":5,"statusMessage":"Checking branch protection..."}]
+        "hooks": [{"type":"command","command":($hd + "/branch-guard.sh"),"args":[],"timeout":5,"statusMessage":"Checking branch protection..."}]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Edit|Write|MultiEdit|NotebookEdit",
-        "hooks": [{"type":"command","command":($hd + "/edit-ledger.sh"),"timeout":3,"statusMessage":"Recording edit state..."}]
+        "hooks": [{"type":"command","command":($hd + "/edit-ledger.sh"),"args":[],"timeout":3,"statusMessage":"Recording edit state..."}]
       },
       {
         "matcher": "Write|Edit",
         "hooks": [
-          {"type":"command","command":($hd + "/comment-checker.sh"),"timeout":10,"statusMessage":"Checking code quality..."},
-          {"type":"command","command":($hd + "/typecheck.sh"),"timeout":60,"statusMessage":"Running type check..."},
-          {"type":"command","command":($hd + "/lint.sh"),"timeout":30,"statusMessage":"Running linter..."},
-          {"type":"command","command":($hd + "/auto-install.sh"),"timeout":60,"statusMessage":"Checking dependencies..."}
+          {"type":"command","command":($hd + "/comment-checker.sh"),"args":[],"timeout":10,"statusMessage":"Checking code quality..."},
+          {"type":"command","command":($hd + "/typecheck.sh"),"args":[],"timeout":60,"statusMessage":"Running type check..."},
+          {"type":"command","command":($hd + "/lint.sh"),"args":[],"timeout":30,"statusMessage":"Running linter..."},
+          {"type":"command","command":($hd + "/auto-install.sh"),"args":[],"timeout":60,"statusMessage":"Checking dependencies..."}
         ]
       },
       {
         "matcher": "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*",
-        "hooks": [{"type":"command","command":($hd + "/agent-reminder.sh"),"timeout":5,"statusMessage":"Checking delegation patterns..."}]
+        "hooks": [{"type":"command","command":($hd + "/agent-reminder.sh"),"args":[],"timeout":5,"statusMessage":"Checking delegation patterns..."}]
       },
       {
         "matcher": "Edit|Write|Bash|Read|Grep|Glob",
-        "hooks": [{"type":"command","command":($hd + "/skill-reminder.sh"),"timeout":5,"statusMessage":"Checking skill usage..."}]
+        "hooks": [{"type":"command","command":($hd + "/skill-reminder.sh"),"args":[],"timeout":5,"statusMessage":"Checking skill usage..."}]
       },
       {
         "matcher": "Agent|Task",
-        "hooks": [{"type":"command","command":($hd + "/agent-count.sh"),"timeout":3,"statusMessage":"Counting agent dispatch..."}]
+        "hooks": [{"type":"command","command":($hd + "/agent-count.sh"),"args":[],"timeout":3,"statusMessage":"Counting agent dispatch..."}]
       },
       {
         "matcher": ".*",
-        "hooks": [{"type":"command","command":($hd + "/context-pressure.sh"),"timeout":3,"async":true}]
+        "hooks": [{"type":"command","command":($hd + "/context-pressure.sh"),"args":[],"timeout":3,"async":true}]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          {"type":"command","command":($hd + "/ignite-stop-gate.sh"),"timeout":5,"statusMessage":"Checking IGNITE compliance..."},
-          {"type":"command","command":($hd + "/todo-enforcer.sh"),"timeout":5,"statusMessage":"Checking todos..."},
-          {"type":"command","command":($hd + "/loop-stop.sh"),"timeout":5,"statusMessage":"Checking loop status..."},
-          {"type":"command","command":($hd + "/session-notify.sh"),"timeout":5,"async":true,"statusMessage":"Session complete!"}
+          {"type":"command","command":($hd + "/ignite-stop-gate.sh"),"args":[],"timeout":5,"statusMessage":"Checking IGNITE compliance..."},
+          {"type":"command","command":($hd + "/todo-enforcer.sh"),"args":[],"timeout":5,"statusMessage":"Checking todos..."},
+          {"type":"command","command":($hd + "/loop-stop.sh"),"args":[],"timeout":5,"statusMessage":"Checking loop status..."},
+          {"type":"command","command":($hd + "/session-notify.sh"),"args":[],"timeout":5,"async":true,"statusMessage":"Session complete!"}
         ]
       }
     ],
     "PreCompact": [
-      {"hooks": [{"type":"command","command":($hd + "/pre-compact.sh"),"timeout":10,"statusMessage":"Saving context before compaction..."}]}
+      {"hooks": [{"type":"command","command":($hd + "/pre-compact.sh"),"args":[],"timeout":10,"statusMessage":"Saving context before compaction..."}]}
     ],
     "SubagentStart": [
-      {"hooks": [{"type":"command","command":($hd + "/subagent-start.sh"),"timeout":5,"statusMessage":"Tracking agent activity..."}]}
+      {"hooks": [{"type":"command","command":($hd + "/subagent-start.sh"),"args":[],"timeout":5,"statusMessage":"Tracking agent activity..."}]}
     ],
     "SubagentStop": [
-      {"hooks": [{"type":"command","command":($hd + "/subagent-stop.sh"),"timeout":5,"statusMessage":"Verifying agent deliverables..."}]}
+      {"hooks": [{"type":"command","command":($hd + "/subagent-stop.sh"),"args":[],"timeout":5,"statusMessage":"Verifying agent deliverables..."}]}
     ],
     "StopFailure": [
-      {"hooks": [{"type":"command","command":($hd + "/rate-limit-resume.sh"),"timeout":5,"statusMessage":"Checking rate limit status..."}]}
+      {"hooks": [{"type":"command","command":($hd + "/rate-limit-resume.sh"),"args":[],"timeout":5,"statusMessage":"Checking rate limit status..."}]}
     ],
     "SessionStart": [
-      {"hooks": [{"type":"command","command":($hd + "/session-start.sh"),"timeout":5,"statusMessage":"Loading project wiki..."}]}
+      {"hooks": [{"type":"command","command":($hd + "/session-start.sh"),"args":[],"timeout":5,"statusMessage":"Loading project wiki..."}]}
     ],
     "SessionEnd": [
-      {"hooks": [{"type":"command","command":($hd + "/session-end.sh"),"timeout":5,"async":true,"statusMessage":"Checking session productivity..."}]}
+      {"hooks": [{"type":"command","command":($hd + "/session-end.sh"),"args":[],"timeout":5,"async":true,"statusMessage":"Checking session productivity..."}]}
     ],
     "UserPromptSubmit": [
-      {"hooks": [{"type":"command","command":($hd + "/ignite-detector.sh"),"timeout":5,"statusMessage":"Checking ignite mode..."}]}
+      {"hooks": [{"type":"command","command":($hd + "/ignite-detector.sh"),"args":[],"timeout":5,"statusMessage":"Checking ignite mode..."}]}
     ]
   }
 }')
