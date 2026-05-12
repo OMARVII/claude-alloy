@@ -157,6 +157,41 @@ jq -nc --arg p "ig keep going" --arg s "$RESET_SID" \
 PRESERVED_COUNT=$(cat "${STATE_DIR}/agent-count-${RESET_SID}" 2>/dev/null || echo "missing")
 assert_eq "5" "$PRESERVED_COUNT" "in-phase re-activation does NOT reset counter (flag still fresh)"
 
+# ---- Effort-tier auto-IGNITE (--effort max sessions) -----------------------
+# Per https://code.claude.com/docs/en/hooks (v2.1.133+), hooks receive the
+# session effort level via $CLAUDE_EFFORT env (and .effort.level JSON for
+# tool-use events). The detector should trip IGNITE on max-effort sessions
+# even when the prompt does NOT contain the "ig"/"ignite" keyword — top-tier
+# effort by definition warrants 6+ agents and post-implementation review fan
+# -out.
+
+call_hook_with_effort() {
+    _prompt=$1
+    _sid=$2
+    _effort=$3
+    rm -f "${STATE_DIR}/ignite-active-${_sid}" 2>/dev/null
+    jq -nc --arg p "$_prompt" --arg s "$_sid" --arg e "$_effort" \
+        '{prompt: $p, session_id: $s, effort: {level: $e}}' \
+        | CLAUDE_EFFORT="$_effort" bash "$HOOK" >/dev/null 2>&1
+    [ -f "${STATE_DIR}/ignite-active-${_sid}" ]
+}
+
+# Plain prompt that would NORMALLY not trip detection (no keyword, no quoted
+# context). With effort.level=max it should activate IGNITE.
+call_hook_with_effort "please refactor the auth middleware for clarity" "effort-1" "max" \
+    && PASS=1 || PASS=0
+assert_eq 1 "$PASS" "effort: 'max' tier activates IGNITE on non-keyword prompt"
+
+# Same prompt at effort=high must NOT activate.
+call_hook_with_effort "please refactor the auth middleware for clarity" "effort-2" "high" \
+    && PASS=1 || PASS=0
+assert_eq 0 "$PASS" "effort: 'high' tier does NOT auto-activate IGNITE"
+
+# Same prompt at effort=medium must NOT activate.
+call_hook_with_effort "please refactor the auth middleware for clarity" "effort-3" "medium" \
+    && PASS=1 || PASS=0
+assert_eq 0 "$PASS" "effort: 'medium' tier does NOT auto-activate IGNITE"
+
 # ---- sessionTitle on first IGNITE activation -------------------------------
 # Per https://code.claude.com/docs/en/hooks, UserPromptSubmit hooks can set
 # hookSpecificOutput.sessionTitle. The detector emits the title ONLY on the
