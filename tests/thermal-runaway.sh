@@ -235,7 +235,8 @@ assert_eq 1 "$_in_bounds" "lint: timeout elapsed in [18,40]s (measured ${_ELAPSE
 # entries from /proc-style scans. Observed pattern: 46/47 once, then 47/47
 # without a code change (steel session memory 2026-05-08). Bumping the
 # reap window to 6s closes the race without slowing the green path
-# meaningfully (~6s total added across the three timeout blocks).
+# meaningfully (~6s total added across this and the two analogous timeout
+# blocks below — typecheck (~line 306) and auto-install (~line 375)).
 sleep 6
 _PARENT_STRAG_L=$(pgrep -f "$PARENT_MARKER_L" 2>/dev/null || true)
 _GRAND_STRAG_L=$(pgrep -f "$GRAND_MARKER_L" 2>/dev/null || true)
@@ -303,7 +304,8 @@ assert_exit 0 "$_rc_to_t" "typecheck: timeout path still exits 0"
 # MAX_SEC=25 for typecheck; allow [23, 45].
 [ "$_ELAPSED_T" -ge 23 ] && [ "$_ELAPSED_T" -le 45 ] && _in_bounds=1 || _in_bounds=0
 assert_eq 1 "$_in_bounds" "typecheck: timeout elapsed in [23,45]s (measured ${_ELAPSED_T}s)"
-sleep 4
+# Reap-window guard: see lint-block comment near line 235 for rationale.
+sleep 6
 _PARENT_STRAG_T=$(pgrep -f "$PARENT_MARKER_T" 2>/dev/null || true)
 _GRAND_STRAG_T=$(pgrep -f "$GRAND_MARKER_T" 2>/dev/null || true)
 assert_eq "" "$_PARENT_STRAG_T" "typecheck: timeout: parent marker killed"
@@ -372,7 +374,8 @@ assert_exit 0 "$_rc_to_i" "auto-install: timeout path still exits 0"
 # MAX_SEC=45 for auto-install; allow [43, 65].
 [ "$_ELAPSED_I" -ge 43 ] && [ "$_ELAPSED_I" -le 65 ] && _in_bounds=1 || _in_bounds=0
 assert_eq 1 "$_in_bounds" "auto-install: timeout elapsed in [43,65]s (measured ${_ELAPSED_I}s)"
-sleep 4
+# Reap-window guard: see lint-block comment near line 235 for rationale.
+sleep 6
 _PARENT_STRAG_I=$(pgrep -f "$PARENT_MARKER_I" 2>/dev/null || true)
 _GRAND_STRAG_I=$(pgrep -f "$GRAND_MARKER_I" 2>/dev/null || true)
 assert_eq "" "$_PARENT_STRAG_I" "auto-install: timeout: parent marker killed"

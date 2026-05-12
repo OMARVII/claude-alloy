@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 ### Fixed
+- **`tests/thermal-runaway.sh` reap-window guard now covers all three timeout blocks.** The initial pgrep-flush race fix (commit `f957bd9`) bumped `sleep 4 → sleep 6` in the lint block only, even though the commit message claimed coverage of all three. The typecheck and auto-install blocks retained the 4-second window and could still flake with `46/47 → 47/47` retry pattern. Extended the guard to both remaining blocks and updated the lint-block rationale comment to point at the analogous sites. Verified: 47/47 across three back-to-back local runs.
 
 ---
 
