@@ -36,17 +36,25 @@ TIMESTAMP=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 # CWE-22 defense-in-depth: it is not currently used in a filesystem path here,
 # but any future use (per-agent state files, audit dirs) inherits a safe shape
 # by default rather than relying on the next maintainer to add the guard.
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
-SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
-AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // ""' 2>/dev/null || echo "")
-AGENT_ID=$(echo "$AGENT_ID" | tr -cd 'a-zA-Z0-9_-')
-AGENT_TYPE=$(echo "$INPUT" | jq -r '
-    .agent_type
-    // .subagent_type
-    // .tool_input.subagent_type
-    // .tool_use.input.subagent_type
-    // empty
-' 2>/dev/null || echo "")
+#
+# Single jq pass — earlier revisions forked jq three separate times to read
+# session_id, agent_id, and agent_type; on a hot path that fires for every
+# SubagentStart, three forks adds ~6-15ms per event. Emit one line per field
+# (newline-delimited, NOT tab-separated, mirroring subagent-stop.sh — keeps
+# the split robust against empty fields that IFS=$'\t' read would collapse).
+JQ_OUT=$(echo "$INPUT" | jq -r '
+    [
+      (.session_id // "default"),
+      (.agent_id // ""),
+      (.agent_type // .subagent_type // .tool_input.subagent_type // .tool_use.input.subagent_type // "")
+    ] | .[]
+' 2>/dev/null) || JQ_OUT=""
+SESSION_ID=$(printf '%s\n' "$JQ_OUT" | sed -n '1p')
+AGENT_ID=$(printf '%s\n' "$JQ_OUT" | sed -n '2p')
+AGENT_TYPE=$(printf '%s\n' "$JQ_OUT" | sed -n '3p')
+[ -n "$SESSION_ID" ] || SESSION_ID="default"
+SESSION_ID=$(printf '%s' "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
+AGENT_ID=$(printf '%s' "$AGENT_ID" | tr -cd 'a-zA-Z0-9_-')
 
 # Optional debug trace — gated to keep production output silent. Surfaces
 # the raw input + extracted fields so users can confirm the hook fired
