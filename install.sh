@@ -225,30 +225,30 @@ if [ "${1:-}" = "--project" ]; then
   "mcpServers": {"context7": {"alwaysLoad": true}, "grep_app": {"alwaysLoad": true}, "websearch": {"alwaysLoad": true}},
   "hooks": {
     "PreToolUse": [
-      {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "timeout": 5}]},
-      {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/branch-guard.sh", "timeout": 5}]}
+      {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "args": [], "timeout": 5}]},
+      {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/branch-guard.sh", "args": [], "timeout": 5}]}
     ],
     "PostToolUse": [
-      {"matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/edit-ledger.sh", "timeout": 3}]},
-      {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/comment-checker.sh", "timeout": 10}, {"type": "command", "command": "${HOOK_PREFIX}/typecheck.sh", "timeout": 60}, {"type": "command", "command": "${HOOK_PREFIX}/lint.sh", "timeout": 30}, {"type": "command", "command": "${HOOK_PREFIX}/auto-install.sh", "timeout": 60}]},
-      {"matcher": "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-reminder.sh", "timeout": 5}]},
-      {"matcher": "Edit|Write|Bash|Read|Grep|Glob", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/skill-reminder.sh", "timeout": 5}]},
-      {"matcher": "Agent|Task", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-count.sh", "timeout": 3}]},
-      {"matcher": ".*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/context-pressure.sh", "timeout": 3, "async": true}]}
+      {"matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/edit-ledger.sh", "args": [], "timeout": 3}]},
+      {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/comment-checker.sh", "args": [], "timeout": 10}, {"type": "command", "command": "${HOOK_PREFIX}/typecheck.sh", "args": [], "timeout": 60}, {"type": "command", "command": "${HOOK_PREFIX}/lint.sh", "args": [], "timeout": 30}, {"type": "command", "command": "${HOOK_PREFIX}/auto-install.sh", "args": [], "timeout": 60}]},
+      {"matcher": "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-reminder.sh", "args": [], "timeout": 5}]},
+      {"matcher": "Edit|Write|Bash|Read|Grep|Glob", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/skill-reminder.sh", "args": [], "timeout": 5}]},
+      {"matcher": "Agent|Task", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-count.sh", "args": [], "timeout": 3}]},
+      {"matcher": ".*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/context-pressure.sh", "args": [], "timeout": 3, "async": true}]}
     ],
     "Stop": [{"hooks": [
-      {"type": "command", "command": "${HOOK_PREFIX}/ignite-stop-gate.sh", "timeout": 5},
-      {"type": "command", "command": "${HOOK_PREFIX}/todo-enforcer.sh", "timeout": 5},
-      {"type": "command", "command": "${HOOK_PREFIX}/loop-stop.sh", "timeout": 5},
-      {"type": "command", "command": "${HOOK_PREFIX}/session-notify.sh", "timeout": 5, "async": true}
+      {"type": "command", "command": "${HOOK_PREFIX}/ignite-stop-gate.sh", "args": [], "timeout": 5},
+      {"type": "command", "command": "${HOOK_PREFIX}/todo-enforcer.sh", "args": [], "timeout": 5},
+      {"type": "command", "command": "${HOOK_PREFIX}/loop-stop.sh", "args": [], "timeout": 5},
+      {"type": "command", "command": "${HOOK_PREFIX}/session-notify.sh", "args": [], "timeout": 5, "async": true}
     ]}],
-    "PreCompact": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/pre-compact.sh", "timeout": 10}]}],
-    "SubagentStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-start.sh", "timeout": 5}]}],
-    "SubagentStop": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-stop.sh", "timeout": 5}]}],
-    "StopFailure": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/rate-limit-resume.sh", "timeout": 5}]}],
-    "SessionStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-start.sh", "timeout": 5}]}],
-    "SessionEnd": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-end.sh", "timeout": 5, "async": true}]}],
-    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/ignite-detector.sh", "timeout": 5}]}]
+    "PreCompact": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/pre-compact.sh", "args": [], "timeout": 10}]}],
+    "SubagentStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-start.sh", "args": [], "timeout": 5}]}],
+    "SubagentStop": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-stop.sh", "args": [], "timeout": 5}]}],
+    "StopFailure": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/rate-limit-resume.sh", "args": [], "timeout": 5}]}],
+    "SessionStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-start.sh", "args": [], "timeout": 5}]}],
+    "SessionEnd": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-end.sh", "args": [], "timeout": 5, "async": true}]}],
+    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/ignite-detector.sh", "args": [], "timeout": 5}]}]
   }
 }
 PROJ_EOF
@@ -463,30 +463,30 @@ cat > "$ALLOY_TMP" << SETTINGS_EOF
   "mcpServers": {"context7": {"alwaysLoad": true}, "grep_app": {"alwaysLoad": true}, "websearch": {"alwaysLoad": true}},
   "hooks": {
     "PreToolUse": [
-      {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "timeout": 5}]},
-      {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/branch-guard.sh", "timeout": 5}]}
+      {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "args": [], "timeout": 5}]},
+      {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/branch-guard.sh", "args": [], "timeout": 5}]}
     ],
     "PostToolUse": [
-      {"matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/edit-ledger.sh", "timeout": 3}]},
-      {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/comment-checker.sh", "timeout": 10}, {"type": "command", "command": "${HOOK_PREFIX}/typecheck.sh", "timeout": 60}, {"type": "command", "command": "${HOOK_PREFIX}/lint.sh", "timeout": 30}, {"type": "command", "command": "${HOOK_PREFIX}/auto-install.sh", "timeout": 60}]},
-      {"matcher": "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-reminder.sh", "timeout": 5}]},
-      {"matcher": "Edit|Write|Bash|Read|Grep|Glob", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/skill-reminder.sh", "timeout": 5}]},
-      {"matcher": "Agent|Task", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-count.sh", "timeout": 3}]},
-      {"matcher": ".*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/context-pressure.sh", "timeout": 3, "async": true}]}
+      {"matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/edit-ledger.sh", "args": [], "timeout": 3}]},
+      {"matcher": "Write|Edit", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/comment-checker.sh", "args": [], "timeout": 10}, {"type": "command", "command": "${HOOK_PREFIX}/typecheck.sh", "args": [], "timeout": 60}, {"type": "command", "command": "${HOOK_PREFIX}/lint.sh", "args": [], "timeout": 30}, {"type": "command", "command": "${HOOK_PREFIX}/auto-install.sh", "args": [], "timeout": 60}]},
+      {"matcher": "Grep|Glob|WebFetch|WebSearch|Bash|mcp__.*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-reminder.sh", "args": [], "timeout": 5}]},
+      {"matcher": "Edit|Write|Bash|Read|Grep|Glob", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/skill-reminder.sh", "args": [], "timeout": 5}]},
+      {"matcher": "Agent|Task", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/agent-count.sh", "args": [], "timeout": 3}]},
+      {"matcher": ".*", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/context-pressure.sh", "args": [], "timeout": 3, "async": true}]}
     ],
     "Stop": [{"hooks": [
-      {"type": "command", "command": "${HOOK_PREFIX}/ignite-stop-gate.sh", "timeout": 5},
-      {"type": "command", "command": "${HOOK_PREFIX}/todo-enforcer.sh", "timeout": 5},
-      {"type": "command", "command": "${HOOK_PREFIX}/loop-stop.sh", "timeout": 5},
-      {"type": "command", "command": "${HOOK_PREFIX}/session-notify.sh", "timeout": 5, "async": true}
+      {"type": "command", "command": "${HOOK_PREFIX}/ignite-stop-gate.sh", "args": [], "timeout": 5},
+      {"type": "command", "command": "${HOOK_PREFIX}/todo-enforcer.sh", "args": [], "timeout": 5},
+      {"type": "command", "command": "${HOOK_PREFIX}/loop-stop.sh", "args": [], "timeout": 5},
+      {"type": "command", "command": "${HOOK_PREFIX}/session-notify.sh", "args": [], "timeout": 5, "async": true}
     ]}],
-    "PreCompact": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/pre-compact.sh", "timeout": 10}]}],
-    "SubagentStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-start.sh", "timeout": 5}]}],
-    "SubagentStop": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-stop.sh", "timeout": 5}]}],
-    "StopFailure": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/rate-limit-resume.sh", "timeout": 5}]}],
-    "SessionStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-start.sh", "timeout": 5}]}],
-    "SessionEnd": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-end.sh", "timeout": 5, "async": true}]}],
-    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/ignite-detector.sh", "timeout": 5}]}]
+    "PreCompact": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/pre-compact.sh", "args": [], "timeout": 10}]}],
+    "SubagentStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-start.sh", "args": [], "timeout": 5}]}],
+    "SubagentStop": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/subagent-stop.sh", "args": [], "timeout": 5}]}],
+    "StopFailure": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/rate-limit-resume.sh", "args": [], "timeout": 5}]}],
+    "SessionStart": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-start.sh", "args": [], "timeout": 5}]}],
+    "SessionEnd": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/session-end.sh", "args": [], "timeout": 5, "async": true}]}],
+    "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "${HOOK_PREFIX}/ignite-detector.sh", "args": [], "timeout": 5}]}]
   }
 }
 SETTINGS_EOF
