@@ -22,6 +22,18 @@ SNAPSHOT_FILE="${STATE_DIR}/pre-compact-snapshot.md"
 
 TIMESTAMP=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
+# Detect stat flavor and current epoch ONCE per invocation. is_fresh() is
+# called twice below (ignite + tungsten markers); the previous form retried
+# the BSD/GNU stat fallback and forked `date +%s` on every call, costing
+# 3 forks per call → 6 forks per event. Caching at script scope drops it
+# to 1 fork per call (just the stat itself).
+if stat -c %Y /dev/null >/dev/null 2>&1; then
+    STAT_MTIME_CMD="stat -c %Y"
+else
+    STAT_MTIME_CMD="stat -f %m"
+fi
+NOW_EPOCH=$(date +%s 2>/dev/null || echo 0)
+
 SOURCE="unknown"
 SESSION_ID="unknown"
 TRANSCRIPT_PATH=""
@@ -97,12 +109,14 @@ TUNGSTEN_TTL=${ALLOY_TUNGSTEN_TTL:-1800}
 
 is_fresh() {
     # $1 = file path, $2 = ttl seconds. Echoes "true" / "false".
+    # Uses script-scope STAT_MTIME_CMD + NOW_EPOCH (resolved once at script
+    # start) instead of retrying the BSD/GNU stat fallback and re-forking
+    # `date +%s` on every call. Saves 2 forks per call, 4 per event.
     _f=$1; _ttl=$2
     [ -f "$_f" ] || { printf 'false'; return; }
-    _now=$(date +%s 2>/dev/null || echo 0)
-    _mt=$(stat -c %Y "$_f" 2>/dev/null || stat -f %m "$_f" 2>/dev/null || echo 0)
+    _mt=$($STAT_MTIME_CMD "$_f" 2>/dev/null || echo 0)
     case "$_mt" in ''|*[!0-9]*) _mt=0 ;; esac
-    _age=$(( _now - _mt ))
+    _age=$(( NOW_EPOCH - _mt ))
     if [ "$_age" -ge 0 ] && [ "$_age" -le "$_ttl" ]; then
         printf 'true'
     else
