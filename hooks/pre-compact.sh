@@ -38,9 +38,22 @@ SOURCE="unknown"
 SESSION_ID="unknown"
 TRANSCRIPT_PATH=""
 if command -v jq &>/dev/null; then
-    SOURCE=$(echo "$INPUT" | jq -r '.compaction_source // "unknown"' 2>/dev/null) || SOURCE="unknown"
-    SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"' 2>/dev/null) || SESSION_ID="unknown"
-    TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // ""' 2>/dev/null) || TRANSCRIPT_PATH=""
+    # Single jq invocation streams all three fields newline-delimited — three
+    # separate `echo | jq` invocations cost 3 forks + 3 jq startup costs per
+    # event, this is 1. Field order is locked here; if reordered, update both
+    # the jq array and the sed -n line numbers below in lockstep.
+    JQ_OUT=$(echo "$INPUT" | jq -r '
+        [
+          (.compaction_source // "unknown"),
+          (.session_id // "unknown"),
+          (.transcript_path // "")
+        ] | .[]
+    ' 2>/dev/null || echo "")
+    SOURCE=$(printf '%s\n' "$JQ_OUT" | sed -n '1p')
+    SESSION_ID=$(printf '%s\n' "$JQ_OUT" | sed -n '2p')
+    TRANSCRIPT_PATH=$(printf '%s\n' "$JQ_OUT" | sed -n '3p')
+    [ -z "$SOURCE" ] && SOURCE="unknown"
+    [ -z "$SESSION_ID" ] && SESSION_ID="unknown"
 fi
 # Sanitize SESSION_ID against path traversal (CWE-22) — same allowlist as
 # context-pressure.sh / statusline.sh / skill-reminder.sh.
@@ -67,7 +80,9 @@ EOF
 
 # --- Per-compact backup dir (recovery insurance) -----------------------------
 # Files we care about — plan/todo state Claude can rehydrate from after compact.
-TS=$(date +%s)
+# Reuse NOW_EPOCH cached at script start (line ~35) — saves a fork; both this
+# and is_fresh() pull from the same timestamp, which is also more consistent.
+TS=$NOW_EPOCH
 BACKUP_DIR="${STATE_DIR}/compact-backup-${SESSION_ID}-${TS}"
 mkdir -p "$BACKUP_DIR" 2>/dev/null || exit 0
 
