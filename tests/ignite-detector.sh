@@ -169,28 +169,39 @@ call_hook_with_effort() {
     _prompt=$1
     _sid=$2
     _effort=$3
-    rm -f "${STATE_DIR}/ignite-active-${_sid}" 2>/dev/null
-    jq -nc --arg p "$_prompt" --arg s "$_sid" --arg e "$_effort" \
+    rm -f "${STATE_DIR}/ignite-active-${_sid}" "${STATE_DIR}/ignite-titled-${_sid}" 2>/dev/null
+    STDOUT_OUT=$(jq -nc --arg p "$_prompt" --arg s "$_sid" --arg e "$_effort" \
         '{prompt: $p, session_id: $s, effort: {level: $e}}' \
-        | CLAUDE_EFFORT="$_effort" bash "$HOOK" >/dev/null 2>&1
+        | CLAUDE_EFFORT="$_effort" bash "$HOOK" 2>/dev/null)
     [ -f "${STATE_DIR}/ignite-active-${_sid}" ]
 }
 
 # Plain prompt that would NORMALLY not trip detection (no keyword, no quoted
-# context). With effort.level=max it should activate IGNITE.
+# context). With effort.level=max it should activate IGNITE — AND emit the
+# full protocol context (hookSpecificOutput.sessionTitle) like keyword-IGNITE,
+# proving the auto-activation path traverses the same protocol-emit branch
+# rather than just flipping the marker file.
 call_hook_with_effort "please refactor the auth middleware for clarity" "effort-1" "max" \
     && PASS=1 || PASS=0
 assert_eq 1 "$PASS" "effort: 'max' tier activates IGNITE on non-keyword prompt"
+HAS_TITLE=$(printf '%s' "$STDOUT_OUT" | grep -c "sessionTitle")
+assert_eq 1 "$HAS_TITLE" "effort: 'max' tier emits sessionTitle (full protocol context)"
 
-# Same prompt at effort=high must NOT activate.
+# Same prompt at effort=high must NOT activate — AND must NOT emit sessionTitle
+# (hook should exit early on the no-keyword + sub-max path, producing no
+# protocol context at all).
 call_hook_with_effort "please refactor the auth middleware for clarity" "effort-2" "high" \
     && PASS=1 || PASS=0
 assert_eq 0 "$PASS" "effort: 'high' tier does NOT auto-activate IGNITE"
+HAS_TITLE=$(printf '%s' "$STDOUT_OUT" | grep -c "sessionTitle")
+assert_eq 0 "$HAS_TITLE" "effort: 'high' tier emits NO sessionTitle (no protocol context)"
 
-# Same prompt at effort=medium must NOT activate.
+# Same prompt at effort=medium must NOT activate — same protocol-silence check.
 call_hook_with_effort "please refactor the auth middleware for clarity" "effort-3" "medium" \
     && PASS=1 || PASS=0
 assert_eq 0 "$PASS" "effort: 'medium' tier does NOT auto-activate IGNITE"
+HAS_TITLE=$(printf '%s' "$STDOUT_OUT" | grep -c "sessionTitle")
+assert_eq 0 "$HAS_TITLE" "effort: 'medium' tier emits NO sessionTitle (no protocol context)"
 
 # ---- sessionTitle on first IGNITE activation -------------------------------
 # Per https://code.claude.com/docs/en/hooks, UserPromptSubmit hooks can set
