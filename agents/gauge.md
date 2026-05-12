@@ -10,7 +10,7 @@ tools:
   - Bash
   - WebFetch
 maxTurns: 20
-effort: high
+effort: medium
 memory: project
 color: gray
 ---

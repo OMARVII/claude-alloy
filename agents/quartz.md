@@ -11,7 +11,7 @@ tools:
   - WebFetch
   - WebSearch
 maxTurns: 30
-effort: max
+effort: high
 memory: project
 color: purple
 ---
