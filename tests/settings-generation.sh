@@ -151,4 +151,15 @@ global_ignite_override=$(jq -r '.skillOverrides.ignite // "missing"' "$GLOBAL_SE
 assert_eq "user-invocable-only" "$global_ignite_override" \
     "global activation writes skillOverrides.ignite = user-invocable-only"
 
+# Claude Code v2.1.139+ schema includes a per-hook `args: []` field on the
+# command exec form. Both hooks/hooks.json and the install.sh / activate.sh
+# heredocs emit it on every entry. Assert it survives generation so future
+# template drift (e.g. someone editing a single hook entry and forgetting to
+# carry the field) is caught by the test suite rather than at runtime.
+project_has_args=$(jq -e '[.. | objects | select(.type == "command" and has("args"))] | length > 0' "$SETTINGS" >/dev/null 2>&1; printf '%s' "$?")
+assert_exit 0 "$project_has_args" "project install emits args[] on command-form hook entries"
+
+global_has_args=$(jq -e '[.. | objects | select(.type == "command" and has("args"))] | length > 0' "$GLOBAL_SETTINGS" >/dev/null 2>&1; printf '%s' "$?")
+assert_exit 0 "$global_has_args" "global activation emits args[] on command-form hook entries"
+
 done_testing
