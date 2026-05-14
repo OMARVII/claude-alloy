@@ -298,6 +298,12 @@ PROJ_EOF
     fi
     echo ""
     success "Project install complete! Run 'claude' to use."
+    echo ""
+    info "MCP pinning (optional): claude-alloy ships .mcp.json.example with"
+    info "  context7, grep_app, websearch pinned via alwaysLoad — prevents"
+    info "  schema-deferral bugs in subagents. Enable with:"
+    info "    cp .mcp.json.example .mcp.json   (project scope)"
+    info "  Full guide: docs/mcp-config.md"
     exit 0
 fi
 
@@ -586,3 +592,10 @@ echo ""
 info "Start: claude"
 info "Max effort: /ignite"
 info "Uninstall: bash ${SCRIPT_DIR}/install.sh --uninstall"
+echo ""
+info "MCP pinning (optional): claude-alloy ships .mcp.json.example with"
+info "  context7, grep_app, websearch pinned via alwaysLoad — prevents"
+info "  schema-deferral bugs in subagents. Enable with:"
+info "    cp .mcp.json.example .mcp.json   (project scope)"
+info "  or merge into ~/.claude.json       (user scope)"
+info "  Full guide: docs/mcp-config.md"

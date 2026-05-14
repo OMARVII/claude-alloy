@@ -140,6 +140,8 @@ bash setup-global.sh
 /alloy-init
 ```
 
+> After install, see [docs/mcp-config.md](docs/mcp-config.md) to enable MCP schema pinning for subagents (`cp .mcp.json.example .mcp.json`).
+
 ---
 
 ## What You Get
