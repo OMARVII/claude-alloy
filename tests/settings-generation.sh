@@ -23,7 +23,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-bash "${REPO_ROOT}/install.sh" --project "$PROJECT_DIR" >/dev/null 2>&1
+INSTALL_OUT=$(bash "${REPO_ROOT}/install.sh" --project "$PROJECT_DIR" 2>&1)
 
 SETTINGS="${PROJECT_DIR}/.claude/settings.json"
 if jq empty "$SETTINGS" >/dev/null 2>&1; then
@@ -115,7 +115,7 @@ cat > "${GLOBAL_HOME}/.claude/settings.json" <<'JSON'
 }
 JSON
 
-HOME="$GLOBAL_HOME" ALLOY_AUTO_UPDATE=0 bash "${REPO_ROOT}/activate.sh" >/dev/null 2>&1
+ACTIVATE_OUT=$(HOME="$GLOBAL_HOME" ALLOY_AUTO_UPDATE=0 bash "${REPO_ROOT}/activate.sh" 2>&1)
 GLOBAL_SETTINGS="${GLOBAL_HOME}/.claude/settings.json"
 
 if jq empty "$GLOBAL_SETTINGS" >/dev/null 2>&1; then
@@ -198,5 +198,22 @@ case "$marketplace_desc" in
     *) _marketplace_count_ok=0 ;;
 esac
 assert_eq 1 "$_marketplace_count_ok" "marketplace.json description advertises 10 skills"
+
+# Installer postinstall must surface the .mcp.json.example template — users
+# would otherwise have no in-stream signal that MCP pinning is still supported
+# (v1.7.0 retired the dead mcpServers block from settings.json). Lock the hint
+# strings in both install paths so future drift (a refactor that strips the
+# closing info() block) is caught here rather than by users.
+case "$INSTALL_OUT" in
+    *".mcp.json.example"*) _project_hint_ok=1 ;;
+    *) _project_hint_ok=0 ;;
+esac
+assert_eq 1 "$_project_hint_ok" "project install output mentions .mcp.json.example"
+
+case "$ACTIVATE_OUT" in
+    *".mcp.json.example"*) _global_hint_ok=1 ;;
+    *) _global_hint_ok=0 ;;
+esac
+assert_eq 1 "$_global_hint_ok" "global activation output mentions .mcp.json.example"
 
 done_testing
