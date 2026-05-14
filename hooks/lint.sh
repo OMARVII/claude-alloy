@@ -147,27 +147,60 @@ run_with_timeout() {
 }
 
 ERRORS=""
+RAN=0
+T_START=$(date +%s)
 
 # Detect and run Biome
 if [ -f "$PROJ_DIR/biome.json" ] || [ -f "$PROJ_DIR/biome.jsonc" ]; then
+    RAN=1
     OUTPUT=$(cd "$PROJ_DIR" && run_with_timeout "$MAX_SEC" npx --no-install @biomejs/biome check "$FILE_PATH" 2>&1) || true
     ERRORS=$(echo "$OUTPUT" | grep -E "^.+:[0-9]+:[0-9]+" | head -10)
 
 # Detect and run ESLint
 elif [ -f "$PROJ_DIR/.eslintrc" ] || [ -f "$PROJ_DIR/.eslintrc.js" ] || [ -f "$PROJ_DIR/.eslintrc.cjs" ] || [ -f "$PROJ_DIR/.eslintrc.json" ] || [ -f "$PROJ_DIR/.eslintrc.yml" ] || [ -f "$PROJ_DIR/eslint.config.js" ] || [ -f "$PROJ_DIR/eslint.config.mjs" ] || [ -f "$PROJ_DIR/eslint.config.cjs" ]; then
+    RAN=1
     OUTPUT=$(cd "$PROJ_DIR" && run_with_timeout "$MAX_SEC" npx --no-install eslint --no-warn-ignored "$FILE_PATH" 2>&1) || true
     ERRORS=$(echo "$OUTPUT" | grep -E "^.+:[0-9]+:[0-9]+" | head -10)
 
 # Detect and run Prettier (check mode only)
 elif [ -f "$PROJ_DIR/.prettierrc" ] || [ -f "$PROJ_DIR/.prettierrc.js" ] || [ -f "$PROJ_DIR/.prettierrc.json" ] || [ -f "$PROJ_DIR/.prettierrc.yml" ] || [ -f "$PROJ_DIR/.prettierrc.cjs" ] || [ -f "$PROJ_DIR/prettier.config.js" ] || [ -f "$PROJ_DIR/prettier.config.cjs" ]; then
+    RAN=1
     OUTPUT=$(cd "$PROJ_DIR" && run_with_timeout "$MAX_SEC" npx --no-install prettier --check "$FILE_PATH" 2>&1) || true
     if echo "$OUTPUT" | grep -q "Code style issues"; then
         ERRORS="Formatting issues detected in $FILE_PATH"
     fi
 fi
 
-if [ -n "$ERRORS" ]; then
-    jq -n --arg msg "[Lint] Issues found: $ERRORS" '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":$msg}}'
+# Emit hookSpecificOutput for every lint run that actually executed a linter.
+# Two sibling fields per https://code.claude.com/docs/en/hooks:
+#   - additionalContext: full first-10 lint detail (Claude sees verbose output).
+#   - updatedToolOutput: STRING that replaces the tool's output in the conversation
+#     surface (v2.1.121+). The file on disk is untouched — only what Claude/UI
+#     reads as the Edit/Write result text is rewritten. Keep this to a single
+#     concise line so it fits the status surface cleanly.
+if [ "$RAN" = "1" ]; then
+    T_END=$(date +%s)
+    ELAPSED=$((T_END - T_START))
+    BASENAME=$(basename "$FILE_PATH")
+    if [ -n "$ERRORS" ]; then
+        # Count "<path>:<line>:<col>" style entries (eslint/biome) — fall back
+        # to 1 for prettier (which we summarize as a single string).
+        ERR_COUNT=$(printf '%s\n' "$ERRORS" | grep -cE "^.+:[0-9]+:[0-9]+")
+        [ "$ERR_COUNT" = "0" ] && ERR_COUNT=1
+        # Warning detection: eslint output flags rows with "warning"; biome
+        # uses "lint/.../<rule>" with severity prefix. Best-effort count.
+        WARN_COUNT=$(printf '%s\n' "$OUTPUT" | grep -ciE 'warning' || true)
+        [ -z "$WARN_COUNT" ] && WARN_COUNT=0
+        FIRST=$(printf '%s\n' "$ERRORS" | head -1)
+        SUMMARY="Lint: ${ERR_COUNT} error(s), ${WARN_COUNT} warning(s) in ${BASENAME}. First: ${FIRST}"
+        DETAIL="[Lint] Issues found: $ERRORS"
+        jq -n --arg sum "$SUMMARY" --arg detail "$DETAIL" \
+            '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":$detail,"updatedToolOutput":$sum}}'
+    else
+        SUMMARY="Lint: clean (1 file, ${ELAPSED}s)"
+        jq -n --arg sum "$SUMMARY" \
+            '{"hookSpecificOutput":{"hookEventName":"PostToolUse","updatedToolOutput":$sum}}'
+    fi
 fi
 
 exit 0
