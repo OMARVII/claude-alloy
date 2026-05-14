@@ -162,4 +162,15 @@ assert_exit 0 "$project_has_args" "project install emits args[] on command-form 
 global_has_args=$(jq -e '[.. | objects | select(.type == "command" and has("args"))] | length > 0' "$GLOBAL_SETTINGS" >/dev/null 2>&1; printf '%s' "$?")
 assert_exit 0 "$global_has_args" "global activation emits args[] on command-form hook entries"
 
+# settings.json mcpServers is silently ignored by Claude Code (GH issue
+# anthropics/claude-code#24477). alwaysLoad belongs in .mcp.json (project) or
+# ~/.claude.json (user) — neither install.sh nor activate.sh should inject a
+# dead block into generated settings. These assertions lock that fix in place
+# so future template drift (someone re-adding the block) is caught here.
+project_has_mcp=$(jq -r 'has("mcpServers")' "$SETTINGS")
+assert_eq "false" "$project_has_mcp" "project install does NOT emit dead mcpServers in settings.json"
+
+global_has_mcp=$(jq -r 'has("mcpServers")' "$GLOBAL_SETTINGS")
+assert_eq "false" "$global_has_mcp" "global activation does NOT emit dead mcpServers in settings.json"
+
 done_testing
