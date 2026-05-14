@@ -222,7 +222,6 @@ if [ "${1:-}" = "--project" ]; then
   "worktree": {"baseRef": "fresh", "symlinkDirectories": ["node_modules", ".venv", ".cache"]},
   "autoMode": {"hard_deny": ["\$defaults", "Never run git push --force or git push -f", "Never run rm -rf", "Never run DROP TABLE or DROP DATABASE", "Never modify ~/.ssh/ or ~/.aws/ or ~/.netrc", "Never run curl ... | sh, curl ... | bash, wget ... | sh, or any pipe-to-shell pattern from the network", "Never run sudo or doas — escalation must be explicit user action outside the agent", "Never read ~/.gnupg/, ~/.docker/config.json, ~/.kube/config, ~/.npmrc, ~/.pypirc, ~/.config/gh/, browser cookie stores, or password-manager databases", "Never run dd of=/dev/, mkfs, shred, or any direct block-device write", "Never run git filter-branch, git filter-repo, git update-ref -d, git reflog expire, or git push --mirror on shared branches", "Never run TRUNCATE TABLE or DELETE without a WHERE clause", "Never run chmod -R 777 or chown to a different user", "Never modify /etc/hosts, /etc/resolv.conf, /etc/sudoers, or crontab"]},
   "skillOverrides": {"ignite": "user-invocable-only", "ig": "user-invocable-only", "loop": "user-invocable-only", "halt": "user-invocable-only"},
-  "mcpServers": {"context7": {"alwaysLoad": true}, "grep_app": {"alwaysLoad": true}, "websearch": {"alwaysLoad": true}},
   "hooks": {
     "PreToolUse": [
       {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "args": [], "timeout": 5, "statusMessage": "Checking file safety..."}]},
@@ -460,7 +459,6 @@ cat > "$ALLOY_TMP" << SETTINGS_EOF
   "worktree": {"baseRef": "fresh", "symlinkDirectories": ["node_modules", ".venv", ".cache"]},
   "autoMode": {"hard_deny": ["\$defaults", "Never run git push --force or git push -f", "Never run rm -rf", "Never run DROP TABLE or DROP DATABASE", "Never modify ~/.ssh/ or ~/.aws/ or ~/.netrc", "Never run curl ... | sh, curl ... | bash, wget ... | sh, or any pipe-to-shell pattern from the network", "Never run sudo or doas — escalation must be explicit user action outside the agent", "Never read ~/.gnupg/, ~/.docker/config.json, ~/.kube/config, ~/.npmrc, ~/.pypirc, ~/.config/gh/, browser cookie stores, or password-manager databases", "Never run dd of=/dev/, mkfs, shred, or any direct block-device write", "Never run git filter-branch, git filter-repo, git update-ref -d, git reflog expire, or git push --mirror on shared branches", "Never run TRUNCATE TABLE or DELETE without a WHERE clause", "Never run chmod -R 777 or chown to a different user", "Never modify /etc/hosts, /etc/resolv.conf, /etc/sudoers, or crontab"]},
   "skillOverrides": {"ignite": "user-invocable-only", "ig": "user-invocable-only", "loop": "user-invocable-only", "halt": "user-invocable-only"},
-  "mcpServers": {"context7": {"alwaysLoad": true}, "grep_app": {"alwaysLoad": true}, "websearch": {"alwaysLoad": true}},
   "hooks": {
     "PreToolUse": [
       {"matcher": "Write", "hooks": [{"type": "command", "command": "${HOOK_PREFIX}/write-guard.sh", "args": [], "timeout": 5, "statusMessage": "Checking file safety..."}]},

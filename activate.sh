@@ -254,11 +254,6 @@ ALLOY_SETTINGS=$(jq -n --arg hd "$HOOK_DIR" '{
     "loop": "user-invocable-only",
     "halt": "user-invocable-only"
   },
-  "mcpServers": {
-    "context7": {"alwaysLoad": true},
-    "grep_app": {"alwaysLoad": true},
-    "websearch": {"alwaysLoad": true}
-  },
   "hooks": {
     "PreToolUse": [
       {
@@ -342,7 +337,6 @@ if [ -f "$BACKUP_FILE" ]; then
       .worktree = ($orig.worktree // $alloy.worktree) |
       .autoMode = ($orig.autoMode // $alloy.autoMode) |
       .skillOverrides = (($alloy.skillOverrides // {}) * ($orig.skillOverrides // {})) |
-      .mcpServers = (($alloy.mcpServers // {}) * ($orig.mcpServers // {})) |
       .env = (($orig.env // {}) * $alloy.env) |
       .hooks.PreToolUse = ($alloy.hooks.PreToolUse) + ([($orig.hooks.PreToolUse // [])[]] | map(select((.hooks // [{}])[0].command // "" | test("alloy-hooks") | not))) |
       .hooks.PostToolUse = ($alloy.hooks.PostToolUse) + ([($orig.hooks.PostToolUse // [])[]] | map(select((.hooks // [{}])[0].command // "" | test("alloy-hooks") | not))) |
