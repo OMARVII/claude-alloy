@@ -22,16 +22,33 @@ STATE_DIR="${HOME}/.claude/.alloy-state"
 alloy_ensure_state_dir "$STATE_DIR" || exit 0
 # Stale-file cleanup is centralized in hooks/session-end.sh.
 
-# Extract session_id
-SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"' 2>/dev/null || echo "default")
-SESSION_ID=$(echo "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
+# Extract session_id, prompt body, and transcript path in a SINGLE jq fork.
+# Mirrors the pattern used in subagent-start.sh / agent-count.sh / pre-compact.sh:
+# one jq invocation, line-delimited output, `gsub` flattens embedded newlines so
+# `sed -n '<line>p'` recovers each field deterministically. Prior implementation
+# spawned three separate jq processes per UserPromptSubmit — measurable overhead
+# on every keystroke-submit.
+JQ_OUT=$(echo "$INPUT" | jq -r '
+    [
+      (.session_id // "default"),
+      (.prompt // .user_message // .message // ""),
+      (.transcript_path // "")
+    ] | .[] | gsub("\n"; "\\n")
+' 2>/dev/null) || JQ_OUT=$'default\n\n'
 
-# Extract user prompt text (try common field names)
-PROMPT_TEXT=$(echo "$INPUT" | jq -r '.prompt // .user_message // .message // empty' 2>/dev/null || echo "")
+SESSION_ID=$(printf '%s\n' "$JQ_OUT" | sed -n '1p')
+PROMPT_TEXT=$(printf '%s\n' "$JQ_OUT" | sed -n '2p')
+TRANSCRIPT_PATH=$(printf '%s\n' "$JQ_OUT" | sed -n '3p')
+
+[ -n "$SESSION_ID" ] || SESSION_ID="default"
+SESSION_ID=$(printf '%s' "$SESSION_ID" | tr -cd 'a-zA-Z0-9_-')
+
+# Restore newlines inside the prompt body for downstream regex passes.
+PROMPT_TEXT=$(printf '%s' "$PROMPT_TEXT" | sed 's/\\n/\
+/g')
 
 # Fallback: check transcript for last user message
 if [ -z "$PROMPT_TEXT" ]; then
-    TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // empty' 2>/dev/null || echo "")
     if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
         PROMPT_TEXT=$(tail -20 "$TRANSCRIPT_PATH" 2>/dev/null || echo "")
     fi
