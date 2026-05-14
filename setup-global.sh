@@ -56,7 +56,7 @@ info "Copied installer payload to ${DIST_DIR}"
 
 cat > "${CLAUDE_DIR}/commands/alloy-init.md" << INITMAX_EOF
 ---
-description: "Install claude-alloy harness into the current project. Adds 14 agents, 9 skills, 15 commands, 23 hooks, and agent memory."
+description: "Install claude-alloy harness into the current project. Adds 14 agents, 10 skills, 15 commands, 23 hooks, and agent memory."
 ---
 
 # /alloy-init — Install claude-alloy Into This Project
@@ -69,7 +69,7 @@ bash ${DIST_DIR}/install.sh --project .
 
 After installation, you'll have:
 - **14 agents** — steel (opus), tungsten (opus), quartz (opus), mercury (haiku), graphene (sonnet), carbon (sonnet), prism (sonnet), gauge (sonnet), spectrum (sonnet), sentinel (opus), titanium (sonnet), iridium (sonnet), cobalt (sonnet), flint (sonnet)
-- **9 skills** — git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, pipeline
+- **10 skills** — git-master, frontend-ui-ux, dev-browser, code-review, review-work, ai-slop-remover, tdd-workflow, verification-loop, pipeline, hyperplan
 - **15 commands** — /ignite, /ig, /loop, /init-deep, /refactor, /start-work, /handoff, /halt, /alloy, /unalloy, /status, /wiki-update, /notify-setup, /learn, /assess
 - **23 hooks** — intent detection, branch protection, write guard, edit ledger, comment checker, typecheck, auto-install, agent & skill reminders, agent counting, context pressure, todo enforcer, loop, session notify, pre-compact, subagent-start, subagent-stop, rate-limit-resume, session-start, session-end, ignite-stop-gate, ignite-detector, statusline
 - **14 agent memory files** — persistent cross-session learning per agent

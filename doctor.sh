@@ -40,7 +40,7 @@ fail_check() {
 
 # Canonical lists
 AGENTS="steel tungsten quartz mercury graphene carbon prism gauge spectrum sentinel titanium iridium cobalt flint"
-SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop pipeline"
+SKILLS="git-master frontend-ui-ux dev-browser code-review review-work ai-slop-remover tdd-workflow verification-loop pipeline hyperplan"
 COMMANDS="ignite ig loop init-deep refactor start-work handoff halt alloy unalloy status wiki-update notify-setup learn assess"
 HOOKS="comment-checker.sh edit-ledger.sh agent-count.sh agent-reminder.sh skill-reminder.sh todo-enforcer.sh loop-stop.sh write-guard.sh session-notify.sh branch-guard.sh auto-install.sh typecheck.sh lint.sh pre-compact.sh subagent-start.sh subagent-stop.sh rate-limit-resume.sh session-start.sh session-end.sh ignite-stop-gate.sh ignite-detector.sh statusline.sh context-pressure.sh"
 
@@ -90,7 +90,7 @@ for skill in $SKILLS; do
     fi
 done
 if [ "$SKILL_MISSING" -eq 0 ]; then
-    pass "All 9 skills present"
+    pass "All 10 skills present"
 fi
 
 # 6. check_commands

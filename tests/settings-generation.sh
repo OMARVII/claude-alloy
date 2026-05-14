@@ -173,4 +173,30 @@ assert_eq "false" "$project_has_mcp" "project install does NOT emit dead mcpServ
 global_has_mcp=$(jq -r 'has("mcpServers")' "$GLOBAL_SETTINGS")
 assert_eq "false" "$global_has_mcp" "global activation does NOT emit dead mcpServers in settings.json"
 
+# doctor.sh maintains a canonical SKILLS list it iterates to verify install
+# health. Hyperplan landed in v1.6.11 (10th skill) but the canonical list was
+# never updated — doctor could pass a health check even if hyperplan were
+# missing. Assert hyperplan is now a tokenized entry so future drift (someone
+# removing the skill but forgetting to update doctor) is caught here.
+doctor_skills=$(grep -E '^SKILLS=' "${REPO_ROOT}/doctor.sh" | sed 's/SKILLS=//; s/"//g')
+_has_hyperplan=$(printf '%s' "$doctor_skills" | tr ' ' '\n' | grep -cx hyperplan)
+assert_eq 1 "$_has_hyperplan" "doctor.sh SKILLS list includes hyperplan"
+
+# Plugin metadata description must match the actual skill count. After
+# hyperplan landed, plugin.json and marketplace.json description strings
+# advertised "9 skills" while the codebase shipped 10. Lock the bump in.
+plugin_desc=$(jq -r '.description' "${REPO_ROOT}/.claude-plugin/plugin.json")
+case "$plugin_desc" in
+    *"10 skills"*) _plugin_count_ok=1 ;;
+    *) _plugin_count_ok=0 ;;
+esac
+assert_eq 1 "$_plugin_count_ok" "plugin.json description advertises 10 skills"
+
+marketplace_desc=$(jq -r '.plugins[0].description' "${REPO_ROOT}/.claude-plugin/marketplace.json")
+case "$marketplace_desc" in
+    *"10 skills"*) _marketplace_count_ok=1 ;;
+    *) _marketplace_count_ok=0 ;;
+esac
+assert_eq 1 "$_marketplace_count_ok" "marketplace.json description advertises 10 skills"
+
 done_testing
