@@ -2,6 +2,23 @@
 # Comment Checker Hook — Detects AI slop comments in edited files
 # Runs as PostToolUse hook on Write|Edit events
 # Exit 0 = pass, Exit 2 = block with error message
+#
+# Default behavior on slop detection: emit a warning via
+# `hookSpecificOutput.additionalContext` (non-blocking, exit 0). Claude
+# sees the warning in the next turn and can choose to clean up.
+#
+# Opt-in recoverable blocking (env var ALLOY_BLOCK_AI_SLOP=1, default unset):
+# emit `{"decision":"block", "hookSpecificOutput.continueOnBlock":true,
+# additionalContext}`. Per https://code.claude.com/docs/en/hooks (v2.1.139),
+# `continueOnBlock:true` on a PostToolUse block decision feeds the rejection
+# reason back to Claude as context — Claude sees the block AND the specific
+# slop comments and rewrites in the SAME turn instead of in a follow-up. The
+# write is not reverted; the rewrite simply gets immediate priority.
+#
+# Default is opt-OUT because forcible blocking can derail unrelated work
+# (e.g. fixing an urgent bug in a file that happens to contain pre-existing
+# slop comments). Teams that want stricter discipline set the env var in
+# their .claude/settings.json env block.
 
 set -u
 
@@ -73,9 +90,17 @@ $SLOP_PATTERNS
 EOF
 
 if [ "$HAS_SLOP" = true ]; then
-    # Output warning as JSON (non-blocking — exit 0 with message)
-    jq -n --arg msg "AI slop comments detected in $FILE_PATH. Remove obvious/redundant comments that just restate the code. Code should be self-documenting." \
-        '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":$msg}}'
+    MSG="AI slop comments detected in $FILE_PATH. Remove obvious/redundant comments that just restate the code. Code should be self-documenting."
+    if [ "${ALLOY_BLOCK_AI_SLOP:-0}" = "1" ]; then
+        # Recoverable block: Claude sees the rejection AND the additionalContext
+        # in the same turn (continueOnBlock:true). Strict mode — opt-in only.
+        jq -n --arg msg "$MSG" \
+            '{"decision":"block","reason":$msg,"hookSpecificOutput":{"hookEventName":"PostToolUse","continueOnBlock":true,"additionalContext":$msg}}'
+    else
+        # Default: warn-only via additionalContext, exit 0.
+        jq -n --arg msg "$MSG" \
+            '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":$msg}}'
+    fi
     exit 0
 fi
 
