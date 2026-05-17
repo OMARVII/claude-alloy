@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml"><img src="https://github.com/OMARVII/claude-alloy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
-  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.7.0"><img src="https://img.shields.io/badge/version-1.7.0-green.svg" alt="Version 1.7.0"></a>
+  <a href="https://github.com/OMARVII/claude-alloy/releases/tag/v1.7.1"><img src="https://img.shields.io/badge/version-1.7.1-green.svg" alt="Version 1.7.1"></a>
 </p>
 
 <p align="center">
@@ -249,7 +249,7 @@ Type **`ig`** (or `/ignite`) for maximum effort: 6+ agents fired in parallel, to
 Run `claude` with the `--plugin-url` flag to load claude-alloy for a single session without writing anything to disk:
 
 ```bash
-claude --plugin-url https://github.com/OMARVII/claude-alloy/releases/download/v1.7.0/claude-alloy.zip
+claude --plugin-url https://github.com/OMARVII/claude-alloy/releases/download/v1.7.1/claude-alloy.zip
 ```
 
 The plugin is unpacked, used for the session, and discarded on exit. Useful for testing a release candidate or trying alloy on a one-off task without committing to a full install. The `--plugin-url` flag is documented at https://code.claude.com/docs/en/cli-reference.
@@ -513,7 +513,7 @@ See [SECURITY.md](SECURITY.md) for the security policy, known considerations, an
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.7.0**.
+See [CHANGELOG.md](CHANGELOG.md) for release history. Current version: **1.7.1**.
 
 ---
 
