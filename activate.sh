@@ -377,12 +377,15 @@ fi
 
 info "Configuring MCP servers..."
 if command -v claude &>/dev/null; then
+    mcp_list() {
+        claude mcp list 2>/dev/null || true
+    }
+
     # Ensures an MCP server is configured with the expected URL.
     # Only touches the config when the server is missing or the URL changed.
     ensure_mcp() {
         local name="$1" url="$2"
-        # claude mcp list outputs JSON; check if this server already has the right URL
-        if claude mcp list --scope user 2>/dev/null | grep -q "\"${url}\""; then
+        if mcp_list | grep -Fq "$url"; then
             return 0
         fi
         claude mcp remove "$name" --scope user &>/dev/null || true
@@ -397,7 +400,7 @@ if command -v claude &>/dev/null; then
     ensure_mcp grep_app "https://mcp.grep.app"
     WEBSEARCH_URL="https://mcp.exa.ai/mcp"
     if [ -n "${EXA_API_KEY:-}" ]; then
-        if claude mcp list --scope user 2>/dev/null | grep -q "\"${WEBSEARCH_URL}\""; then
+        if mcp_list | grep -Fq "$WEBSEARCH_URL"; then
             : # already present with the right URL
         else
             claude mcp remove websearch --scope user &>/dev/null || true
@@ -455,7 +458,7 @@ if command -v claude &>/dev/null; then
     fi
 
     if [ "$PLAYWRIGHT_MODE" != "skip" ]; then
-        if ! claude mcp list --scope user 2>/dev/null | grep -q "playwright"; then
+        if ! mcp_list | grep -q "playwright"; then
             claude mcp remove playwright --scope user &>/dev/null || true
             # Forced mode (ALLOY_BROWSER=1) → user accepted the cold-cache
             # download cost; warn once so it's not silent and they don't
