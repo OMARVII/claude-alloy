@@ -193,7 +193,7 @@ fi
 
 # 12. check_mcp
 if command -v claude &>/dev/null; then
-    MCP_LIST=$(claude mcp list -s user 2>/dev/null || echo "")
+    MCP_LIST=$(claude mcp list 2>/dev/null || echo "")
     MCP_MISSING=0
     for server in context7 grep_app websearch; do
         if ! echo "$MCP_LIST" | grep -q "$server"; then

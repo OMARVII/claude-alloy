@@ -537,9 +537,13 @@ mv "$MANIFEST_TMP" "$MANIFEST_FILE"
 
 MCP_OK=0; MCP_NAMES=""
 if command -v claude &>/dev/null; then
+    mcp_list() {
+        claude mcp list 2>/dev/null || true
+    }
+
     ensure_mcp() {
         local name="$1" url="$2"
-        if claude mcp list --scope user 2>/dev/null | grep -q "\"${url}\""; then
+        if mcp_list | grep -Fq "$url"; then
             return 0
         fi
         claude mcp remove "$name" --scope user &>/dev/null || true
@@ -554,7 +558,7 @@ if command -v claude &>/dev/null; then
     ensure_mcp grep_app "https://mcp.grep.app" && MCP_OK=$((MCP_OK + 1)) && MCP_NAMES="${MCP_NAMES}, grep_app"
     WEBSEARCH_URL="https://mcp.exa.ai/mcp"
     if [ -n "${EXA_API_KEY:-}" ]; then
-        if claude mcp list --scope user 2>/dev/null | grep -q "\"${WEBSEARCH_URL}\""; then
+        if mcp_list | grep -Fq "$WEBSEARCH_URL"; then
             MCP_OK=$((MCP_OK + 1)); MCP_NAMES="${MCP_NAMES}, websearch"
         else
             claude mcp remove websearch --scope user &>/dev/null || true
@@ -568,7 +572,7 @@ if command -v claude &>/dev/null; then
         ensure_mcp websearch "$WEBSEARCH_URL" && MCP_OK=$((MCP_OK + 1)) && MCP_NAMES="${MCP_NAMES}, websearch"
     fi
     if [ "${ALLOY_BROWSER:-}" = "1" ]; then
-        if ! claude mcp list --scope user 2>/dev/null | grep -q "playwright"; then
+        if ! mcp_list | grep -q "playwright"; then
             claude mcp remove playwright --scope user &>/dev/null || true
             if claude mcp add --scope user playwright -- npx @playwright/mcp@0.0.73 --browser=chrome --headless &>/dev/null; then
                 MCP_OK=$((MCP_OK + 1)); MCP_NAMES="${MCP_NAMES}, playwright"
